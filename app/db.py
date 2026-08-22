@@ -1,0 +1,140 @@
+"""
+Database access for the ruslovar API.
+
+This module owns the MySQL connection and all SQL queries. No other module
+should contain SQL — route handlers and services call the functions here.
+
+The database is assumed to be read-only. This API never modifies the
+underlying dictionary data.
+"""
+
+import pymysql
+from pymysql.cursors import DictCursor
+
+from app.config import settings
+
+
+def get_connection() -> pymysql.connections.Connection:
+    """
+    Create and return a new MySQL connection.
+
+    Uses settings from app.config. Returns a connection with DictCursor so
+    query results are dictionaries keyed by column name, which is easier to
+    work with than tuples.
+
+    Raises pymysql.MySQLError if the connection cannot be established.
+    """
+    return pymysql.connect(
+        host=settings.db_host,
+        port=settings.db_port,
+        user=settings.db_user,
+        password=settings.db_password,
+        database=settings.db_name,
+        charset="utf8mb4",
+        cursorclass=DictCursor,
+        autocommit=True,
+    )
+
+
+def lookup_word(conn, word: str) -> dict | None:
+    """
+    Look up a single word in the dictionary.
+
+    Args:
+        conn: An active MySQL connection.
+        word: The surface form to search for (Cyrillic, UTF-8).
+
+    Returns:
+        A dictionary representing the matching row, or None if no match exists.
+        The dictionary keys are column names: IID, word, code, code_parent,
+        plural, gender, wcase, soul.
+    """
+    sql = """
+        SELECT IID, word, code, code_parent, plural, gender, wcase, soul
+        FROM nouns_morf
+        WHERE word = %s
+        LIMIT 1
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (word,))
+        return cursor.fetchone()
+
+
+def lookup_by_code(conn, code: int) -> dict | None:
+    """
+    Look up a row by its unique code.
+
+    Used to walk the parent chain when resolving a declined form to its
+    dictionary root.
+
+    Args:
+        conn: An active MySQL connection.
+        code: The unique code of the row to look up.
+
+    Returns:
+        A dictionary representing the matching row, or None if no match exists.
+    """
+    sql = """
+        SELECT IID, word, code, code_parent, plural, gender, wcase, soul
+        FROM nouns_morf
+        WHERE code = %s
+        LIMIT 1
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (code,))
+        return cursor.fetchone()
+
+
+def get_children(conn, parent_code: int) -> list[dict]:
+    """
+    Return all rows whose code_parent matches the given parent code.
+
+    Used to fetch all declensions of a root form (singular forms) and all
+    declensions of a nominative plural form (plural forms).
+
+    Args:
+        conn: An active MySQL connection.
+        parent_code: The code of the parent row.
+
+    Returns:
+        A list of dictionaries, each representing a child row.
+    """
+    sql = """
+        SELECT IID, word, code, code_parent, plural, gender, wcase, soul
+        FROM nouns_morf
+        WHERE code_parent = %s
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (parent_code,))
+        return cursor.fetchall()
+
+
+def find_nominative_plural(conn, root_code: int) -> dict | None:
+    """
+    Find the nominative plural row for a given root.
+
+    Not all nouns have plural forms. If no nominative plural exists,
+    this returns None and the noun is treated as singular-only.
+
+    Args:
+        conn: An active MySQL connection.
+        root_code: The code of the root (dictionary form) row.
+
+    Returns:
+        A dictionary representing the nominative plural row, or None.
+    """
+    sql = """
+        SELECT IID, word, code, code_parent, plural, gender, wcase, soul
+        FROM nouns_morf
+        WHERE code_parent = %s
+          AND plural = 1
+          AND wcase = 'им'
+        LIMIT 1
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (root_code,))
+        return cursor.fetchone()
