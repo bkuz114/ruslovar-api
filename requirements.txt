@@ -1,0 +1,7 @@
+fastapi>=0.110
+uvicorn>=0.29
+pymysql>=1.1
+pydantic-settings>=2.2
+python-dotenv>=1.0
+# for declensions.py client
+httpx>=0.27
