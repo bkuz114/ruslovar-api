@@ -68,10 +68,23 @@ def lookup_word(conn, word: str) -> dict | None:
         The dictionary keys are column names: IID, word, code,
         code_parent, plural, gender, wcase, soul.
     """
+
     sql = """
         SELECT IID, word, code, code_parent, plural, gender, wcase, soul
         FROM nouns_morf
         WHERE word = %s
+        -- Query returns only one result, but there can be multiple results.
+        -- For regular declining words, doesn't matter which is returned
+        -- (e.g. кролика will have multiple results: acc sing and gen sing,
+        --  but can return either, as user will look up the parent, and parent
+        --  is same for both)
+        -- However, some irregular words exist both as a standalone root
+        -- in the db as well as a declined form of another root (e.g., люди).
+        -- For those words, want to return the word which has a parent
+        -- so the caller can resolve it to its true root.
+        -- So, Order rows by if they have a parent (code_parent != 0)
+        -- so the row with parent would be the one returned.
+        ORDER BY (code_parent = 0) ASC
         LIMIT 1
     """
 
