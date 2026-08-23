@@ -97,21 +97,30 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
             "Use strict=false to resolve automatically."
         )
 
-    # Step 4: Get all singular declensions (children of root).
-    singular_children = db.get_children(conn, root_row["code"])
+    # Check if noun is invariant (радио, кофе, и т.д.)
+    if _is_invariant(root_row):
+        # All case forms are identical to the root word.
+        singular = _invariant_case_forms(root_word)
+        plural = _invariant_case_forms(root_word)
+        additional = AdditionalForms()
+    else:
+        # Normal declension path
 
-    # Step 5: Find the nominative plural row, if any.
-    nom_plural = db.find_nominative_plural(conn, root_row["code"])
+        # Step 4: Get all singular declensions (children of root).
+        singular_children = db.get_children(conn, root_row["code"])
 
-    # Step 6: Get all plural declensions (children of nominative plural).
-    plural_children = []
-    if nom_plural is not None:
-        plural_children = db.get_children(conn, nom_plural["code"])
+        # Step 5: Find the nominative plural row, if any.
+        nom_plural = db.find_nominative_plural(conn, root_row["code"])
 
-    # Step 7: Assemble the response.
-    singular = _assemble_case_forms(singular_children)
-    plural = _assemble_case_forms(plural_children)
-    additional = _assemble_additional_forms(singular_children + plural_children)
+        # Step 6: Get all plural declensions (children of nominative plural).
+        plural_children = []
+        if nom_plural is not None:
+            plural_children = db.get_children(conn, nom_plural["code"])
+
+        # Step 7: Assemble the response.
+        singular = _assemble_case_forms(singular_children)
+        plural = _assemble_case_forms(plural_children)
+        additional = _assemble_additional_forms(singular_children + plural_children)
 
     # Extract gender and animacy from the root row (singular rows only)
     gender = root_row.get("gender")
@@ -125,6 +134,44 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
         singular=singular,
         plural=plural,
         additional_forms=additional,
+    )
+
+
+def _is_invariant(root_row: dict) -> bool:
+    """
+    Determine whether a noun is invariant (does not decline).
+
+    An invariant noun has no grammatical case marking, which is indicated
+    by wcase = NULL on the root row.
+
+    Args:
+        root_row: The dictionary row representing the root form.
+
+    Returns:
+        True if the noun is invariant, False otherwise.
+    """
+    return root_row.get("wcase") is None
+
+
+def _invariant_case_forms(word: str) -> CaseForms:
+    """
+    Build a CaseForms object where every case is the same word.
+
+    Used for invariant nouns that do not change form.
+
+    Args:
+        word: The root word.
+
+    Returns:
+        A CaseForms object with all standard cases set to word.
+    """
+    return CaseForms(
+        nominative=word,
+        genitive=word,
+        dative=word,
+        accusative=word,
+        instrumental=word,
+        prepositional=word,
     )
 
 
