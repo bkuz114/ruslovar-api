@@ -54,6 +54,7 @@ Returns the full declension table for a Russian noun.
 {
   "word": "кролика",
   "root": "кролик",
+  "invariant": false,
   "gender": "муж",
   "animacy": true,
   "singular": {
@@ -87,6 +88,7 @@ Returns the full declension table for a Russian noun.
 |---|---|---|
 | `word` | string | The word as submitted by the client. May equal `root` if the input was already in dictionary form. |
 | `root` | string | Same as `word`. Always present for schema consistency. |
+| `invariant` | boolean | `true` for invariant nouns (e.g., кофе, радио), `false` otherwise |
 | `gender` | string \| null | Grammatical gender. One of: `муж`, `жен`, `ср`, `общ`. `null` if unknown. |
 | `animacy` | boolean \| null | `true` = animate, `false` = inanimate, `null` = unknown. |
 | `singular` | object | Singular declensions, keyed by English case name. Empty object if the noun has no singular forms. |
@@ -164,6 +166,7 @@ curl "http://localhost:8000/api/v1/nouns/кролик/declensions"
 {
   "word": "кролик",
   "root": "кролик",
+  "invariant": false,
   "gender": "муж",
   "animacy": true,
   "singular": {
@@ -201,6 +204,7 @@ curl "http://localhost:8000/api/v1/nouns/кролика/declensions"
 {
   "word": "кролика",
   "root": "кролик",
+  "invariant": false,
   "gender": "муж",
   "animacy": true,
   "singular": {
@@ -250,10 +254,25 @@ curl "http://localhost:8000/api/v1/nouns/кофе/declensions"
 {
   "word": "кофе",
   "root": "кофе",
+  "invariant": true,
   "gender": "муж",
   "animacy": false,
-  "singular": {},
-  "plural": {},
+  "singular": {
+    "nominative": "кофе",
+    "genitive": "кофе",
+    "dative": "кофе",
+    "accusative": "кофе",
+    "instrumental": "кофе",
+    "prepositional": "кофе"
+  },
+  "plural": {
+    "nominative": "кофе",
+    "genitive": "кофе",
+    "dative": "кофе",
+    "accusative": "кофе",
+    "instrumental": "кофе",
+    "prepositional": "кофе"
+  },
   "additional_forms": {
     "partitive": null,
     "locative": null,

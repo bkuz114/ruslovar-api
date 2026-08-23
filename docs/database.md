@@ -130,7 +130,7 @@ Some nouns have no declensions at all. They appear in the table only as a root f
 кофе (root, code=122227, code_parent=0, wcase=NULL)
 ```
 
-The API returns empty objects for `singular` and `plural` in this case.
+The API fills all singular and plural case forms with the invariant word, and sets the invariant field to `true`
 
 ### Plural-only nouns
 
