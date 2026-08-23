@@ -109,7 +109,7 @@ def get_children(conn, parent_code: int) -> list[dict]:
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (parent_code,))
-        return cursor.fetchall()
+        return list(cursor.fetchall())
 
 
 def find_nominative_plural(conn, root_code: int) -> dict | None:
