@@ -70,5 +70,5 @@ class NounDeclensionResponse(BaseModel):
     gender: str | None = None
     animacy: bool | None = None
     singular: CaseForms
-    plural: CaseForms
+    plural: list[CaseForms]
     additional_forms: AdditionalForms

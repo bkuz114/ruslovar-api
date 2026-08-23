@@ -85,7 +85,8 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
     if is_invariant:
         # All case forms are identical to the root word.
         singular = _invariant_case_forms(root_word)
-        plural = _invariant_case_forms(root_word)
+        # plurals must be in a list
+        plurals_list = [_invariant_case_forms(root_word)]
         additional = AdditionalForms()
     else:
         # get all children of root
@@ -94,13 +95,18 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
         # Step 4: Get all singular declension rows
         singular_rows = _get_singular_rows(conn, root_row, root_children)
 
-        # Step 5: Get all plural declension rows
-        plural_rows = _get_plural_rows(conn, root_row, root_children)
+        # Step 5: Get all possible plural declension rows
+        # Note:
+        # - root word can have multiple distinct nom. plural words with their
+        #   own declensions (e.g., человек -> человеки, люди)
+        # - so this returns a list of lists of rows (one sublist for each
+        #   distinct nom. plural word and its related declensions)
+        plural_rows_list = _get_plural_rows_list(conn, root_row, root_children)
 
         # Step 6: Assemble data for the response from the rows
         singular = _assemble_case_forms(singular_rows)
-        plural = _assemble_case_forms(plural_rows)
-        additional = _assemble_additional_forms(singular_rows + plural_rows)
+        plurals_list = [_assemble_case_forms(pl) for pl in plural_rows_list]
+        additional = _assemble_additional_forms(singular_rows)
 
     # Step 7: Extract gender and animacy from the root row (singular rows only)
     gender = root_row.get("gender")
@@ -113,7 +119,7 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
         gender=gender,
         animacy=animacy,
         singular=singular,
-        plural=plural,
+        plural=plurals_list,
         additional_forms=additional,
     )
 
@@ -220,9 +226,9 @@ def _get_singular_rows(
     return singular_rows
 
 
-def _get_plural_rows(
+def _get_plural_rows_list(
     conn, root_row: dict, root_children: list[dict] | None = None
-) -> list[dict]:
+) -> list[list[dict]]:
     """
     Gather all plural declension rows from a root word row.
 
@@ -231,6 +237,25 @@ def _get_plural_rows(
       only plural form it stores)
     - Remaining plural declensions are stored as children of nominative
       plural row.
+    - There can be MULTIPLE distinct nominative plural words for the
+      root word (e.g. человек -> человеки, люди). Will create a sublist
+      for each distinct word; that sublist will contain all rows for it
+      (that nominative plural + related declensions)
+
+    Example:
+        The root word человек (code=35307) has two nominative plural
+        children:
+
+            люди       (code=1378733, code_parent=35307, plural=1, wcase=им)
+            человеки   (code=1379833, code_parent=35307, plural=1, wcase=им)
+
+        Each one will appear as a child row of the root row, and each one
+        has its own set of children.
+
+        This function would return a list with two sublists: One sublist
+        contains the row for люди plus its children (людей, людям, ...).
+        The other sublist the row for человеки plus its children
+        (человеков, человекам, ...).
 
     Args:
         conn: An active MySQL connection.
@@ -240,15 +265,16 @@ def _get_plural_rows(
             extra db query
 
     Returns:
-        A list of rows representing all plural declensions. Empty if the
-        noun has no plural forms.
+        A list of lists. Each sublist contains the rows for one distinct
+        nominative plural word and all of its declensions.
+        Empty if the noun has no plural forms.
     """
     if not _is_root_row(root_row):
         raise LookupError(
             f"Expected root row for '{root_row.get('word', 'unknown')}', but got a declined form"
         )
 
-    plural_rows = []
+    plural_rows_list = []
 
     # If not cached, get all children of the root.
     # This includes singular declensions and the nominative plural row.
@@ -259,26 +285,23 @@ def _get_plural_rows(
     # (NOTE: Some uncountable, group words that colloquially don't use
     # plural still return plural e.g., дружба, север, одежда -- the only
     # words in sshra without plurals seem to be specialized or loan words)
-    nom_plural_row = [child for child in root_children if child["plural"] == 1]
+    nom_plural_rows = [child for child in root_children if child["plural"] == 1]
 
-    # if no nom plural in root children, then there's no plural form (e.g., человек)
-    if not nom_plural_row:
-        return plural_rows
+    # there can be multiple nominative plural results for a single root,
+    # each with their own set of children.
+    # (e.g. человек has nom pl row for человеки and люди).
+    # Construct lists of rows for all of them.
+    for nom_plural_row in nom_plural_rows:
+        # Get all plural declensions (children of the nominative plural row).
+        plural_rows = db.get_children(conn, nom_plural_row["code"])
 
-    if len(nom_plural_row) > 1:
-        raise LookupError(
-            f"Found more than one plural for '{root_row.get('word', 'unknown')}'"
-        )
+        # Add nom plural row to get all plural forms
+        plural_rows.append(nom_plural_row)
 
-    nom_plural_row = nom_plural_row[0]
+        # add to list of all sets of plural rows
+        plural_rows_list.append(plural_rows)
 
-    # Get all plural declensions (children of the nominative plural row).
-    plural_rows = db.get_children(conn, nom_plural_row["code"])
-
-    # Add nom plural row to get all plural forms
-    plural_rows.append(nom_plural_row)
-
-    return plural_rows
+    return plural_rows_list
 
 
 def _is_invariant(conn, root_row: dict) -> bool:
