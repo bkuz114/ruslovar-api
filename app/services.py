@@ -107,21 +107,30 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
     else:
         # Normal declension path
 
-        # Step 4: Get all singular declensions (children of root).
-        singular_children = db.get_children(conn, root_row["code"])
+        # Step 4: Get all singular declensions
+        singular_forms = []
+        # get children of root (will include singular forms + plural nom)
+        root_children = db.get_children(conn, root_row["code"])
+        # remove nom plural from children
+        singular_forms = [child for child in root_children if child["plural"] == 0]
+        # add nominative
+        singular_forms.append(root_row)
 
         # Step 5: Find the nominative plural row, if any.
         nom_plural = db.find_nominative_plural(conn, root_row["code"])
 
-        # Step 6: Get all plural declensions (children of nominative plural).
-        plural_children = []
+        # Step 6: Get all plural declensions
+        plural_forms = []
         if nom_plural is not None:
-            plural_children = db.get_children(conn, nom_plural["code"])
+            # Get all non-nominative forms (children of nom plural)
+            plural_forms = db.get_children(conn, nom_plural["code"])
+            # Add nom plural row to get all plural forms
+            plural_forms.append(nom_plural)
 
         # Step 7: Assemble the response.
-        singular = _assemble_case_forms(singular_children)
-        plural = _assemble_case_forms(plural_children)
-        additional = _assemble_additional_forms(singular_children + plural_children)
+        singular = _assemble_case_forms(singular_forms)
+        plural = _assemble_case_forms(plural_forms)
+        additional = _assemble_additional_forms(singular_forms + plural_forms)
 
     # Extract gender and animacy from the root row (singular rows only)
     gender = root_row.get("gender")
