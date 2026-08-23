@@ -307,3 +307,103 @@ No existing code needs to be rewritten. Each layer grows without breaking what i
 - [Database Schema](database.md) — the structure of the MySQL data.
 - [Quickstart](quickstart.md) — setup and run instructions.
 - [Database Setup](database-setup.md) — preparing the MySQL database.
+
+## **Appendix**
+
+This Appendix contains topics which are useful but not necessarily relevant to everyone.
+
+### Swagger UI
+
+FastAPI automatically generates an interactive documentation page at `/docs` using Swagger UI. This page allows developers to explore and test API endpoints directly from the browser. It is generated from the same Pydantic models and route definitions that power the API itself.
+
+#### Offline Swagger UI
+
+By default, the Swagger UI page loads its JavaScript, CSS, and favicon assets from a CDN. On a machine without internet access, the page fails to load even though the API itself is fully functional.
+
+This project serves the Swagger UI assets from local files instead, so `/docs` works fully offline.
+
+##### How To Make Swagger UI work Offline
+
+Here is one approach to make offline Swagger UI in FastAPI possible (an example is given below):
+
+1. **Add Local asset files to serve**: Since will not be getting the Swagger assets (JS, CSS, and favicon) via CDN, need to host them offline. (see [Obtaining Swagger Assets for Offline Hosting](#obtaining-swagger-assets-for-offline-hosting)).
+
+2. **Add a static file mount**: This will map an URL prefix (which you will use in step 4) to the directory with the local assets. (When the browser requests `/static/swagger-ui/swagger-ui-bundle.js`, the file mount instructs FastAPI to serve the files from disk at the mapped location.)
+
+3. **Add `docs_url=None` in the FastAPI() constructor**: this disables the default FastAPI `/docs` route, which would otherwise load Swagger UI assets from a CDN. This prevents FastAPI from creating its own /docs page, allowing us to define a custom one next.
+
+4. **Add a custom `/docs` route using the URL prefix in step 2**: This will generate the HTML page and points the `<script>`, `<link>`, and favicon tags to the mounted URL prefix, instead of the CDN.
+
+**Working Example**
+
+Here is the complete setup this project uses, as it appears in `app/main.py`:
+
+```python
+# URL prefix where local Swagger UI assets will be served.
+SWAGGER_UI_URL_PREFIX = "/static/swagger-ui"
+
+# Filesystem path to the local Swagger UI assets.
+SWAGGER_UI_DIR = Path(__file__).resolve().parent / SWAGGER_UI_URL_PREFIX.lstrip("/")
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Ruslovar API",
+        description="...",
+        # Disable the default /docs route (loads assets from a CDN).
+        docs_url=None,
+        version="0.1.0",
+    )
+
+    # Map the URL prefix to the local asset directory.
+    app.mount(
+        SWAGGER_UI_URL_PREFIX,
+        StaticFiles(directory=str(SWAGGER_UI_DIR)), # dir on FS where the assets live
+        name="swagger-ui",
+    )
+
+    # Custom /docs route with local asset URLs.
+    @app.get("/docs", include_in_schema=False)
+    async def custom_swagger_ui():
+        return get_swagger_ui_html(
+            openapi_url=app.openapi_url,
+            title=app.title + " - Swagger UI",
+            swagger_js_url=f"{SWAGGER_UI_URL_PREFIX}/swagger-ui-bundle.js",
+            swagger_css_url=f"{SWAGGER_UI_URL_PREFIX}/swagger-ui.css",
+            swagger_favicon_url=f"{SWAGGER_UI_URL_PREFIX}/favicon-32x32.png",
+        )
+```
+
+##### Obtaining Swagger Assets for Offline Hosting
+
+1. Download the latest Swagger UI release: https://github.com/swagger-api/swagger-ui/releases (this project is currently using [v5.32.14](https://github.com/swagger-api/swagger-ui/releases/tag/v5.32.14)
+
+2. The files you want are: `dist/swagger-ui-bundle.js`, `dist/swagger-ui.css`, and `dist/favicon-32x32.png`
+
+##### Why not use the built-in parameters?
+
+Several approaches were attempted before arriving at the current solution. Full details are documented in commit `0c58f96`. In short:
+
+- Passing `swagger_ui_css_url` and `swagger_ui_js_url` directly to the `FastAPI()` constructor does not work in this FastAPI version. Those parameters are not accepted.
+
+- Passing the URLs through `swagger_ui_parameters` does inject them into the page, but not into the HTML `<link>` and `<script>` tags where they are needed. Swagger UI does not use those configuration keys to load its own core assets.
+
+- Defining a custom `/docs` route without disabling the default route does not work because the built-in route takes precedence.
+
+Disabling the default route with `docs_url=None` and then defining a custom `/docs` route is the approach that works.
+
+##### Upgrading Swagger UI
+
+The bundled assets are pinned to Swagger UI version 5.32.14. To upgrade:
+
+1. Download the new release from the Swagger UI GitHub releases page.
+2. Extract the `dist/` directory.
+3. Replace the files in `app/static/swagger-ui/` with the new versions.
+4. Test that `/docs` still loads offline.
+
+Do not edit the upstream files in place. If customization is needed, add a separate `custom.css` or `custom.js` and reference it from the custom `/docs` route.
+
+##### Related
+
+- Commit `0c58f96` — feat: serve v5.32.14 Swagger UI assets locally for offline use
+- Issue #1 — Offline Swagger UI support
