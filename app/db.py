@@ -38,16 +38,35 @@ def get_connection() -> pymysql.connections.Connection:
 
 def lookup_word(conn, word: str) -> dict | None:
     """
-    Look up a single word in the dictionary.
+    Look up a single word in the dictionary and return a row for it
+    (or None, if no matching rows found)
+
+    Note:
+    - The database may contain multiple rows for the same word (e.g.
+      кролика, as it is both gen sing and acc sing of кролик)
+    - This function returns only one of them, selected arbitrarily.
+    - Ultimately, for non-root words, will use the row returned by
+      this function to find its root via code_parent column walk,
+      so it doesn't matter which is returned.
+
+    Example:
+        кролика exists as both genitive singular and accusative singular:
+
+            кролика  (code=27250, code_parent=27249, wcase=род)
+            кролика  (code=27252, code_parent=27249, wcase=вин)
+
+        Either row points to the same root via code_parent, so the
+        arbitrary selection is acceptable for standard declined forms.
 
     Args:
         conn: An active MySQL connection.
-        word: The surface form to search for (Cyrillic, UTF-8).
+        word: The word to search for (Cyrillic, UTF-8).
 
     Returns:
-        A dictionary representing the matching row, or None if no match exists.
-        The dictionary keys are column names: IID, word, code, code_parent,
-        plural, gender, wcase, soul.
+        A dictionary representing a matching row (selected arbitrarily
+        if more than one match), or None if no match exists.
+        The dictionary keys are column names: IID, word, code,
+        code_parent, plural, gender, wcase, soul.
     """
     sql = """
         SELECT IID, word, code, code_parent, plural, gender, wcase, soul
