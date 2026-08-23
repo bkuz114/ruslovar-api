@@ -98,7 +98,8 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
         )
 
     # Check if noun is invariant (радио, кофе, и т.д.)
-    if _is_invariant(root_row):
+    is_invariant = _is_invariant(root_row)
+    if is_invariant:
         # All case forms are identical to the root word.
         singular = _invariant_case_forms(root_word)
         plural = _invariant_case_forms(root_word)
@@ -129,6 +130,7 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
     return NounDeclensionResponse(
         word=word,
         root=root_word,
+        invariant=is_invariant,
         gender=gender,
         animacy=animacy,
         singular=singular,

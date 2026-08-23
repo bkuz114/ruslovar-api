@@ -66,6 +66,7 @@ class NounDeclensionResponse(BaseModel):
 
     word: str
     root: str
+    invariant: bool
     gender: str | None = None
     animacy: bool | None = None
     singular: CaseForms
