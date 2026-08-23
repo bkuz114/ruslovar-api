@@ -81,7 +81,7 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
         )
 
     # Check if noun is invariant (радио, кофе, и т.д.)
-    is_invariant = _is_invariant(root_row)
+    is_invariant = _is_invariant(conn, root_row)
     if is_invariant:
         # All case forms are identical to the root word.
         singular = _invariant_case_forms(root_word)
@@ -243,6 +243,11 @@ def _get_plural_rows(
         A list of rows representing all plural declensions. Empty if the
         noun has no plural forms.
     """
+    if not _is_root_row(root_row):
+        raise LookupError(
+            f"Expected root row for '{root_row.get('word', 'unknown')}', but got a declined form"
+        )
+
     plural_rows = []
 
     # If not cached, get all children of the root.
@@ -276,20 +281,40 @@ def _get_plural_rows(
     return plural_rows
 
 
-def _is_invariant(root_row: dict) -> bool:
+def _is_invariant(conn, root_row: dict) -> bool:
     """
-    Determine whether a noun is invariant (does not decline).
+    Determine whether a word is invariant (кофе, радио, и т.д.).
 
-    An invariant noun has no grammatical case marking, which is indicated
-    by wcase = NULL on the root row.
+    - In the Sshra data, an invariant noun has no grammatical case
+      marking (its root row has wcase = NULL)
+    - Additionally, no other row exists for the word in the db.
+      This distinguishes invariant nouns from nouns like plural-only
+      forms (e.g. люди), which have two rows: one with wcase = NULL
+      and others with wcase = им and other case values
+
+    db.is_invariant_word checks for this, but we only call it
+    unless wcase = NULL to avoid an unecessary sql query every time this
+    function runs (as only a small subset of nouns meet the first
+    condition of having wcase = NULL -- e.g. plural-only nouns)
 
     Args:
+        conn: An active MySQL connection.
         root_row: The dictionary row representing the root form.
 
     Returns:
         True if the noun is invariant, False otherwise.
     """
-    return root_row.get("wcase") is None
+    if not _is_root_row(root_row):
+        raise LookupError(
+            f"Expected root row for '{root_row.get('word', 'unknown')}', but got a declined form"
+        )
+
+    # only call db.is_invariant_word if wcase = NULL (the first
+    # condition of invariant words) to avoid an extra sql query
+    if root_row.get("wcase") is None:
+        return db.is_invariant_word(conn, root_row["word"])
+
+    return False
 
 
 def _invariant_case_forms(word: str) -> CaseForms:

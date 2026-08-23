@@ -112,6 +112,52 @@ def get_children(conn, parent_code: int) -> list[dict]:
         return list(cursor.fetchall())
 
 
+def is_invariant_word(conn, word: str) -> bool:
+    """
+    Determine whether a word is invariant (кофе, радио, и т.д.).
+
+    - In the Sshra data, an invariant noun has no grammatical case
+      marking (its root row has wcase = NULL)
+    - Additionally, no other row exists for the word in the db.
+      This distinguishes invariant nouns from nouns like plural-only
+      forms (e.g. люди), which have two rows: one with wcase = NULL
+      and others with wcase = им and other case values
+
+    Example (invariant):
+        кофе -> only one row, wcase = NULL
+
+    Example (not invariant):
+        люди -> one row with wcase = NULL, but also rows with wcase = им
+                and other case values
+
+    Args:
+        conn: An active MySQL connection.
+        word: The surface form to check.
+
+    Returns:
+        True if the word is invariant, False otherwise.
+
+    """
+
+    sql = """
+        SELECT
+            CASE
+                WHEN EXISTS (
+                    SELECT 1 FROM nouns_morf
+                    WHERE word = %s
+                      AND wcase IS NOT NULL
+                )
+                THEN 0
+                ELSE 1
+            END AS is_invariant
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (word,))
+        result = cursor.fetchone()
+        return bool(result["is_invariant"])
+
+
 def find_nominative_plural(conn, root_code: int) -> dict | None:
     """
     Find the nominative plural row for a given root.
