@@ -88,21 +88,21 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
         plural = _invariant_case_forms(root_word)
         additional = AdditionalForms()
     else:
+        # get all children of root
+        root_children = db.get_children(conn, root_row["code"])
+
         # Step 4: Get all singular declension rows
-        singular_rows = _get_singular_rows(conn, root_row)
+        singular_rows = _get_singular_rows(conn, root_row, root_children)
 
-        # Step 5: Find the nominative plural row, if any.
-        nom_plural_row = db.find_nominative_plural(conn, root_code)
+        # Step 5: Get all plural declension rows
+        plural_rows = _get_plural_rows(conn, root_row, root_children)
 
-        # Step 6: Get all plural declension rows
-        plural_rows = _get_plural_rows(conn, nom_plural_row)
-
-        # Step 7: Assemble data for the response from the rows
+        # Step 6: Assemble data for the response from the rows
         singular = _assemble_case_forms(singular_rows)
         plural = _assemble_case_forms(plural_rows)
         additional = _assemble_additional_forms(singular_rows + plural_rows)
 
-    # Extract gender and animacy from the root row (singular rows only)
+    # Step 7: Extract gender and animacy from the root row (singular rows only)
     gender = root_row.get("gender")
     animacy = _parse_animacy(root_row.get("soul"))
 
@@ -174,7 +174,9 @@ def _is_root_row(row: dict) -> bool:
     return row["code_parent"] == 0
 
 
-def _get_singular_rows(conn, root_row: dict) -> list[dict]:
+def _get_singular_rows(
+    conn, root_row: dict, root_children: list[dict] | None = None
+) -> list[dict]:
     """
     Gather all singular declension rows for a root form.
 
@@ -185,7 +187,10 @@ def _get_singular_rows(conn, root_row: dict) -> list[dict]:
 
     Args:
         conn: An active MySQL connection.
+            (only used if root_children not passed)
         root_row: The dictionary row representing the root form.
+        root_childen: (optional) children of root row. Pass to avoid
+            extra db query
 
     Returns:
         A list of rows representing all singular declensions, including
@@ -201,9 +206,10 @@ def _get_singular_rows(conn, root_row: dict) -> list[dict]:
 
     singular_rows = []
 
-    # Get all children of the root. This includes singular declensions
-    # and the nominative plural row.
-    root_children = db.get_children(conn, root_row["code"])
+    # If not cached, get all children of the root.
+    # This includes singular declensions and the nominative plural row.
+    if root_children == None:
+        root_children = db.get_children(conn, root_row["code"])
 
     # Keep only singular rows (plural = 0), excluding the nominative plural.
     singular_rows = [child for child in root_children if child["plural"] == 0]
@@ -214,18 +220,24 @@ def _get_singular_rows(conn, root_row: dict) -> list[dict]:
     return singular_rows
 
 
-def _get_plural_rows(conn, nom_plural_row: dict | None) -> list[dict]:
+def _get_plural_rows(
+    conn, root_row: dict, root_children: list[dict] | None = None
+) -> list[dict]:
     """
-    Gather all plural declension rows for a nominative plural row.
+    Gather all plural declension rows from a root word row.
 
-    The database stores plural declensions as children of the nominative
-    plural row. The nominative plural row itself is added to the list so
-    that the nominative plural form is included in the response.
+    - If there's plural forms of the root word, the database stores
+      the nominative plural as a child of the root row (this is the
+      only plural form it stores)
+    - Remaining plural declensions are stored as children of nominative
+      plural row.
 
     Args:
         conn: An active MySQL connection.
-        nom_plural_row: The nominative plural row, or None if the noun
-            has no plural forms.
+            (only used if root_children not passed)
+        root_row: The dictionary row representing the root form.
+        root_childen: (optional) children of root row. Pass to avoid
+            extra db query
 
     Returns:
         A list of rows representing all plural declensions. Empty if the
@@ -233,12 +245,33 @@ def _get_plural_rows(conn, nom_plural_row: dict | None) -> list[dict]:
     """
     plural_rows = []
 
-    if nom_plural_row is not None:
-        # Get all plural declensions (children of the nominative plural row).
-        plural_rows = db.get_children(conn, nom_plural_row["code"])
+    # If not cached, get all children of the root.
+    # This includes singular declensions and the nominative plural row.
+    if root_children == None:
+        root_children = db.get_children(conn, root_row["code"])
 
-        # Add nom plural row to get all plural forms
-        plural_rows.append(nom_plural_row)
+    # Get nominative plural row from root row, if any
+    # (NOTE: Some uncountable, group words that colloquially don't use
+    # plural still return plural e.g., дружба, север, одежда -- the only
+    # words in sshra without plurals seem to be specialized or loan words)
+    nom_plural_row = [child for child in root_children if child["plural"] == 1]
+
+    # if no nom plural in root children, then there's no plural form (e.g., человек)
+    if not nom_plural_row:
+        return plural_rows
+
+    if len(nom_plural_row) > 1:
+        raise LookupError(
+            f"Found more than one plural for '{root_row.get('word', 'unknown')}'"
+        )
+
+    nom_plural_row = nom_plural_row[0]
+
+    # Get all plural declensions (children of the nominative plural row).
+    plural_rows = db.get_children(conn, nom_plural_row["code"])
+
+    # Add nom plural row to get all plural forms
+    plural_rows.append(nom_plural_row)
 
     return plural_rows
 
