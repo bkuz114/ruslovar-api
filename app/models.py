@@ -50,13 +50,13 @@ class AdditionalForms(BaseModel):
     counting: str | None = None  # счет — e.g., два часа
 
 
-class NounDeclensionResponse(BaseModel):
+class NounDeclensions(BaseModel):
     """
-    Full declension table for a Russian noun.
+    Declension table for one possible dictionary root of a word.
 
     Fields:
-        word: The surface form submitted by the client.
-        root: The dictionary form (lemma) resolved from word.
+        root: The dictionary form (lemma).
+        invariant: True if the noun is invariant.
         gender: Grammatical gender (муж, жен, ср, общ) or None.
         animacy: True for animate, False for inanimate, None for unknown.
         singular: Singular declensions. Empty if the noun has no singular.
@@ -64,7 +64,6 @@ class NounDeclensionResponse(BaseModel):
         additional_forms: Rare/archaic forms. Always present.
     """
 
-    word: str
     root: str
     invariant: bool
     gender: str | None = None
@@ -72,3 +71,16 @@ class NounDeclensionResponse(BaseModel):
     singular: CaseForms
     plural: list[CaseForms]
     additional_forms: AdditionalForms
+
+
+class NounLookupResponse(BaseModel):
+    """
+    Top-level response for a noun lookup.
+
+    Fields:
+        word: The word submitted by the client.
+        matches: One or more declension tables, one per possible root.
+    """
+
+    word: str
+    matches: list[NounDeclensions]

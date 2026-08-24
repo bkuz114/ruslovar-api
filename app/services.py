@@ -10,7 +10,7 @@ No SQL lives here — all database access goes through app.db.
 """
 
 from app import db
-from app.models import NounDeclensionResponse, CaseForms, AdditionalForms
+from app.models import NounLookupResponse, NounDeclensions, CaseForms, AdditionalForms
 
 # Mapping from database wcase values to English response keys.
 # The extra cases (partitive, locative, etc.) are handled separately.
@@ -32,7 +32,7 @@ ADDITIONAL_CASE_MAP = {
 }
 
 
-def get_noun_declensions(word: str, strict: bool = False) -> NounDeclensionResponse:
+def get_noun_declensions(word: str, strict: bool = False) -> NounLookupResponse:
     """
     Resolve and return the full declension table for a Russian noun.
 
@@ -42,7 +42,7 @@ def get_noun_declensions(word: str, strict: bool = False) -> NounDeclensionRespo
             a LookupError is raised with an explanatory message.
 
     Returns:
-        A NounDeclensionResponse containing the declension table.
+        A NounLookupResponse containing the declension table.
 
     Raises:
         LookupError: If the word is not found in the dictionary, or if
@@ -55,30 +55,60 @@ def get_noun_declensions(word: str, strict: bool = False) -> NounDeclensionRespo
         conn.close()
 
 
-def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionResponse:
+def _get_noun_declensions(conn, word: str, strict: bool) -> NounLookupResponse:
     """
     Internal implementation. Takes an existing connection to avoid opening
     a new one when called from other functions (not currently the case, but
     keeps the door open for future refactoring).
     """
 
-    # Step 1: Look up the input word.
-    row = db.lookup_word(conn, word)
-    if row is None:
+    # Get all matching rows in the database for the word
+    # (could be multiple e.g., кролика has rows for acc sing, gen sing)
+    matching_rows = db.lookup_word(conn, word)
+    if not matching_rows:
         raise LookupError(f"Word '{word}' not found in dictionary")
 
-    # Step 2: Walk the parent chain to find the dictionary root.
-    root_row = _get_root_row(conn, row, word)
+    # For each matching row, find its root form.
+    # - A single word can have multiple possible roots
+    #   (e.g, абаки could be plural of абак or абака)
+    # - Most words only have a single root though, so
+    #   put in set to remove duplicates (e.g. all кролика
+    #   rows will collapse to a single кролик root row)
+    distinct_roots = {}
+    for row in matching_rows:
+        root_row = _get_root_row(conn, row, word)
+        distinct_roots[root_row["code"]] = root_row
+    distinct_root_rows = distinct_roots.values()
+
+    # For each distinct root row, create a NounDeclensions object
+    declension_objects = [
+        _assemble_noun_declension(conn, row) for row in distinct_root_rows
+    ]
+
+    return NounLookupResponse(
+        word=word,
+        matches=declension_objects,
+    )
+
+
+def _assemble_noun_declension(conn, root_row: dict) -> NounDeclensions:
+    """
+    Build a NounDeclensions object for a single dictionary root.
+
+    Given a root row, gathers the singular and plural declension rows
+    and assembles them into the response model.
+
+    Args:
+        conn: An active MySQL connection.
+        root_row: The dictionary row representing the root form.
+
+    Returns:
+        A NounDeclensions object with the full declension table for
+        this root.
+    """
+
     root_word = root_row["word"]  # actual word
     root_code = root_row["code"]  # unique db ID for each word
-
-    # Step 3: If strict mode is on, verify the input was already in
-    # dictionary form.
-    if strict and word != root_word:
-        raise LookupError(
-            f"Word '{word}' is not in dictionary form. "
-            "Use strict=false to resolve automatically."
-        )
 
     # Check if noun is invariant (радио, кофе, и т.д.)
     is_invariant = _is_invariant(conn, root_row)
@@ -90,7 +120,7 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
         additional = AdditionalForms()
     else:
         # get all children of root
-        root_children = db.get_children(conn, root_row["code"])
+        root_children = db.get_children(conn, root_code)
 
         # Step 4: Get all singular declension rows
         singular_rows = _get_singular_rows(conn, root_row, root_children)
@@ -112,8 +142,7 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
     gender = root_row.get("gender")
     animacy = _parse_animacy(root_row.get("soul"))
 
-    return NounDeclensionResponse(
-        word=word,
+    return NounDeclensions(
         root=root_word,
         invariant=is_invariant,
         gender=gender,
@@ -124,44 +153,57 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounDeclensionRespon
     )
 
 
-def _get_root_row(conn, row: dict, word: str) -> dict:
+def _get_root_row(conn, row: dict, word: str, visited_codes: set | None = None) -> dict:
     """
-    Walk the parent chain from a given row to the dictionary root.
+    Resolve a row to its dictionary root.
 
-    The parent chain is at most two levels deep:
-      declined form -> root (for singular)
-      declined form -> nominative plural -> root (for plural)
+    If the row is already a root, first check whether the same word also
+    exists as a child of another root. If so, recurse on that child row.
+
+    Otherwise, recurse up the code_parent chain until reaching a root.
 
     Args:
         conn: An active MySQL connection.
-        row: The starting row (as returned from the database).
-        word: The original input word, used in error messages.
+        row: The starting row.
+        word: The original input word, used for error messages.
+        visited_codes: Set of codes already seen, used to detect cycles.
+            Internal parameter, not intended for callers.
 
     Returns:
-        The dictionary row representing the root form.
+        The dictionary row representing the root.
 
     Raises:
-        LookupError: If a parent cycle is detected or a parent row is missing.
+        LookupError: If a parent cycle is detected or a parent row is
+            missing.
     """
-    # The parent chain is at most two levels deep:
-    #   declined form -> root (for singular)
-    #   declined form -> nominative plural -> root (for plural)
-    current = row
-    visited_codes = set()  # guard against infinite loops from bad data
+    # Guard against infinite recursion. Each row's code should only be
+    # visited once; revisiting indicates a cycle in the database or a
+    # dictionary artifact that points back to itself.
+    if visited_codes is None:
+        visited_codes = set()
 
-    while not _is_root_row(current):
-        if current["code"] in visited_codes:
-            # Should never happen with clean data, but prevents a hang
-            # if the database ever contains a cycle.
-            raise LookupError(f"Parent chain cycle detected for word '{word}'")
-        visited_codes.add(current["code"])
+    if row["code"] in visited_codes:
+        raise LookupError(f"Parent chain cycle detected for word '{word}'")
+    visited_codes.add(row["code"])
 
-        parent = db.lookup_by_code(conn, current["code_parent"])
-        if parent is None:
-            raise LookupError(f"Parent row not found for word '{word}'")
-        current = parent
+    # Base case: row is a root and has no parent row elsewhere.
+    if _is_root_row(row):
+        if db.is_dictionary_artifact(conn, row):
+            child_version_row = db.find_useful_row(conn, word)
+            if child_version_row is None:
+                raise LookupError(
+                    f"Dictionary artifact detected for word '{word}' but no useful row found"
+                )
+            return _get_root_row(conn, child_version_row, word, visited_codes)
+        else:
+            return row
 
-    return current
+    # Recursive case: walk up the parent chain.
+    parent = db.lookup_by_code(conn, row["code_parent"])
+    if parent is None:
+        raise LookupError(f"Parent row not found for word '{word}'")
+
+    return _get_root_row(conn, parent, word, visited_codes)
 
 
 def _is_root_row(row: dict) -> bool:

@@ -5,14 +5,14 @@ HTTP endpoint for noun declensions.
 from fastapi import APIRouter, HTTPException, Query
 
 from app import services
-from app.models import NounDeclensionResponse
+from app.models import NounLookupResponse
 
 router = APIRouter(prefix="/nouns", tags=["nouns"])
 
 
 @router.get(
     "/{word}/declensions",
-    response_model=NounDeclensionResponse,
+    response_model=NounLookupResponse,
     summary="Get noun declensions",
     description=(
         "Returns the full declension table for a Russian noun. "
@@ -35,7 +35,7 @@ def get_noun_declensions(
         strict: If True, return 404 if the word is not in dictionary form.
 
     Returns:
-        NounDeclensionResponse with the full declension table.
+        NounLookupResponse with the full declension table.
 
     Raises:
         HTTPException 404 if the word is not found or strict mode fails.

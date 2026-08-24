@@ -36,61 +36,45 @@ def get_connection() -> pymysql.connections.Connection:
     )
 
 
-def lookup_word(conn, word: str) -> dict | None:
+def lookup_word(conn, word: str) -> list[dict]:
     """
-    Look up a single word in the dictionary and return a row for it
-    (or None, if no matching rows found)
+    Look up all rows in the dictionary matching a given word.
 
-    Note:
-    - The database may contain multiple rows for the same word (e.g.
-      кролика, as it is both gen sing and acc sing of кролик)
-    - This function returns only one of them, selected arbitrarily.
-    - Ultimately, for non-root words, will use the row returned by
-      this function to find its root via code_parent column walk,
-      so it doesn't matter which is returned.
+    The database may contain multiple rows for the same word. This
+    function returns all of them, not just one. The caller is
+    responsible for grouping and resolving them.
 
-    Example:
-        кролика exists as both genitive singular and accusative singular:
+    Examples:
+        кролика exists as both genitive singular and accusative
+        singular, both with the same parent:
 
             кролика  (code=27250, code_parent=27249, wcase=род)
             кролика  (code=27252, code_parent=27249, wcase=вин)
 
-        Either row points to the same root via code_parent, so the
-        arbitrary selection is acceptable for standard declined forms.
+        абаки has multiple rows, each potentially pointing to a
+        different parent root:
+
+            абаки  (code=..., code_parent=..., plural=1, wcase=им)
+            абаки  (code=..., code_parent=..., plural=1, wcase=вин)
 
     Args:
         conn: An active MySQL connection.
         word: The word to search for (Cyrillic, UTF-8).
 
     Returns:
-        A dictionary representing a matching row (selected arbitrarily
-        if more than one match), or None if no match exists.
-        The dictionary keys are column names: IID, word, code,
-        code_parent, plural, gender, wcase, soul.
+        A list of dictionaries representing all matching rows. Each
+        dictionary has keys: IID, word, code, code_parent, plural,
+        gender, wcase, soul. Empty list if no match exists.
     """
-
     sql = """
         SELECT IID, word, code, code_parent, plural, gender, wcase, soul
         FROM nouns_morf
         WHERE word = %s
-        -- Query returns only one result, but there can be multiple results.
-        -- For regular declining words, doesn't matter which is returned
-        -- (e.g. кролика will have multiple results: acc sing and gen sing,
-        --  but can return either, as user will look up the parent, and parent
-        --  is same for both)
-        -- However, some irregular words exist both as a standalone root
-        -- in the db as well as a declined form of another root (e.g., люди).
-        -- For those words, want to return the word which has a parent
-        -- so the caller can resolve it to its true root.
-        -- So, Order rows by if they have a parent (code_parent != 0)
-        -- so the row with parent would be the one returned.
-        ORDER BY (code_parent = 0) ASC
-        LIMIT 1
     """
 
     with conn.cursor() as cursor:
         cursor.execute(sql, (word,))
-        return cursor.fetchone()
+        return list(cursor.fetchall())
 
 
 def lookup_by_code(conn, code: int) -> dict | None:
@@ -142,6 +126,70 @@ def get_children(conn, parent_code: int) -> list[dict]:
     with conn.cursor() as cursor:
         cursor.execute(sql, (parent_code,))
         return list(cursor.fetchall())
+
+
+def is_dictionary_artifact(conn, row: dict) -> bool:
+    """
+    Check whether a row is a dictionary artifact.
+
+    A row is a dictionary artifact if it is a standalone root
+    (code_parent = 0, wcase = NULL) and the same word also exists as a
+    child of another root.
+
+    Args:
+        conn: An active MySQL connection.
+        row: A dictionary row from nouns_morf.
+
+    Returns:
+        True if the row is a dictionary artifact, False otherwise.
+    """
+    if row["code_parent"] != 0 or row["wcase"] is not None:
+        return False
+
+    sql = """
+        SELECT 1
+        FROM nouns_morf
+        WHERE word = %s
+          AND code_parent != 0
+        LIMIT 1
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (row["word"],))
+        return cursor.fetchone() is not None
+
+
+def find_useful_row(conn, word: str) -> dict | None:
+    """
+    Find the useful row for a word that has a dictionary artifact.
+
+    When a word has a dictionary artifact (see is_dictionary_artifact),
+    this function returns the row that points to the word's actual
+    dictionary root.
+
+    Example:
+        For люди, this returns the row where люди is the nominative
+        plural of человек (code_parent = 35307).
+
+    Args:
+        conn: An active MySQL connection.
+        word: The word to look up.
+
+    Returns:
+        The child row that points to the actual root, or None if no
+        such row exists.
+    """
+    sql = """
+        SELECT IID, word, code, code_parent, plural, gender, wcase, soul
+        FROM nouns_morf
+        WHERE word = %s
+          AND code_parent != 0
+        LIMIT 1
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(sql, (word,))
+        return cursor.fetchone()
 
 
 def is_invariant_word(conn, word: str) -> bool:
