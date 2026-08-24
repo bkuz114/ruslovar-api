@@ -209,12 +209,13 @@ If the service layer raises a `LookupError` (word not found, not a dictionary fo
 
 `services.py` is where the actual lookup happens. It:
 
-1. Looks up the input word in the database.
-2. If the word is not a dictionary root, it follows parent references to the root.
-3. Fetches all singular declensions of the root.
-4. Finds the nominative plural form, if one exists.
-5. Fetches all plural declensions.
-6. Assembles the rows into the response structure.
+1. Looks up all matching rows in the database for the input word.
+2. Resolves each row to its dictionary root, following parent references and handling dictionary artifacts.
+3. Deduplicates roots so each appears once.
+4. For each root, fetches all singular declensions.
+5. For each root, finds all nominative plural forms, if any.
+6. Fetches all plural declensions for each nominative plural form.
+7. Assembles one declension table per root and wraps them in the response structure.
 
 All database access goes through `db.py`. The service layer never writes SQL directly.
 
@@ -222,16 +223,17 @@ All database access goes through `db.py`. The service layer never writes SQL dir
 
 `db.py` contains functions for each query the service layer needs:
 
-- `lookup_word()` — find a word by surface form.
+- `lookup_word()` — find all rows matching a word.
 - `lookup_by_code()` — find a row by its unique code.
 - `get_children()` — find all rows whose parent is a given code.
-- `find_nominative_plural()` — find the nominative plural for a root.
+- `is_dictionary_artifact()` — check whether a root row is a dictionary artifact.
+- `find_useful_row()` — find the useful row for a dictionary artifact.
 
 Each function opens a cursor, executes a parameterized SQL query, and returns rows as dictionaries.
 
 ### 5. The response is validated and returned
 
-The service layer returns a `NounDeclensionResponse` Pydantic object. FastAPI validates it against the model and serializes it to JSON. The client receives the full declension table.
+The service layer returns a `NounLookupResponse` Pydantic object. FastAPI validates it against the model and serializes it to JSON. The client receives the full response with one or more matches.
 
 ## The database lookup
 
@@ -254,12 +256,13 @@ root form (code_parent = 0)
 
 The lookup algorithm in `services.py` walks this hierarchy:
 
-1. Look up the input word.
-2. If `code_parent != 0`, follow the parent chain until reaching a row with `code_parent = 0`. This is the dictionary root.
-3. Fetch all children of the root that are singular (`plural = 0`).
-4. Find the nominative plural child (`plural = 1` and `wcase = 'им'`).
-5. Fetch all children of the nominative plural.
-6. Assemble the rows into the response structure, grouping by grammatical case.
+1. Look up all matching rows for the input word.
+2. Resolve each row to its root. If a root row has `wcase = NULL` and also exists as a child of another root, follow the child row instead.
+3. Deduplicate roots by root code.
+4. For each root, fetch all children that are singular (`plural = 0`).
+5. For each root, find all nominative plural children (`plural = 1` and `wcase = 'им'`).
+6. For each nominative plural, fetch all its children.
+7. Assemble the rows for each root into a declension table, grouping by grammatical case. Each root becomes one entry in the `matches` list.
 
 The indexes described in the Database Setup guide make these lookups fast. Without them, queries on `word`, `code`, and `code_parent` would require full table scans over 760,000 rows.
 
