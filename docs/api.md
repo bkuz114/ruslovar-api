@@ -108,6 +108,10 @@ Within each match, `plural` is also a list. This is because some nouns have more
 
 Thus, the `matches` and `plural` lists reflect the reality of the Sshra morphology data: a single word can correspond to multiple dictionary entries, and a single dictionary entry can have multiple plural forms.
 
+**Duplicates that aren't duplicates**
+
+In some cases, multiple matches may appear identical because the database does not store stress marks. For example, `замок` (and its declensions) returns two matches that look the same, but are distinct entries (corresponding to `за́мок` (castle) and `замо́к` (lock)).
+
 #### Response Schema
 
 **Top-level response**

@@ -207,6 +207,19 @@ Many nouns that are semantically uncountable or singular-only in common usage st
 
 These plurals may be rare, archaic, or context-specific, but they are grammatically possible and included in the Sshra data. The API returns all forms present in the database without making judgments about which are common or preferred.
 
+### Homographs without stress marks
+
+Some words exist as multiple distinct dictionary entries with identical spelling and grammatical properties. These are separate roots in the database with different `code` values, but the API cannot distinguish them by spelling alone.
+
+**Example:** `замок` has two root entries:
+
+```
+замок (root, code=36223, code_parent=0)
+замок (root, code=4182648, code_parent=0)
+```
+
+These correspond to `за́мок` (castle) and `замо́к` (lock), but stress marks are not stored in the database. As a result, both entries produce identical declension tables, and the API returns them as separate but identical-looking matches.
+
 ### Missing suppletive plural links
 
 The upstream dump does not link all suppletive plural forms to their singular roots.
