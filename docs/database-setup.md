@@ -4,12 +4,12 @@ This guide walks through setting up the MySQL database required by the Ruslovar 
 
 The API does not store dictionary data in Python. It queries a local MySQL database at runtime. The data comes from the [sshra/database-russian-morphology](https://github.com/sshra/database-russian-morphology) project, which provides SQL dumps of Russian morphological data.
 
-The table used for noun declensions is `nouns_morf` inside a database called `runouns`. The original upstream dump contains no indexes on lookup-critical columns, which makes queries slow. This project adds three indexes to make word lookups fast.
+The table used for noun declensions is `nouns_morf` inside a database called `runouns`. The original upstream dump contains no indexes on lookup-critical columns, which makes queries slow. This project adds three indexes to make word lookups fast. It also adds some data fixes.
 
 Two setup paths are available:
 
-- **Option A (recommended):** Use a prepared dump that already includes the indexes. Fastest path to a working setup.
-- **Option B (reproducible):** Download the original upstream dump and add the indexes yourself. For users who want full control or wish to make further modifications.
+- **Option A (recommended):** Use a prepared dump that already includes the indexes and data fixes. Fastest path to a working setup
+- **Option B (reproducible):** Download the original upstream dump and add the indexes and data fixes yourself. For users who want full control or wish to make further modifications.
 
 ---
 
@@ -65,7 +65,7 @@ Once both commands succeed, continue below.
 
 ## Option A: Use the prepared dump (recommended)
 
-This dump already includes the indexes described in this guide. It is identical to the upstream data, with only the indexes added.
+This dump already includes the indexes and data fixes described in this guide. It is identical to the upstream data, with only the indexes and needed data fixes applied.
 
 ### 1. Download the prepared dump
 
@@ -133,23 +133,15 @@ Replace `words-russian-nouns-morf.sql` with the actual path.
 
 **Note**: This step may take several minutes depending on your machine.
 
-### 5. Add indexes
+### 5. Run the setup script
 
-Run the provided SQL file to add the indexes:
+The setup script adds indexes for query performance and applies a data fix to link `дети` to `ребенок` as its suppletive plural.
 
 ```bash
-mysql -u root -p runouns < sql/add_noun_indexes.sql
+mysql -u root -p runouns < sql/setup_database.sql
 ```
 
-**Note**: The file contains:
-
-```sql
-CREATE INDEX code_idx ON nouns_morf (code);
-CREATE INDEX code_parent_idx ON nouns_morf (code_parent);
-CREATE INDEX word_idx ON nouns_morf (word(5));
-```
-
-These indexes match the reference setup used by this project.
+The script is intended to be run once immediately after import. It is not idempotent — re-running it will fail on duplicate index names and duplicate data rows.
 
 ### 6. Verify
 
@@ -159,7 +151,17 @@ Proceed to the Verification section.
 
 ## Verification
 
-Confirm the table exists and contains the expected number of rows:
+Run the verification script to confirm the database is correctly set up:
+
+```bash
+mysql -u root -p runouns < sql/verify_database.sql
+```
+
+The script checks row count, indexes, and the data fix. All checks should show PASS. If any show FAIL, re-run the setup script or investigate the specific check that failed.
+
+In lieu of the verification script, you can run the following manual tests:
+
+1. Confirm the table exists and contains the expected number of rows:
 
 ```bash
 mysql -u root -p runouns -e "SELECT COUNT(*) FROM nouns_morf;"
@@ -175,13 +177,29 @@ Expected output:
 +----------+
 ```
 
-If you used Option B, also confirm the indexes are present:
+2. Confirm the added indexes are present:
 
 ```bash
 mysql -u root -p runouns -e "SHOW INDEXES FROM nouns_morf;"
 ```
 
 You should see entries for `code_idx`, `code_parent_idx`, and `word_idx` in addition to the primary key.
+
+3. Confirm the data fixes are present:
+
+Check that `дети` is linked to both `дитя` and `ребенок`:
+
+```bash
+mysql -u root -p runouns -e "SELECT c.word, p.word AS parent_word FROM nouns_morf c JOIN nouns_morf p ON p.code = c.code_parent WHERE c.word = 'дети';"
+```
+
+You should see the following output:
+
+```bash
+word  parent_word
+дети  дитя
+дети  ребенок
+```
 
 ---
 
