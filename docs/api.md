@@ -53,47 +53,81 @@ Returns the full declension table for a Russian noun.
 ```json
 {
   "word": "кролика",
-  "root": "кролик",
-  "invariant": false,
-  "gender": "муж",
-  "animacy": true,
-  "singular": {
-    "nominative": "кролик",
-    "genitive": "кролика",
-    "dative": "кролику",
-    "accusative": "кролика",
-    "instrumental": "кроликом",
-    "prepositional": "кролике"
-  },
-  "plural": {
-    "nominative": "кролики",
-    "genitive": "кроликов",
-    "dative": "кроликам",
-    "accusative": "кроликов",
-    "instrumental": "кроликами",
-    "prepositional": "кроликах"
-  },
-  "additional_forms": {
-    "partitive": null,
-    "locative": null,
-    "vocative": null,
-    "counting": null
-  }
+  "matches": [
+    {
+      "root": "кролик",
+      "invariant": false,
+      "gender": "муж",
+      "animacy": true,
+      "singular": {
+        "nominative": "кролик",
+        "genitive": "кролика",
+        "dative": "кролику",
+        "accusative": "кролика",
+        "instrumental": "кроликом",
+        "prepositional": "кролике"
+      },
+      "plural": [
+        {
+          "nominative": "кролики",
+          "genitive": "кроликов",
+          "dative": "кроликам",
+          "accusative": "кроликов",
+          "instrumental": "кроликами",
+          "prepositional": "кроликах"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": null,
+        "counting": null
+      }
+    }
+  ]
 }
 ```
 
-#### Response fields
+#### Response Structure
+
+This section provides a brief explanation for the response structure, as it is non-obvious.
+
+The API returns a top-level object with two fields: `word` and `matches`.
+
+`word` is the word as submitted by the client. `matches` is a list of one or more declension tables, each representing a possible dictionary root for that word.
+
+**Why is `matches` a list?**
+
+Most words have exactly one match. However, some Russian words map to multiple distinct roots. For example, `абаки` is both the plural of `абак` and the plural of `абака`. The API cannot determine which root the user intended, so it returns all possible matches.
+
+**Why is `plural` also a list?**
+
+Within each match, `plural` is also a list. This is because some nouns have more than one distinct plural form. For example, `человек` has both `люди` and `человеки`. Each item in the `plural` list represents one set of plural forms.
+
+**Note**: Some of these forms may be archaic, rare, or not commonly used in colloquial Russian. However, they are still represented in the Sshra morphological database, and so the API returns them. 
+
+Thus, the `matches` and `plural` lists reflect the reality of the Sshra morphology data: a single word can correspond to multiple dictionary entries, and a single dictionary entry can have multiple plural forms.
+
+#### Response Schema
+
+**Top-level response**
 
 | Field | Type | Description |
 |---|---|---|
-| `word` | string | The word as submitted by the client. May equal `root` if the input was already in dictionary form. |
-| `root` | string | Same as `word`. Always present for schema consistency. |
-| `invariant` | boolean | `true` for invariant nouns (e.g., кофе, радио), `false` otherwise |
+| `word` | string | The word as submitted by the client. |
+| `matches` | list | One or more declension tables, one per possible dictionary root. |
+
+**Match object (`NounDeclensions`)**
+
+| Field | Type | Description |
+|---|---|---|
+| `root` | string | The dictionary form (lemma). |
+| `invariant` | boolean | `true` for invariant nouns (e.g., кофе, радио), `false` otherwise. |
 | `gender` | string \| null | Grammatical gender. One of: `муж`, `жен`, `ср`, `общ`. `null` if unknown. |
 | `animacy` | boolean \| null | `true` = animate, `false` = inanimate, `null` = unknown. |
 | `singular` | object | Singular declensions, keyed by English case name. Empty object if the noun has no singular forms. |
-| `plural` | object | Plural declensions, keyed by English case name. Empty object if the noun has no plural forms. |
-| `additional_forms` | object | Rare or archaic case forms. Always present. Each key maps to a string or `null`. |
+| `plural` | list | List of plural paradigms. Each item is an object keyed by English case name. Empty list if the noun has no plural forms. |
+| `additional_forms` | object | Rare or archaic case forms. Always present. |
 
 #### Case name mapping
 
@@ -165,32 +199,38 @@ curl "http://localhost:8000/api/v1/nouns/кролик/declensions"
 ```json
 {
   "word": "кролик",
-  "root": "кролик",
-  "invariant": false,
-  "gender": "муж",
-  "animacy": true,
-  "singular": {
-    "nominative": "кролик",
-    "genitive": "кролика",
-    "dative": "кролику",
-    "accusative": "кролика",
-    "instrumental": "кроликом",
-    "prepositional": "кролике"
-  },
-  "plural": {
-    "nominative": "кролики",
-    "genitive": "кроликов",
-    "dative": "кроликам",
-    "accusative": "кроликов",
-    "instrumental": "кроликами",
-    "prepositional": "кроликах"
-  },
-  "additional_forms": {
-    "partitive": null,
-    "locative": null,
-    "vocative": null,
-    "counting": null
-  }
+  "matches": [
+    {
+      "root": "кролик",
+      "invariant": false,
+      "gender": "муж",
+      "animacy": true,
+      "singular": {
+        "nominative": "кролик",
+        "genitive": "кролика",
+        "dative": "кролику",
+        "accusative": "кролика",
+        "instrumental": "кроликом",
+        "prepositional": "кролике"
+      },
+      "plural": [
+        {
+          "nominative": "кролики",
+          "genitive": "кроликов",
+          "dative": "кроликам",
+          "accusative": "кроликов",
+          "instrumental": "кроликами",
+          "prepositional": "кроликах"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": null,
+        "counting": null
+      }
+    }
+  ]
 }
 ```
 
@@ -203,32 +243,38 @@ curl "http://localhost:8000/api/v1/nouns/кролика/declensions"
 ```json
 {
   "word": "кролика",
-  "root": "кролик",
-  "invariant": false,
-  "gender": "муж",
-  "animacy": true,
-  "singular": {
-    "nominative": "кролик",
-    "genitive": "кролика",
-    "dative": "кролику",
-    "accusative": "кролика",
-    "instrumental": "кроликом",
-    "prepositional": "кролике"
-  },
-  "plural": {
-    "nominative": "кролики",
-    "genitive": "кроликов",
-    "dative": "кроликам",
-    "accusative": "кроликов",
-    "instrumental": "кроликами",
-    "prepositional": "кроликах"
-  },
-  "additional_forms": {
-    "partitive": null,
-    "locative": null,
-    "vocative": null,
-    "counting": null
-  }
+  "matches": [
+    {
+      "root": "кролик",
+      "invariant": false,
+      "gender": "муж",
+      "animacy": true,
+      "singular": {
+        "nominative": "кролик",
+        "genitive": "кролика",
+        "dative": "кролику",
+        "accusative": "кролика",
+        "instrumental": "кроликом",
+        "prepositional": "кролике"
+      },
+      "plural": [
+        {
+          "nominative": "кролики",
+          "genitive": "кроликов",
+          "dative": "кроликам",
+          "accusative": "кроликов",
+          "instrumental": "кроликами",
+          "prepositional": "кроликах"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": null,
+        "counting": null
+      }
+    }
+  ]
 }
 ```
 
@@ -253,32 +299,216 @@ curl "http://localhost:8000/api/v1/nouns/кофе/declensions"
 ```json
 {
   "word": "кофе",
-  "root": "кофе",
-  "invariant": true,
-  "gender": "муж",
-  "animacy": false,
-  "singular": {
-    "nominative": "кофе",
-    "genitive": "кофе",
-    "dative": "кофе",
-    "accusative": "кофе",
-    "instrumental": "кофе",
-    "prepositional": "кофе"
-  },
-  "plural": {
-    "nominative": "кофе",
-    "genitive": "кофе",
-    "dative": "кофе",
-    "accusative": "кофе",
-    "instrumental": "кофе",
-    "prepositional": "кофе"
-  },
-  "additional_forms": {
-    "partitive": null,
-    "locative": null,
-    "vocative": null,
-    "counting": null
-  }
+  "matches": [
+    {
+      "root": "кофе",
+      "invariant": true,
+      "gender": "муж",
+      "animacy": false,
+      "singular": {
+        "nominative": "кофе",
+        "genitive": "кофе",
+        "dative": "кофе",
+        "accusative": "кофе",
+        "instrumental": "кофе",
+        "prepositional": "кофе"
+      },
+      "plural": [
+        {
+          "nominative": "кофе",
+          "genitive": "кофе",
+          "dative": "кофе",
+          "accusative": "кофе",
+          "instrumental": "кофе",
+          "prepositional": "кофе"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": null,
+        "counting": null
+      }
+    }
+  ]
+}
+```
+
+### Example 5: Word with multiple possible roots
+
+```bash
+curl "http://localhost:8000/api/v1/nouns/лук/declensions"
+```
+
+```json
+{
+  "word": "лук",
+  "matches": [
+    {
+      "root": "лук",
+      "invariant": false,
+      "gender": "муж",
+      "animacy": false,
+      "singular": {
+        "nominative": "лук",
+        "genitive": "лука",
+        "dative": "луку",
+        "accusative": "лук",
+        "instrumental": "луком",
+        "prepositional": "луке"
+      },
+      "plural": [
+        {
+          "nominative": "луки",
+          "genitive": "луков",
+          "dative": "лукам",
+          "accusative": "луки",
+          "instrumental": "луками",
+          "prepositional": "луках"
+        }
+      ],
+      "additional_forms": {
+        "partitive": "луку",
+        "locative": null,
+        "vocative": null,
+        "counting": null
+      }
+    },
+    {
+      "root": "лука",
+      "invariant": false,
+      "gender": "жен",
+      "animacy": false,
+      "singular": {
+        "nominative": "лука",
+        "genitive": "луки",
+        "dative": "луке",
+        "accusative": "луку",
+        "instrumental": "лукой",
+        "prepositional": "луке"
+      },
+      "plural": [
+        {
+          "nominative": "луки",
+          "genitive": "лук",
+          "dative": "лукам",
+          "accusative": "луки",
+          "instrumental": "луками",
+          "prepositional": "луках"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": null,
+        "counting": null
+      }
+    }
+  ]
+}
+```
+
+### Example 6: Word with multiple plural forms
+
+```bash
+curl "http://localhost:8000/api/v1/nouns/человек/declensions"
+```
+
+```json
+{
+  "word": "человек",
+  "matches": [
+    {
+      "root": "человек",
+      "invariant": false,
+      "gender": "муж",
+      "animacy": true,
+      "singular": {
+        "nominative": "человек",
+        "genitive": "человека",
+        "dative": "человеку",
+        "accusative": "человека",
+        "instrumental": "человеком",
+        "prepositional": "человеке"
+      },
+      "plural": [
+        {
+          "nominative": "люди",
+          "genitive": "людей",
+          "dative": "людям",
+          "accusative": "людей",
+          "instrumental": "людьми",
+          "prepositional": "людях"
+        },
+        {
+          "nominative": "человеки",
+          "genitive": "человеков",
+          "dative": "человекам",
+          "accusative": "человеков",
+          "instrumental": "человеками",
+          "prepositional": "человеках"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": "человече",
+        "counting": null
+      }
+    }
+  ]
+}
+```
+
+### Example 7: Irregular plural form resolving to its root
+
+```bash
+curl "http://localhost:8000/api/v1/nouns/люди/declensions"
+```
+
+```json
+{
+  "word": "люди",
+  "matches": [
+    {
+      "root": "человек",
+      "invariant": false,
+      "gender": "муж",
+      "animacy": true,
+      "singular": {
+        "nominative": "человек",
+        "genitive": "человека",
+        "dative": "человеку",
+        "accusative": "человека",
+        "instrumental": "человеком",
+        "prepositional": "человеке"
+      },
+      "plural": [
+        {
+          "nominative": "люди",
+          "genitive": "людей",
+          "dative": "людям",
+          "accusative": "людей",
+          "instrumental": "людьми",
+          "prepositional": "людях"
+        },
+        {
+          "nominative": "человеки",
+          "genitive": "человеков",
+          "dative": "человекам",
+          "accusative": "человеков",
+          "instrumental": "человеками",
+          "prepositional": "человеках"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": "человече",
+        "counting": null
+      }
+    }
+  ]
 }
 ```
 
