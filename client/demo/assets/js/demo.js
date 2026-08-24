@@ -58,12 +58,18 @@ const STRINGS = {
             instrumental: "Творительный",
             prepositional: "Предложный",
         },
+        gender_values: {
+            "муж": "мужской",
+            "жен": "женский",
+            "ср": "средний",
+            "общ": "общий",
+        },
         singular_heading: "Единственное число",
         plural_heading: "Множественное число",
         gender_label: "Род",
         animacy_label: "Одушевлённость",
-        animacy_animate: "одушевлённое",
-        animacy_inanimate: "неодушевлённое",
+        animacy_animate: "одуш",
+        animacy_inanimate: "неодуш",
         invariant_label: "Неизменяемое",
         singular_heading: "Единственное число",
         plural_heading: "Множественное число",
@@ -91,6 +97,12 @@ const STRINGS = {
             accusative: "Accusative",
             instrumental: "Instrumental",
             prepositional: "Prepositional",
+        },
+        gender_values: {
+            "муж": "masculine",
+            "жен": "feminine",
+            "ср": "neuter",
+            "общ": "common",
         },
         singular_heading: "Singular",
         plural_heading: "Plural",
@@ -481,14 +493,38 @@ function createMetadataSection(match) {
     if (match.gender) {
         const genderItem = document.createElement("span");
         genderItem.className = "metadata-item";
-        genderItem.textContent = `${s.gender_label}: ${match.gender}`;
+
+        const genderLabel = document.createElement("span");
+        genderLabel.setAttribute("data-i18n", "gender_label");
+        genderLabel.textContent = s.gender_label;
+
+        const genderValue = document.createElement("span");
+        const genderKey = match.gender;
+        genderValue.setAttribute("data-i18n", `gender_values.${genderKey}`);
+        genderValue.textContent = s.gender_values[genderKey];
+
+        genderItem.appendChild(genderLabel);
+        genderItem.appendChild(document.createTextNode(": "));
+        genderItem.appendChild(genderValue);
         metaList.appendChild(genderItem);
     }
 
     if (match.animacy !== null && match.animacy !== undefined) {
         const animacyItem = document.createElement("span");
         animacyItem.className = "metadata-item";
-        animacyItem.textContent = match.animacy ? s.animacy_animate : s.animacy_inanimate;
+
+        const animacyLabel = document.createElement("span");
+        animacyLabel.setAttribute("data-i18n", "animacy_label");
+        animacyLabel.textContent = s.animacy_label;
+
+        const animacyValue = document.createElement("span");
+        const animacyKey = match.animacy ? "animacy_animate" : "animacy_inanimate";
+        animacyValue.setAttribute("data-i18n", animacyKey);
+        animacyValue.textContent = s[animacyKey];
+
+        animacyItem.appendChild(animacyLabel);
+        animacyItem.appendChild(document.createTextNode(": "));
+        animacyItem.appendChild(animacyValue);
         metaList.appendChild(animacyItem);
     }
 
