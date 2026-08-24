@@ -32,8 +32,15 @@ let config = {
 // ==========================================================================
 
 /**
- * UI strings for each supported language.
- * Keys are used in the HTML via data attributes or element IDs.
+ *
+ * UI strings are stored in the STRINGS object below, keyed by language.
+ * - Keys are used in the HTML via i18n data attributes.
+ * - elements with data-i18n attributes are updated by applyLanguage() when
+ *   the language changes.
+ *
+ * Keys use dot notation for nested objects. For example, the key
+ * "gender_values.муж" points to STRINGS[currentLanguage].gender_values["муж"].
+ * getNestedValue() resolves these paths.
  */
 const STRINGS = {
     ru: {
@@ -219,6 +226,16 @@ function setLanguage(lang) {
     applyLanguage(lang);
 }
 
+/**
+ * Retrieve a value from a nested object using dot notation.
+ *
+ * Used by the i18n system to look up keys that reference nested objects
+ * within STRINGS, such as "gender_values.муж" or "case_labels.nominative".
+ *
+ * @param {object} obj - The object to search.
+ * @param {string} path - Dot-separated key path.
+ * @returns {*} The value at the path, or undefined if not found.
+ */
 function getNestedValue(obj, path) {
     return path.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 }
