@@ -80,6 +80,21 @@ def _get_noun_declensions(conn, word: str, strict: bool) -> NounLookupResponse:
         distinct_roots[root_row["code"]] = root_row
     distinct_root_rows = distinct_roots.values()
 
+    # If strict mode, ensure at least one root matches
+    if strict:
+        # checks if word user submitted matches *any* possible
+        # root for it.
+        is_word_root = any(
+            word.lower() == root_row["word"].lower() for root_row in distinct_root_rows
+        )
+        if not is_word_root:
+            possible_roots = ", ".join(
+                root_row["word"] for root_row in distinct_root_rows
+            )
+            raise LookupError(
+                f"Word '{word}' is not in dictionary form. Possible roots: {possible_roots}."
+            )
+
     # For each distinct root row, create a NounDeclensions object
     declension_objects = [
         _assemble_noun_declension(conn, row) for row in distinct_root_rows
