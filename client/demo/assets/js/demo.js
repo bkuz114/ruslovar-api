@@ -149,6 +149,7 @@ document.addEventListener("DOMContentLoaded", async () => {
  */
 function cacheDomElements() {
     elements = {
+        form: document.getElementById("lookup-form"),
         pageTitle: document.getElementById("page-title"),
         wordLabel: document.getElementById("word-label"),
         wordInput: document.getElementById("word-input"),
@@ -199,7 +200,7 @@ function bindEvents() {
     elements.langRu.addEventListener("click", () => setLanguage("ru"));
     elements.langEn.addEventListener("click", () => setLanguage("en"));
 
-    document.getElementById("lookup-form").addEventListener("submit", handleFormSubmit);
+    elements.form.addEventListener("submit", handleFormSubmit);
 }
 
 // ==========================================================================
@@ -333,7 +334,7 @@ function preloadWordFromUrl() {
     const word = params.get("word");
     if (word) {
         elements.wordInput.value = word;
-        document.getElementById("lookup-form").requestSubmit();
+        elements.form.requestSubmit();
     }
 }
 
