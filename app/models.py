@@ -60,7 +60,8 @@ class NounDeclensions(BaseModel):
         gender: Grammatical gender (муж, жен, ср, общ) or None.
         animacy: True for animate, False for inanimate, None for unknown.
         singular: Singular declensions. Empty if the noun has no singular.
-        plural: Plural declensions. Empty if the noun has no plural.
+        plural: Plural declensions. List because some nouns have more than
+            one plural form. Empty list if the noun has no plural.
         additional_forms: Rare/archaic forms. Always present.
     """
 
@@ -79,7 +80,8 @@ class NounLookupResponse(BaseModel):
 
     Fields:
         word: The word submitted by the client.
-        matches: One or more declension tables, one per possible root.
+        matches: One or more declension tables. List because some words
+            map to multiple dictionary roots.
     """
 
     word: str
