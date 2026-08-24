@@ -60,6 +60,15 @@ const STRINGS = {
         },
         singular_heading: "Единственное число",
         plural_heading: "Множественное число",
+        gender_label: "Род",
+        animacy_label: "Одушевлённость",
+        animacy_animate: "одушевлённое",
+        animacy_inanimate: "неодушевлённое",
+        invariant_label: "Неизменяемое",
+        singular_heading: "Единственное число",
+        plural_heading: "Множественное число",
+        plural_heading_numbered: "Множественное число {n}",
+        match_label: "Вариант {n}",
     },
     en: {
         page_title: "Declension Demo",
@@ -85,6 +94,15 @@ const STRINGS = {
         },
         singular_heading: "Singular",
         plural_heading: "Plural",
+        gender_label: "Gender",
+        animacy_label: "Animacy",
+        animacy_animate: "animate",
+        animacy_inanimate: "inanimate",
+        invariant_label: "Invariant",
+        singular_heading: "Singular",
+        plural_heading: "Plural",
+        plural_heading_numbered: "Plural {n}",
+        match_label: "Match {n}",
     },
 };
 
@@ -296,32 +314,186 @@ function getErrorMessage(status, data) {
 // ==========================================================================
 
 /**
- * Render the declension table and raw JSON into the results area.
+ * Render the API response into the results area.
+ *
+ * The response may contain multiple matches (possible dictionary roots).
+ * If more than one match exists, a tab bar is created so the user can
+ * switch between them. A single raw JSON toggle is added at the bottom
+ * showing the complete API response.
+ *
  * @param {object} data - The parsed API response.
  */
 function renderResults(data) {
-    const container = document.createElement("div");
-
-    // Word info header
-    const wordInfo = document.createElement("p");
-    wordInfo.className = "word-info";
-    wordInfo.textContent = `${data.word} → ${data.root}`;
-    container.appendChild(wordInfo);
-
-    // Build singular and plural tables
-    if (hasAnyForms(data.singular)) {
-        container.appendChild(createDeclensionTable("singular_heading", data.singular));
-    }
-
-    if (hasAnyForms(data.plural)) {
-        container.appendChild(createDeclensionTable("plural_heading", data.plural));
-    }
-
-    // Raw JSON toggle
-    container.appendChild(createRawJsonToggle("raw_json_heading", data));
-
     elements.resultsArea.innerHTML = "";
-    elements.resultsArea.appendChild(container);
+
+    // If multiple matches exist, create tabs to switch between them.
+    if (data.matches.length > 1) {
+        elements.resultsArea.appendChild(createMatchTabs(data.matches));
+    }
+
+    // Render each match as a separate container.
+    // Containers are hidden by default when tabs are present; the first
+    // match is shown initially.
+    data.matches.forEach((match, index) => {
+        const container = document.createElement("div");
+        container.className = "match-container";
+        container.dataset.matchIndex = index;
+
+        if (data.matches.length > 1) {
+            container.classList.add("hidden");
+            if (index === 0) {
+                container.classList.remove("hidden");
+            }
+        }
+
+        container.appendChild(createMetadataSection(match));
+        container.appendChild(
+            createDeclensionTable("singular_heading", match.singular)
+        );
+
+        // Plural is a list. Each item is a separate set of plural forms.
+        match.plural.forEach((pluralForms, pluralIndex) => {
+            // If there are multiple plural forms, number them.
+            // Otherwise, use the simple heading.
+            const headingKey = match.plural.length > 1 ?
+                "plural_heading_numbered" :
+                "plural_heading";
+            const headingIndex = match.plural.length > 1 ? pluralIndex + 1 : null;
+            container.appendChild(createDeclensionTable(headingKey, pluralForms, headingIndex));
+        });
+
+        elements.resultsArea.appendChild(container);
+    });
+
+    // Raw JSON toggle appears once, showing the full API response.
+    elements.resultsArea.appendChild(
+        createRawJsonToggle("raw_json_heading", data)
+    );
+}
+
+/**
+ * Create a tab bar for switching between multiple matches.
+ *
+ * Each tab is labeled with the root word of its match. If multiple
+ * matches have the same root word (e.g., замок), a number is appended
+ * to distinguish them.
+ *
+ * Clicking a tab hides all match containers and shows only the selected
+ * one.
+ *
+ * @param {Array<object>} matches - The list of match objects from the
+ *     API response.
+ * @returns {HTMLElement} The tab bar element.
+ */
+function createMatchTabs(matches) {
+    const tabBar = document.createElement("div");
+    tabBar.className = "match-tabs";
+    tabBar.setAttribute("role", "tablist");
+
+    matches.forEach((match, index) => {
+        const tab = document.createElement("button");
+        tab.className = "match-tab";
+        tab.setAttribute("role", "tab");
+        tab.setAttribute("aria-selected", index === 0 ? "true" : "false");
+        tab.textContent = getMatchLabel(match, index, matches);
+
+        // Clicking a tab updates the active state and shows the
+        // corresponding match container.
+        tab.addEventListener("click", () => {
+            document.querySelectorAll(".match-tab").forEach(t => {
+                t.classList.remove("active");
+                t.setAttribute("aria-selected", "false");
+            });
+            tab.classList.add("active");
+            tab.setAttribute("aria-selected", "true");
+
+            document.querySelectorAll(".match-container").forEach(container => {
+                container.classList.add("hidden");
+            });
+            const target = document.querySelector(
+                `.match-container[data-match-index="${index}"]`
+            );
+            if (target) {
+                target.classList.remove("hidden");
+            }
+        });
+
+        // First tab starts active.
+        if (index === 0) {
+            tab.classList.add("active");
+        }
+
+        tabBar.appendChild(tab);
+    });
+
+    return tabBar;
+}
+
+/**
+ * Generate a label for a match tab.
+ *
+ * If multiple matches share the same root word, a number is appended to
+ * make the tabs distinguishable. Otherwise, the root word alone is used.
+ *
+ * @param {object} match - The match object.
+ * @param {number} index - The index of this match in the matches array.
+ * @param {Array<object>} matches - The full matches array, used to check
+ *     for duplicate root words.
+ * @returns {string} The label to display on the tab.
+ */
+function getMatchLabel(match, index, matches) {
+    const duplicateRoots = matches.filter(m => m.root === match.root).length > 1;
+    if (duplicateRoots) {
+        return `${match.root} (${index + 1})`;
+    }
+    return match.root;
+}
+
+/**
+ * Create the metadata section for a match.
+ *
+ * Displays the root word prominently, along with invariant status,
+ * gender, and animacy when available.
+ *
+ * @param {object} match - The match object from the API response.
+ * @returns {HTMLElement} The metadata section element.
+ */
+function createMetadataSection(match) {
+    const s = STRINGS[currentLanguage];
+    const section = document.createElement("div");
+    section.className = "metadata-section";
+
+    const rootHeading = document.createElement("h2");
+    rootHeading.className = "match-root";
+    rootHeading.textContent = match.root;
+    section.appendChild(rootHeading);
+
+    if (match.invariant) {
+        const invariantBadge = document.createElement("span");
+        invariantBadge.className = "invariant-badge";
+        invariantBadge.textContent = s.invariant_label;
+        section.appendChild(invariantBadge);
+    }
+
+    const metaList = document.createElement("div");
+    metaList.className = "metadata-list";
+
+    if (match.gender) {
+        const genderItem = document.createElement("span");
+        genderItem.className = "metadata-item";
+        genderItem.textContent = `${s.gender_label}: ${match.gender}`;
+        metaList.appendChild(genderItem);
+    }
+
+    if (match.animacy !== null && match.animacy !== undefined) {
+        const animacyItem = document.createElement("span");
+        animacyItem.className = "metadata-item";
+        animacyItem.textContent = match.animacy ? s.animacy_animate : s.animacy_inanimate;
+        metaList.appendChild(animacyItem);
+    }
+
+    section.appendChild(metaList);
+    return section;
 }
 
 /**
@@ -336,11 +508,17 @@ function hasAnyForms(forms) {
 
 /**
  * Create a table element for a set of case forms.
- * @param {string} headingText - The heading for this table.
+ *
+ * @param {string} i18nKey - The i18n key for the heading text. The
+ *     resolved string is looked up in STRINGS using the current
+ *     language.
  * @param {object} forms - The case forms object.
+ * @param {number|null} [headingIndex=null] - Optional index to insert
+ *     into the heading text, used when there are multiple plural forms
+ *     and the heading contains a {n} placeholder.
  * @returns {HTMLElement} The created table wrapped in a container.
  */
-function createDeclensionTable(i18nKey, forms) {
+function createDeclensionTable(i18nKey, forms, headingIndex = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "declension-section";
 
@@ -348,6 +526,10 @@ function createDeclensionTable(i18nKey, forms) {
     heading.className = "declension-heading";
     heading.setAttribute("data-i18n", i18nKey);
     heading.textContent = STRINGS[currentLanguage][i18nKey];
+
+    if (headingIndex !== null) {
+        heading.textContent = heading.textContent.replace("{n}", headingIndex);
+    }
     wrapper.appendChild(heading);
 
     const table = document.createElement("table");
