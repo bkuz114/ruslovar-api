@@ -141,6 +141,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadConfig();
     bindEvents();
     applyLanguage(currentLanguage);
+    preloadWordFromUrl();
 });
 
 /**
@@ -319,6 +320,21 @@ function getErrorMessage(status, data) {
     }
 
     return s.error_unknown;
+}
+
+/**
+ * Check the URL for a word parameter, populate the input field, and
+ * automatically submit the lookup.
+ *
+ * Allows users to share direct links like demo.html?word=кролик.
+ */
+function preloadWordFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const word = params.get("word");
+    if (word) {
+        elements.wordInput.value = word;
+        document.getElementById("lookup-form").requestSubmit();
+    }
 }
 
 // ==========================================================================
