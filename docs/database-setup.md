@@ -75,13 +75,21 @@ Download the prepared SQL dump from:
 
 Save it to a location you can access from the terminal.
 
-### 2. Create the database
+### 2. Unpack the file
+
+```bash
+gzip -d nouns_morf.sql.gz
+```
+
+This produces `nouns_morf.sql`.
+
+### 3. Create the database
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE runouns;"
 ```
 
-### 3. Import the dump
+### 4. Import the dump
 
 ```bash
 mysql -u root -p runouns < path/to/nouns_morf.sql
@@ -91,7 +99,7 @@ Replace `path/to/nouns_morf.sql` with the actual path.
 
 **Note**: This step may take several minutes depending on your machine.
 
-### 4. Verify
+### 5. Verify
 
 Skip to the Verification section below.
 
