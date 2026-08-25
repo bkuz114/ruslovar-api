@@ -27,8 +27,10 @@ class LanguageStrings(TypedDict):
     """Expected structure for a single language's table strings."""
 
     cases: dict[str, str]
+    misc: dict[str, str]
     root: str
     gender: str
+    animacy: str
     animacy_animate: str
     animacy_inanimate: str
     invariant: str
@@ -48,8 +50,12 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
             "instrumental": "Творительный",
             "prepositional": "Предложный",
         },
+        "misc": {
+            "yes": "да",
+        },
         "root": "Корень",
         "gender": "Род",
+        "animacy": "Одушевлённость",
         "animacy_animate": "одушевлённое",
         "animacy_inanimate": "неодушевлённое",
         "invariant": "Неизменяемое",
@@ -67,8 +73,12 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
             "instrumental": "Instrumental",
             "prepositional": "Prepositional",
         },
+        "misc": {
+            "yes": "yes",
+        },
         "root": "Root",
         "gender": "Gender",
+        "animacy": "Animacy",
         "animacy_animate": "animate",
         "animacy_inanimate": "inanimate",
         "invariant": "Invariant",
@@ -225,13 +235,15 @@ class TableFormatter:
         """
         Format the metadata block shown above the case tables.
 
-        Includes the root word, grammatical gender, animacy, and an
-        "invariant" marker when applicable.
+        Includes the root word, grammatical gender, and animacy.
+        An "invariant" marker is shown only when applicable.
 
         Example output (without color):
 
-            Root: кролик
-            Gender: masculine  animate
+            Root:      радио
+            Gender:    ср
+            Animacy:   animate
+            Invariant: yes
 
         Args:
             match (dict): A single match object from the API response.
@@ -243,21 +255,19 @@ class TableFormatter:
         """
         lines: list[str] = []
 
-        root = match.get("root", "?")
-        lines.append(
-            self._colorize(
-                f"{self.strings['root']}: {root}",
-                Colors.HEADER,
-            )
-        )
+        # Collect all metadata rows as (label, value) pairs
+        # (then, after all data collected, will align cols)
+        # Each label includes its trailing colon, e.g. "Root:".
+        entries: list[tuple[str, str]] = []
 
-        meta_parts: list[str] = []
+        root = match.get("root", "?")
+        entries.append((self.strings["root"] + ":", root))
 
         # gender returns as Ru strings in response
         # (e.g. муж, жен)
         gender = match.get("gender")
         if gender:
-            meta_parts.append(f"{self.strings['gender']}: {gender}")
+            entries.append((self.strings["gender"] + ":", gender))
 
         # animacy data returned as a boolean.
         # so can easily localize
@@ -268,15 +278,28 @@ class TableFormatter:
                 if animacy
                 else self.strings["animacy_inanimate"]
             )
-            meta_parts.append(animacy_text)
+            entries.append((self.strings["animacy"] + ":", animacy_text))
 
         # invariant also a boolean; only display text if its invariant
         # (e.g. no "Invariant" or "Not invariant", just "Invariant" or nothing)
         if match.get("invariant"):
-            meta_parts.append(self.strings["invariant"])
+            entries.append((self.strings["invariant"] + ":", self.strings["misc"]["yes"]))
 
-        if meta_parts:
-            lines.append(self._colorize("  ".join(meta_parts), Colors.META))
+        # Align the value column by padding each label to match the
+        # longest label in this block. For example, with English labels:
+        #
+        #     Root:     кролик
+        #     Gender:   муж
+        #     Animacy:  animate
+        max_label_len = max(len(label) for label, _ in entries)
+
+        for label, value in entries:
+            # Pad the plain label before applying color so ANSI escape
+            # sequences don't affect alignment calculations.
+            padding = " " * (max_label_len - len(label))
+            label_part = self._colorize(label, Colors.HEADER)
+            value_part = self._colorize(value, Colors.WORD) if value else ""
+            lines.append(f"{label_part}{padding}  {value_part}")
 
         lines.append("")
         return lines
