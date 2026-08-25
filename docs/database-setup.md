@@ -84,10 +84,10 @@ mysql -u root -p -e "CREATE DATABASE runouns;"
 ### 3. Import the dump
 
 ```bash
-mysql -u root -p runouns < path/to/prepared_dump.sql
+mysql -u root -p runouns < path/to/nouns_morf.sql
 ```
 
-Replace `path/to/prepared_dump.sql` with the actual path.
+Replace `path/to/nouns_morf.sql` with the actual path.
 
 **Note**: This step may take several minutes depending on your machine.
 
