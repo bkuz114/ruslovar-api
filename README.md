@@ -60,6 +60,8 @@ The repository includes a thin CLI client for testing the API from the terminal:
 python client/declensions.py --word кролик
 ```
 
+(Note: it assumes a base URL for the FastAPI server of `http://127.0.0.1:8000`; to change, supply `--url` argument.)
+
 ## Demo Page
 
 A browser-based demo page is included in `client/demo/`. It provides a simple form for entering a noun and displays the declension table.
