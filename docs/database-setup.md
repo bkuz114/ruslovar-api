@@ -157,6 +157,12 @@ Run the verification script to confirm the database is correctly set up:
 mysql -u root -p runouns < sql/verify_database.sql
 ```
 
+**Note**: To quickly check for failures without reading through each result table, pipe to grep:
+
+```bash
+mysql -u root -p runouns < sql/verify_database.sql | grep "FAIL"
+```
+
 The script checks row count, indexes, and the data fix. All checks should show PASS. If any show FAIL, re-run the setup script or investigate the specific check that failed.
 
 In lieu of the verification script, you can run the following manual tests:
