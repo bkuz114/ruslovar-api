@@ -14,12 +14,49 @@ The API queries a local MySQL database containing Russian noun morphology data a
 - Bilingual browser demo (Russian / English) for testing the API.
 - CLI client for quick lookups from the terminal.
 
-## Requirements
+## Quickstart (Docker)
+
+The project is fully containerized, with all needed images on Dockerhub. All you need to run it is Docker. If you don't have Docker or wish to have full control over each component, see [#quickstart-manual](#quickstart-manual)
+
+### Requirements
+
+- Docker with the Compose plugin (`docker compose`).
+
+### Steps
+
+1. Clone the repo
+
+	```bash
+	git clone https://github.com/bkuz114/ruslovar-api.git
+	cd ruslovar-api
+	```
+
+2. Run Docker compose
+
+	```bash
+	docker compose up -d
+	```
+
+3. Open `http://127.0.0.1:8000/docs` (Swagger UI) and `http://127.0.0.1:8080` (demo page) in your browser and make sure they work.
+
+	Alternatively, run a test curl command:
+
+	```bash
+	curl "http://127.0.0.1:8000/api/v1/nouns/кролик/declensions"
+	```
+
+That's it.
+
+## Quickstart (Manual)
+
+If you don't have access to Docker, hate it, or want full control over each component, the manual process is also documented.
+
+### Requirements
 
 - Python 3.10+
-- MySQL with the `runouns` database imported (see [Database Setup](docs/database-setup.md))
+- MySQL 8.0
 
-## Quickstart
+### Steps
 
 The detailed setup process is documented here: [Quickstart guide](docs/quickstart.md). In short:
 
@@ -75,7 +112,9 @@ python client/declensions.py --word кролик
 
 A browser-based demo page is included in `client/demo/`. It provides a simple form for entering a noun and displays the declension table.
 
-To run the demo:
+The demo page is included in the Docker setup, running in its own nginx container on port `8080`. After running `docker compose up`, you can view it at `http://127.0.0.1:8080`.
+
+For the non-Docker route:
 
 1. Start a **separate** web server for the demo page:
 
