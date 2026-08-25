@@ -45,6 +45,8 @@ The project is fully containerized, with all needed images on Dockerhub. All you
 	curl "http://127.0.0.1:8000/api/v1/nouns/кролик/declensions"
 	```
 
+	**IMPORTANT**: It can take 2-3 minutes for the MySQL container to fully load on the first run. Until then, the API will be unreachable.
+
 That's it.
 
 ## Quickstart (Manual)
