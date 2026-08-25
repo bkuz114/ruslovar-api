@@ -43,15 +43,6 @@ python run.py
 
 Then open `http://127.0.0.1:8000/docs` in your browser.
 
-## Documentation
-
-- [Quickstart](docs/quickstart.md) — setup and run instructions.
-- [Database Setup](docs/database-setup.md) — preparing the MySQL database.
-- [Database Schema](docs/database.md) — structure of the underlying data.
-- [API Contract](docs/api.md) — endpoint and response documentation.
-- [Developer Guide](docs/developer-guide.md) — architecture, request lifecycle, and extension guide.
-- [Demo README](client/demo/README.md) — browser demo usage.
-
 ## CLI client
 
 The repository includes a thin CLI client for testing the API from the terminal:
@@ -80,6 +71,15 @@ python -m http.server 8080
 (or your preferred web server)
 
 2. Open `http://127.0.0.1:8080` in your browser.
+
+## Documentation
+
+- [Quickstart](docs/quickstart.md) — setup and run instructions.
+- [Database Setup](docs/database-setup.md) — preparing the MySQL database.
+- [Database Schema](docs/database.md) — structure of the underlying data.
+- [API Contract](docs/api.md) — endpoint and response documentation.
+- [Developer Guide](docs/developer-guide.md) — architecture, request lifecycle, and extension guide.
+- [Demo README](client/demo/README.md) — browser demo usage.
 
 ## License
 
