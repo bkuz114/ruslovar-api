@@ -21,27 +21,45 @@ The API queries a local MySQL database containing Russian noun morphology data a
 
 ## Quickstart
 
-Follow the [Quickstart guide](docs/quickstart.md) to set up the database, configure the environment, and run the server locally.
+The detailed setup process is documented here: [Quickstart guide](docs/quickstart.md). In short:
 
-In short:
+1. Clone the repo
 
-```bash
-# 1. Set up the database (see docs/database-setup.md)
+	```bash
+	git clone https://github.com/bkuz114/ruslovar-api.git
+	cd ruslovar-api
+	```
 
-# 2. Install dependencies
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
+2. Import and setup the `runouns` database (see [Database Setup](docs/database-setup.md))
 
-# 3. Configure the environment
-cp .env.example .env
-# (then edit .env with details of your local runouns database)
+3. Install dependencies for FastAPI server
 
-# 4. Run the server
-python run.py
-```
+	```bash
+	python -m venv venv
+	source venv/bin/activate  # or venv\Scripts\activate on Windows
+	pip install -r requirements.txt
+	```
 
-Then open `http://127.0.0.1:8000/docs` in your browser.
+4. Configure the FastAPI environment with details of your local `runouns` database
+
+	```bash
+	cp .env.example .env
+	# then edit .env with details of your local runouns database
+	```
+
+5. Start the FastAPI server
+
+	```bash
+	python run.py
+	```
+
+6. Open `http://127.0.0.1:8000/docs` (Swagger UI) in your browser.
+
+	Alternatively, run a test curl command:
+
+	```bash
+	curl "http://127.0.0.1:8000/api/v1/nouns/кролик/declensions"
+	```
 
 ## CLI client
 
