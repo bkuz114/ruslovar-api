@@ -75,20 +75,20 @@ python client/declensions.py --word кролик
 
 A browser-based demo page is included in `client/demo/`. It provides a simple form for entering a noun and displays the declension table.
 
-To run the demo, see the [Demo README](client/demo/README.md).
-
-In short:
+To run the demo:
 
 1. Start a **separate** web server for the demo page:
 
-```bash
-cd client/demo
-python -m http.server 8080
-```
+	```bash
+	cd client/demo
+	python -m http.server 8080
+	```
 
-(or your preferred web server)
+	(or your preferred web server)
 
 2. Open `http://127.0.0.1:8080` in your browser.
+
+(see [Demo README](client/demo/README.md) for further info.)
 
 ## Documentation
 
