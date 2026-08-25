@@ -61,4 +61,4 @@ WHERE c.word = 'дети'
 -- --------------------------------------------------------------------------
 -- Summary
 -- --------------------------------------------------------------------------
-SELECT 'All checks complete.' AS summary;
+SELECT 'All checks ran. View output above to check PASS or FAIL of each test.' AS summary;
