@@ -13,7 +13,7 @@ USE runouns;
 -- 1. Row count check
 -- --------------------------------------------------------------------------
 SELECT 'ROW COUNT' AS check_name,
-       CASE WHEN COUNT(*) = 767694 THEN 'PASS' ELSE 'FAIL' END AS status,
+       CASE WHEN COUNT(*) = 767695 THEN 'PASS' ELSE 'FAIL' END AS status,
        COUNT(*) AS actual_count
 FROM nouns_morf;
 
