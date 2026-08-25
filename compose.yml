@@ -1,0 +1,30 @@
+services:
+  db:
+    image: ikzv/runouns-db:latest
+    restart: unless-stopped
+    container_name: ruslovar-db
+
+  api:
+    image: ikzv/ruslovar-api:latest
+    restart: unless-stopped
+    container_name: ruslovar-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=runouns
+      - CORS_ORIGINS=*
+    depends_on:
+      - db
+
+  demo:
+    image: ikzv/ruslovar-demo:latest
+    restart: unless-stopped
+    container_name: ruslovar-demo
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
