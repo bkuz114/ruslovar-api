@@ -71,7 +71,7 @@ This dump already includes the indexes and data fixes described in this guide. I
 
 Download the prepared SQL dump from:
 
-[PLACEHOLDER_URL]
+[https://raw.githubusercontent.com/bkuz114/ruslovar-db/main/db/nouns_morf.sql.gz](https://raw.githubusercontent.com/bkuz114/ruslovar-db/main/db/nouns_morf.sql.gz)
 
 Save it to a location you can access from the terminal.
 
