@@ -14,39 +14,40 @@ Usage:
 import argparse
 import json
 import sys
+from typing import TypedDict
 
 import httpx
 
 # ==========================================================================
-# Case label mappings for table output
+# Language-specific display strings for table output
 # ==========================================================================
 
-CASE_LABELS = {
+
+class LanguageStrings(TypedDict):
+    """Expected structure for a single language's table strings."""
+
+    cases: dict[str, str]
+    root: str
+    gender: str
+    animacy_animate: str
+    animacy_inanimate: str
+    invariant: str
+    singular: str
+    plural: str
+    additional_forms: str
+    no_forms: str
+
+
+LANG_STRINGS: dict[str, LanguageStrings] = {
     "ru": {
-        "nominative": "Именительный",
-        "genitive": "Родительный",
-        "dative": "Дательный",
-        "accusative": "Винительный",
-        "instrumental": "Творительный",
-        "prepositional": "Предложный",
-    },
-    "en": {
-        "nominative": "Nominative",
-        "genitive": "Genitive",
-        "dative": "Dative",
-        "accusative": "Accusative",
-        "instrumental": "Instrumental",
-        "prepositional": "Prepositional",
-    },
-}
-
-
-# ==========================================================================
-# Table output strings
-# ==========================================================================
-
-TABLE_STRINGS = {
-    "ru": {
+        "cases": {
+            "nominative": "Именительный",
+            "genitive": "Родительный",
+            "dative": "Дательный",
+            "accusative": "Винительный",
+            "instrumental": "Творительный",
+            "prepositional": "Предложный",
+        },
         "root": "Корень",
         "gender": "Род",
         "animacy_animate": "одушевлённое",
@@ -58,6 +59,14 @@ TABLE_STRINGS = {
         "no_forms": "(нет форм)",
     },
     "en": {
+        "cases": {
+            "nominative": "Nominative",
+            "genitive": "Genitive",
+            "dative": "Dative",
+            "accusative": "Accusative",
+            "instrumental": "Instrumental",
+            "prepositional": "Prepositional",
+        },
         "root": "Root",
         "gender": "Gender",
         "animacy_animate": "animate",
@@ -80,269 +89,316 @@ class Colors:
     """ANSI escape codes for colored terminal output."""
 
     HEADER = "\033[1;34m"  # bold blue
-    CASE = "\033[0;36m"  # cyan → change to yellow
+    CASE = "\033[0;36m"  # cyan
     META = "\033[2;33m"  # dim yellow
     WORD = "\033[1;37m"  # bold white
     RESET = "\033[0m"  # reset to terminal default
 
     @staticmethod
-    def strip(text):
-        """Remove ANSI escape codes from a string."""
+    def strip(text: str) -> str:
+        """
+        Remove ANSI escape codes from a string.
+
+        Args:
+            text (str): The text from which to strip ANSI codes.
+
+        Returns:
+            str: The same text without ANSI escape sequences.
+        """
         import re
 
         return re.sub(r"\033\[[0-9;]*m", "", text)
 
 
 # ==========================================================================
-# Table formatting functions
+# Table formatting
 # ==========================================================================
 
 
-def print_table(data, lang="ru", color="auto"):
+class TableFormatter:
     """
-    Print the API response as a human-readable table.
+    Formats Ruslovar API responses as human-readable terminal tables.
 
-    Renders each match separately, joins the results with separators,
-    and prints once at the end.
-
-    Args:
-        data: The parsed API response (dict).
-        lang: Language for case labels and metadata ("ru" or "en").
-        color: Color mode ("auto", "always", or "never").
+    The formatter is constructed once with the desired display context
+    (language strings and color mode) and can then be reused to format
+    multiple API responses.
     """
-    use_color = _should_use_color(color)
-    labels = CASE_LABELS.get(lang, CASE_LABELS["ru"])
-    strings = TABLE_STRINGS.get(lang, TABLE_STRINGS["ru"])
 
-    matches = data.get("matches", [])
-    if not matches:
-        print("No matches found.")
-        return
+    def __init__(self, strings: LanguageStrings, use_color: bool) -> None:
+        """
+        Args:
+            strings (LanguageStrings): Display strings for the selected
+                language.
+            use_color (bool): Whether ANSI colors are enabled.
+        """
+        self.strings = strings
+        self.use_color = use_color
 
-    tables = []
-    for match in matches:
-        tables.append(_build_match_table(match, strings, labels, use_color))
+    def format(self, data: dict) -> str:
+        """
+        Format the full API response as a human-readable table string.
 
-    separator = _separator_line(use_color)
-    print(f"\n{separator}\n".join(tables))
+        Each match in the response is rendered as a separate block,
+        joined by horizontal separators.
 
+        Example (abbreviated, without color):
 
-def _build_match_table(match, strings, labels, use_color):
-    """
-    Build the table output for a single match.
+            Root: кролик
+            Gender: masculine  animate
 
-    Args:
-        match: A single match object from the API response.
-        strings: Table output strings for the current language.
-        labels: Case label mapping for the current language.
-        use_color: Whether colors are enabled.
+            Singular:
+              Nominative     кролик
+              ...
 
-    Returns:
-        A string containing the formatted table for this match.
-    """
-    lines = []
+            Plural:
+              Nominative     кролики
+              ...
 
-    lines.extend(_metadata_lines(match, strings, use_color))
-    lines.extend(
-        _case_table_lines(
-            strings["singular"],
-            match.get("singular", {}),
-            labels,
-            strings,
-            use_color,
+            ────────────────────────────────────────────
+
+            Root: кролика
+            ...
+
+        Args:
+            data (dict): Parsed JSON response from the API. Expected to
+                contain a "matches" key holding a list of match objects.
+
+        Returns:
+            str: The formatted output. If no matches are found, returns
+                the string "No matches found."
+        """
+        matches = data.get("matches", [])
+        if not matches:
+            return "No matches found."
+
+        tables = [self._format_match(match) for match in matches]
+        separator = self._colorize("─" * 60, Colors.META)
+        return f"\n{separator}\n".join(tables)
+
+    # ------------------------------------------------------------------
+    # Internal formatting methods
+    # ------------------------------------------------------------------
+
+    def _format_match(self, match: dict) -> str:
+        """
+        Format a single match as a table block.
+
+        A match block consists of:
+
+        1. Metadata (root, gender, animacy, invariant marker)
+        2. Singular case table
+        3. One or more plural case tables
+        4. Additional forms, if present
+
+        Args:
+            match (dict): A single match object from the API response.
+                Expected keys: "root" (str), "gender" (str or None),
+                "animacy" (bool or None), "invariant" (bool or None),
+                "singular" (dict), "plural" (list[dict]),
+                "additional_forms" (dict).
+
+        Returns:
+            str: The formatted table block for this match.
+        """
+        lines: list[str] = []
+
+        lines.extend(self._metadata_lines(match))
+        lines.extend(
+            self._case_table_lines(
+                self.strings["singular"],
+                match.get("singular", {}),
+            )
         )
-    )
 
-    plurals = match.get("plural", [])
-    if plurals:
+        plurals = match.get("plural", [])
         for plural_index, plural_forms in enumerate(plurals):
-            heading = strings["plural"]
+            heading = self.strings["plural"]
             if len(plurals) > 1:
                 heading = f"{heading} ({plural_index + 1})"
-            lines.extend(
-                _case_table_lines(
-                    heading,
-                    plural_forms,
-                    labels,
-                    strings,
-                    use_color,
-                )
+            lines.extend(self._case_table_lines(heading, plural_forms))
+
+        lines.extend(self._additional_forms_lines(match.get("additional_forms", {})))
+
+        return "\n".join(lines).rstrip()
+
+    def _metadata_lines(self, match: dict) -> list[str]:
+        """
+        Format the metadata block shown above the case tables.
+
+        Includes the root word, grammatical gender, animacy, and an
+        "invariant" marker when applicable.
+
+        Example output (without color):
+
+            Root: кролик
+            Gender: masculine  animate
+
+        Args:
+            match (dict): A single match object from the API response.
+                Expected keys: "root" (str), "gender" (str or None),
+                "animacy" (bool or None), "invariant" (bool or None).
+
+        Returns:
+            list[str]: Lines to append to the match table.
+        """
+        lines: list[str] = []
+
+        root = match.get("root", "?")
+        lines.append(
+            self._colorize(
+                f"{self.strings['root']}: {root}",
+                Colors.HEADER,
             )
-
-    lines.extend(
-        _additional_forms_lines(
-            match.get("additional_forms", {}),
-            strings,
-            use_color,
         )
-    )
 
-    return "\n".join(lines).rstrip()
+        meta_parts: list[str] = []
 
+        # gender returns as Ru strings in response
+        # (e.g. муж, жен)
+        gender = match.get("gender")
+        if gender:
+            meta_parts.append(f"{self.strings['gender']}: {gender}")
 
-def _should_use_color(color_mode):
-    """
-    Determine whether to use ANSI colors based on mode and TTY.
+        # animacy data returned as a boolean.
+        # so can easily localize
+        animacy = match.get("animacy")
+        if animacy is not None:
+            animacy_text = (
+                self.strings["animacy_animate"]
+                if animacy
+                else self.strings["animacy_inanimate"]
+            )
+            meta_parts.append(animacy_text)
 
-    "auto" enables colors only when stdout is a terminal. This prevents
-    raw ANSI codes from polluting piped or redirected output.
+        # invariant also a boolean; only display text if its invariant
+        # (e.g. no "Invariant" or "Not invariant", just "Invariant" or nothing)
+        if match.get("invariant"):
+            meta_parts.append(self.strings["invariant"])
 
-    Args:
-        color_mode: "auto", "always", or "never".
+        if meta_parts:
+            lines.append(self._colorize("  ".join(meta_parts), Colors.META))
 
-    Returns:
-        True if colors should be used, False otherwise.
-    """
-    if color_mode == "always":
-        return True
-    if color_mode == "never":
-        return False
-    return sys.stdout.isatty()
-
-
-def _colorize(text, color_code, use_color):
-    """
-    Wrap text in ANSI color codes if colors are enabled.
-
-    Args:
-        text: The text to colorize.
-        color_code: The ANSI color code from the Colors class.
-        use_color: Whether colors are enabled.
-
-    Returns:
-        The colorized text, or the original text if colors are off.
-    """
-    if use_color:
-        return f"{color_code}{text}{Colors.RESET}"
-    return text
-
-
-def _separator_line(use_color):
-    """
-    Build a horizontal separator line between matches.
-
-    Args:
-        use_color: Whether colors are enabled.
-
-    Returns:
-        A string containing the separator.
-    """
-    return _colorize("─" * 60, Colors.META, use_color)
-
-
-def _metadata_lines(match, strings, use_color):
-    """
-    Build lines for the match metadata: root, gender, animacy, invariant.
-
-    Args:
-        match: A single match object from the API response.
-        strings: Table output strings for the current language.
-        use_color: Whether colors are enabled.
-
-    Returns:
-        A list of strings to add to the output.
-    """
-    lines = []
-
-    root = match.get("root", "?")
-    lines.append(_colorize(f"{strings['root']}: {root}", Colors.HEADER, use_color))
-
-    meta_parts = []
-    gender = match.get("gender")
-    if gender:
-        meta_parts.append(f"{strings['gender']}: {gender}")
-
-    animacy = match.get("animacy")
-    if animacy is not None:
-        animacy_text = (
-            strings["animacy_animate"] if animacy else strings["animacy_inanimate"]
-        )
-        meta_parts.append(animacy_text)
-
-    if match.get("invariant"):
-        meta_parts.append(strings["invariant"])
-
-    if meta_parts:
-        lines.append(_colorize("  ".join(meta_parts), Colors.META, use_color))
-
-    lines.append("")
-    return lines
-
-
-def _case_table_lines(heading, forms, labels, strings, use_color):
-    """
-    Build lines for a table of case forms.
-
-    Args:
-        heading: The heading text (e.g., "Singular", "Plural (1)").
-        forms: A dict of case forms from the API response.
-        labels: Case label mapping for the current language.
-        strings: Table output strings for the current language.
-        use_color: Whether colors are enabled.
-
-    Returns:
-        A list of strings to add to the output.
-    """
-    lines = []
-
-    lines.append(_colorize(f"{heading}:", Colors.HEADER, use_color))
-
-    entries = []
-    for case_key, case_label in labels.items():
-        if case_key in forms and forms[case_key]:
-            entries.append((case_label, forms[case_key]))
-
-    if not entries:
-        lines.append(f"  {strings['no_forms']}")
         lines.append("")
         return lines
 
-    max_label_len = max(len(label) for label, _ in entries)
+    def _case_table_lines(self, heading: str, forms: dict) -> list[str]:
+        """
+        Format a single case table (e.g., singular or plural).
 
-    for case_label, word in entries:
-        padding = " " * (max_label_len - len(case_label))
-        label_part = _colorize(case_label, Colors.CASE, use_color)
-        word_part = _colorize(word, Colors.WORD, use_color)
-        lines.append(f"  {label_part}{padding}  {word_part}")
+        Iterates the six grammatical cases in display order and prints
+        only those present in the API response.
 
-    lines.append("")
-    return lines
+        Example output (without color):
 
+            Singular:
+              Nominative     кролик
+              Genitive       кролика
+              Dative         кролику
+              Accusative     кролика
+              Instrumental   кроликом
+              Prepositional  кролике
 
-def _additional_forms_lines(additional_forms, strings, use_color):
-    """
-    Build lines for non-null additional forms.
+        Args:
+            heading (str): Section heading, e.g. "Singular" or "Plural (2)".
+            forms (dict): Mapping of case key to word form. Case keys are
+                lower-case English names ("nominative", "genitive", etc.).
+                Missing or empty values are skipped.
 
-    Args:
-        additional_forms: A dict of additional forms from the API response.
-        strings: Table output strings for the current language.
-        use_color: Whether colors are enabled.
+        Returns:
+            list[str]: Lines to append to the match table.
+        """
+        lines: list[str] = []
 
-    Returns:
-        A list of strings to add to the output.
-    """
-    lines = []
+        lines.append(self._colorize(f"{heading}:", Colors.HEADER))
 
-    entries = []
-    for key, value in additional_forms.items():
-        if value:
-            entries.append((key.capitalize(), value))
+        entries: list[tuple[str, str]] = []
+        for case_key, case_label in self.strings["cases"].items():
+            if case_key in forms and forms[case_key]:
+                entries.append((case_label, forms[case_key]))
 
-    if not entries:
+        if not entries:
+            lines.append(f"  {self.strings['no_forms']}")
+            lines.append("")
+            return lines
+
+        max_label_len = max(len(label) for label, _ in entries)
+
+        for case_label, word in entries:
+            padding = " " * (max_label_len - len(case_label))
+            label_part = self._colorize(case_label, Colors.CASE)
+            word_part = self._colorize(word, Colors.WORD)
+            lines.append(f"  {label_part}{padding}  {word_part}")
+
+        lines.append("")
         return lines
 
-    lines.append(_colorize(f"{strings['additional_forms']}:", Colors.HEADER, use_color))
+    def _additional_forms_lines(self, additional_forms: dict) -> list[str]:
+        """
+        Format optional noun forms such as locative or partitive.
 
-    max_label_len = max(len(label) for label, _ in entries)
+        These are forms not covered by the six standard cases. Only
+        non-empty values are included; empty dicts produce no output.
 
-    for label, word in entries:
-        padding = " " * (max_label_len - len(label))
-        label_part = _colorize(label, Colors.CASE, use_color)
-        word_part = _colorize(word, Colors.WORD, use_color)
-        lines.append(f"  {label_part}{padding}  {word_part}")
+        Example output (without color):
 
-    lines.append("")
-    return lines
+            Additional forms:
+              Locative    лесу
+              Partitive   чаю
+
+        Args:
+            additional_forms (dict): Mapping of form name to word form.
+                Keys are lower-case API field names (e.g., "locative",
+                "partitive") and are capitalized for display.
+
+        Returns:
+            list[str]: Lines to append to the match table.
+        """
+        lines: list[str] = []
+
+        entries: list[tuple[str, str]] = []
+        for key, value in additional_forms.items():
+            if value:
+                entries.append((key.capitalize(), value))
+
+        if not entries:
+            return lines
+
+        lines.append(
+            self._colorize(
+                f"{self.strings['additional_forms']}:",
+                Colors.HEADER,
+            )
+        )
+
+        max_label_len = max(len(label) for label, _ in entries)
+
+        for label, word in entries:
+            padding = " " * (max_label_len - len(label))
+            label_part = self._colorize(label, Colors.CASE)
+            word_part = self._colorize(word, Colors.WORD)
+            lines.append(f"  {label_part}{padding}  {word_part}")
+
+        lines.append("")
+        return lines
+
+    # ------------------------------------------------------------------
+    # Utility
+    # ------------------------------------------------------------------
+
+    def _colorize(self, text: str, color_code: str) -> str:
+        """
+        Wrap text in ANSI color codes if colors are enabled.
+
+        Args:
+            text (str): The text to colorize.
+            color_code (str): The ANSI color code from the Colors class.
+
+        Returns:
+            str: The colorized text, or the original text if colors are off.
+        """
+        if self.use_color:
+            return f"{color_code}{text}{Colors.RESET}"
+        return text
 
 
 # ==========================================================================
@@ -403,9 +459,17 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# ==========================================================================
+# Main driver
+# ==========================================================================
+
+
 def main() -> None:
     """
-    Main entry point. Calls the API and prints the response as formatted JSON.
+    Main entry point.
+
+    Queries the Ruslovar API and prints the response either as formatted
+    JSON (default) or as a human-readable table (--table).
     """
     args = parse_args()
 
@@ -442,7 +506,12 @@ def main() -> None:
     result = response.json()
 
     if args.table:
-        print_table(result, lang=args.lang, color=args.color)
+        use_color = args.color == "always" or (
+            args.color == "auto" and sys.stdout.isatty()
+        )
+        strings = LANG_STRINGS[args.lang]
+        formatter = TableFormatter(strings, use_color)
+        print(formatter.format(result))
     else:
         print(json.dumps(result, ensure_ascii=False, indent=2))
 
