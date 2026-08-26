@@ -16,7 +16,7 @@ The API queries a local MySQL database containing Russian noun morphology data a
 
 ## Quickstart (Docker)
 
-The project is fully containerized, with all needed images on Dockerhub. All you need to run it is Docker. If you don't have Docker or wish to have full control over each component, see [#quickstart-manual](#quickstart-manual)
+The project is fully containerized, with all needed images on Dockerhub. Both ARM and AMD64 architecture are supported. All you need to run it is Docker. If you don't have Docker or wish to have full control over each component, see [#quickstart-manual](#quickstart-manual)
 
 ### Requirements
 
