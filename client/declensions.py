@@ -30,6 +30,7 @@ class LanguageStrings(TypedDict):
     misc: dict[str, str]
     root: str
     gender: str
+    genders: dict[str, str]
     animacy: str
     animacy_animate: str
     animacy_inanimate: str
@@ -40,6 +41,7 @@ class LanguageStrings(TypedDict):
     no_forms: str
 
 
+# localized strings for table display
 LANG_STRINGS: dict[str, LanguageStrings] = {
     "ru": {
         "cases": {
@@ -55,6 +57,14 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
         },
         "root": "Корень",
         "gender": "Род",
+        "genders": {
+            # Ru grammar displays commonly use abbreviation for gender
+            # it's intentional; don't change it.
+            "masculine": "муж",
+            "feminine": "жен",
+            "neuter": "ср",
+            "common": "общ",
+        },
         "animacy": "Одушевлённость",
         "animacy_animate": "одушевлённое",
         "animacy_inanimate": "неодушевлённое",
@@ -78,6 +88,12 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
         },
         "root": "Root",
         "gender": "Gender",
+        "genders": {
+            "masculine": "masculine",
+            "feminine": "feminine",
+            "neuter": "neuter",
+            "common": "common",
+        },
         "animacy": "Animacy",
         "animacy_animate": "animate",
         "animacy_inanimate": "inanimate",
@@ -89,6 +105,16 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
     },
 }
 
+# Map of the raw gender values returned by the API to their
+# corresponding keys in LANG_STRINGS, so they can be localized.
+# (Gender is the only string response data that needs localization;
+# animacy and invariance are booleans and can be handled directly.)
+API_GENDER_TO_LANG_KEY = {
+    "муж": "masculine",
+    "жен": "feminine",
+    "ср": "neuter",
+    "общ": "common",
+}
 
 # ==========================================================================
 # ANSI color codes for terminal output
@@ -351,7 +377,12 @@ class TableFormatter:
         # (e.g. муж, жен)
         gender = match.get("gender")
         if gender:
-            entries.append((self.strings["gender"] + ":", gender))
+            # label for gender row
+            gender_label = self.strings["gender"] + ":"
+            # localize actual string value returned by the API
+            gender_key = self._gender_key(gender)  # key in LANG_STRINGS it maps to
+            gender_localized = self.strings["genders"][gender_key]
+            entries.append((gender_label, gender_localized))
 
         # animacy data returned as a boolean.
         # so can easily localize
@@ -389,6 +420,28 @@ class TableFormatter:
 
         lines.append("")
         return lines
+
+    def _gender_key(self, api_gender: str) -> str:
+        """
+        Convert the gender value returned by the API (e.g. "муж") into the
+        key used to look up its localization in LANG_STRINGS.
+
+        Args:
+            api_gender (str): Gender value from the API. Expected values:
+                "муж" (masculine), "жен" (feminine), "ср" (neuter),
+                "общ" (common).
+
+        Returns:
+            str: English key used in LANG_STRINGS["genders"], e.g.
+                "masculine".
+
+        Raises:
+            KeyError: If the API returns an unrecognized gender value.
+        """
+        if api_gender not in API_GENDER_TO_LANG_KEY:
+            raise KeyError(f"Unknown gender value from API: {api_gender!r}")
+
+        return API_GENDER_TO_LANG_KEY[api_gender]
 
     def _case_table_lines(self, heading: str, forms: dict) -> list[str]:
         """
