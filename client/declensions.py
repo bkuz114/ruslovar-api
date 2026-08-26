@@ -292,12 +292,40 @@ class TableFormatter:
             return "No matches found."
 
         tables = [self._format_match(match) for match in matches]
-        separator = self._colorize("─" * 60, self.colors.meta)
+
+        # Determine the widest table so separator can be
+        # aligned to the actual content rather than a hardcoded width.
+        max_table_width = max(self._visible_table_width(t) for t in tables)
+
+        separator = self._colorize("─" * max_table_width, self.colors.meta)
         return f"\n{separator}\n".join(tables)
 
     # ------------------------------------------------------------------
     # Internal formatting methods
     # ------------------------------------------------------------------
+
+    def _visible_table_width(self, table: str) -> int:
+        """
+        Return the display width of the longest line in a table string
+        after removing ANSI escape sequences.
+
+        Args:
+            table (str): Multi-line table string to measure. e.g.
+
+            Root: кролик
+            Gender: masculine  animate
+
+            Singular:
+              Nominative     кролик
+              ...
+
+        Returns:
+            int: Display width of the longest line.
+        """
+        if not table:
+            return 0
+        lines = table.splitlines()
+        return max(len(Colors.strip(line)) for line in lines)
 
     def _format_match(self, match: dict) -> str:
         """
