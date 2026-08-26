@@ -96,13 +96,89 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
 
 
 class Colors:
-    """ANSI escape codes for colored terminal output."""
+    """
+    ANSI color themes for terminal output.
 
-    HEADER = "\033[1;34m"  # bold blue
-    CASE = "\033[0;36m"  # cyan
-    META = "\033[2;33m"  # dim yellow
-    WORD = "\033[1;37m"  # bold white
-    RESET = "\033[0m"  # reset to terminal default
+    Each theme maps semantic roles (header, case, meta, word) to ANSI
+    escape sequences. Roles are semantic so call sites express intent
+    ("this is a heading") without needing to know the active palette.
+
+    Available roles:
+        header: section headings and metadata labels
+        case:   grammatical case labels
+        meta:   separators and secondary indicators
+        word:   word forms and values the user cares about
+    """
+
+    THEMES = {
+        "default": {
+            "header": "\033[1;34m",  # bold blue
+            "case": "\033[0;36m",  # cyan
+            "meta": "\033[2;33m",  # dim yellow
+            "word": "\033[1;37m",  # bold white
+        },
+        "high_contrast": {
+            "header": "\033[1;97m",  # bold bright white
+            "case": "\033[1;36m",  # bold bright cyan
+            "meta": "\033[1;33m",  # bold bright yellow
+            "word": "\033[1;37m",  # bold white
+        },
+    }
+
+    RESET = "\033[0m"
+
+    def __init__(self, theme: str = "default") -> None:
+        """
+        Args:
+            theme (str): Name of the color theme to use. Must be a key
+                in THEMES.
+
+        Raises:
+            KeyError: If the theme is not defined in THEMES.
+        """
+        if theme not in self.THEMES:
+            raise KeyError(f"Unknown theme: {theme!r}")
+
+        self.theme_name = theme
+        self.palette = self.THEMES[theme]
+
+    def _wrap(self, role: str, text: str) -> str:
+        """
+        Wrap text in the ANSI color for the given role.
+
+        Args:
+            role (str): Semantic color role. Must be a key in the
+                selected theme's palette.
+            text (str): The text to wrap.
+
+        Returns:
+            str: The ANSI-wrapped text.
+
+        Raises:
+            KeyError: If the role is not defined in the selected theme.
+        """
+        if role not in self.palette:
+            raise KeyError(
+                f"Unknown color role {role!r} in theme " f"{self.theme_name!r}"
+            )
+
+        return f"{self.palette[role]}{text}{self.RESET}"
+
+    def header(self, text: str) -> str:
+        """Wrap text as a section heading or metadata label."""
+        return self._wrap("header", text)
+
+    def case(self, text: str) -> str:
+        """Wrap text as a grammatical case label."""
+        return self._wrap("case", text)
+
+    def meta(self, text: str) -> str:
+        """Wrap text as a separator or secondary indicator."""
+        return self._wrap("meta", text)
+
+    def word(self, text: str) -> str:
+        """Wrap text as a word form or value."""
+        return self._wrap("word", text)
 
     @staticmethod
     def strip(text: str) -> str:
@@ -134,15 +210,23 @@ class TableFormatter:
     multiple API responses.
     """
 
-    def __init__(self, strings: LanguageStrings, use_color: bool) -> None:
+    def __init__(
+        self,
+        strings: LanguageStrings,
+        use_color: bool,
+        colors: Colors,
+    ) -> None:
         """
         Args:
             strings (LanguageStrings): Display strings for the selected
                 language.
             use_color (bool): Whether ANSI colors are enabled.
+            colors (Colors): Color theme instance for semantic ANSI
+                wrapping.
         """
         self.strings = strings
         self.use_color = use_color
+        self.colors = colors
 
     def format(self, data: dict) -> str:
         """
@@ -182,7 +266,7 @@ class TableFormatter:
             return "No matches found."
 
         tables = [self._format_match(match) for match in matches]
-        separator = self._colorize("─" * 60, Colors.META)
+        separator = self._colorize("─" * 60, self.colors.meta)
         return f"\n{separator}\n".join(tables)
 
     # ------------------------------------------------------------------
@@ -283,7 +367,9 @@ class TableFormatter:
         # invariant also a boolean; only display text if its invariant
         # (e.g. no "Invariant" or "Not invariant", just "Invariant" or nothing)
         if match.get("invariant"):
-            entries.append((self.strings["invariant"] + ":", self.strings["misc"]["yes"]))
+            entries.append(
+                (self.strings["invariant"] + ":", self.strings["misc"]["yes"])
+            )
 
         # Align the value column by padding each label to match the
         # longest label in this block. For example, with English labels:
@@ -297,8 +383,8 @@ class TableFormatter:
             # Pad the plain label before applying color so ANSI escape
             # sequences don't affect alignment calculations.
             padding = " " * (max_label_len - len(label))
-            label_part = self._colorize(label, Colors.HEADER)
-            value_part = self._colorize(value, Colors.WORD) if value else ""
+            label_part = self._colorize(label, self.colors.header)
+            value_part = self._colorize(value, self.colors.word) if value else ""
             lines.append(f"{label_part}{padding}  {value_part}")
 
         lines.append("")
@@ -332,7 +418,7 @@ class TableFormatter:
         """
         lines: list[str] = []
 
-        lines.append(self._colorize(f"{heading}:", Colors.HEADER))
+        lines.append(self._colorize(f"{heading}:", self.colors.header))
 
         entries: list[tuple[str, str]] = []
         for case_key, case_label in self.strings["cases"].items():
@@ -348,8 +434,8 @@ class TableFormatter:
 
         for case_label, word in entries:
             padding = " " * (max_label_len - len(case_label))
-            label_part = self._colorize(case_label, Colors.CASE)
-            word_part = self._colorize(word, Colors.WORD)
+            label_part = self._colorize(case_label, self.colors.case)
+            word_part = self._colorize(word, self.colors.word)
             lines.append(f"  {label_part}{padding}  {word_part}")
 
         lines.append("")
@@ -389,7 +475,7 @@ class TableFormatter:
         lines.append(
             self._colorize(
                 f"{self.strings['additional_forms']}:",
-                Colors.HEADER,
+                self.colors.header,
             )
         )
 
@@ -397,8 +483,8 @@ class TableFormatter:
 
         for label, word in entries:
             padding = " " * (max_label_len - len(label))
-            label_part = self._colorize(label, Colors.CASE)
-            word_part = self._colorize(word, Colors.WORD)
+            label_part = self._colorize(label, self.colors.case)
+            word_part = self._colorize(word, self.colors.word)
             lines.append(f"  {label_part}{padding}  {word_part}")
 
         lines.append("")
@@ -408,19 +494,21 @@ class TableFormatter:
     # Utility
     # ------------------------------------------------------------------
 
-    def _colorize(self, text: str, color_code: str) -> str:
+    def _colorize(self, text: str, color_fn) -> str:
         """
-        Wrap text in ANSI color codes if colors are enabled.
+        Apply a semantic color method if colors are enabled.
 
         Args:
             text (str): The text to colorize.
-            color_code (str): The ANSI color code from the Colors class.
+            color_fn: A method on the Colors instance, e.g.
+                self.colors.header or self.colors.word.
 
         Returns:
-            str: The colorized text, or the original text if colors are off.
+            str: The colorized text, or the original text if colors
+                are off.
         """
         if self.use_color:
-            return f"{color_code}{text}{Colors.RESET}"
+            return color_fn(text)
         return text
 
 
@@ -479,6 +567,13 @@ def parse_args() -> argparse.Namespace:
         help="Control colored output. auto detects TTY. Default: auto.",
     )
 
+    parser.add_argument(
+        "--theme",
+        choices=list(Colors.THEMES),
+        default="default",
+        help="Color theme for table output. Default: default.",
+    )
+
     return parser.parse_args()
 
 
@@ -533,7 +628,8 @@ def main() -> None:
             args.color == "auto" and sys.stdout.isatty()
         )
         strings = LANG_STRINGS[args.lang]
-        formatter = TableFormatter(strings, use_color)
+        colors = Colors(theme=args.theme)
+        formatter = TableFormatter(strings, use_color, colors)
         print(formatter.format(result))
     else:
         print(json.dumps(result, ensure_ascii=False, indent=2))
