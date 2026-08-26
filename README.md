@@ -108,7 +108,41 @@ The repository includes a thin CLI client for testing the API from the terminal:
 python client/declensions.py --word кролик
 ```
 
-(Note: it assumes a base URL for the FastAPI server of `http://127.0.0.1:8000`; to change, supply `--url` argument.)
+By default, the client prints the API response as formatted JSON. For a human-readable table, use `--table`:
+
+```bash
+python client/declensions.py --word кролик --table
+```
+
+Output:
+
+```
+Корень:          кролик
+Род:             муж
+Одушевлённость:  одушевлённое
+
+Единственное число:
+  Именительный  кролик
+  Родительный   кролика
+  Дательный     кролику
+  Винительный   кролика
+  Творительный  кроликом
+  Предложный    кролике
+
+Множественное число:
+  Именительный  кролики
+  Родительный   кроликов
+  Дательный     кроликам
+  Винительный   кроликов
+  Творительный  кроликами
+  Предложный    кроликах
+```
+
+The table output supports language selection (`--lang ru` or `--lang en`), colored terminal output (`--color always`, `--color never`, or the default `--color auto`), and alternate color themes (`--theme high_contrast`).
+
+The client assumes the FastAPI server is running at `http://127.0.0.1:8000`. Use `--url` to point to a different base URL.
+
+Run `python client/declensions.py --help` for all options.
 
 ## Demo Page
 
