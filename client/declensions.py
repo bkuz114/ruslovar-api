@@ -274,6 +274,7 @@ class TableFormatter:
 
         Example (abbreviated, without color):
 
+            ══════════ Root Match #1 ══════════
             Root: кролик
             Gender: masculine  animate
 
@@ -285,8 +286,7 @@ class TableFormatter:
               Nominative     кролики
               ...
 
-            ────────────────────────────────────────────
-
+            ══════════ Root Match #2 ══════════
             Root: кролика
             ...
 
@@ -304,7 +304,7 @@ class TableFormatter:
 
         tables = [self._format_match(match) for match in matches]
 
-        # Determine the widest table so headers and separators can be
+        # Determine the widest table so headers can be
         # aligned to the actual content rather than a hardcoded width.
         max_table_width = max(self._visible_table_width(t) for t in tables)
 
@@ -312,12 +312,11 @@ class TableFormatter:
         # (e.g., лук, замок), add headers to each one: "Root match {n}"
         if len(tables) > 1:
             tables = [
-                f"{self._match_header(i, max_table_width)}\n{t}"
+                f"\n{self._match_header(i, max_table_width)}\n{t}"
                 for i, t in enumerate(tables, start=1)
             ]
 
-        separator = self._colorize("─" * max_table_width, self.colors.meta)
-        return f"\n{separator}\n".join(tables)
+        return f"\n".join(tables)
 
     # ------------------------------------------------------------------
     # Internal formatting methods
@@ -325,23 +324,44 @@ class TableFormatter:
 
     def _match_header(self, index: int, width: int) -> str:
         """
-        Build a centered header for a root match when multiple matches
-        are present.
+        Build a banner-style header for a root match when multiple
+        matches are present.
 
         Example:
 
-            Root Match #1
+            ══════════ Root Match #1 ══════════
 
         Args:
             index (int): One-based match number.
             width (int): Display width of the widest table, used for
-                centering.
+                sizing the banner.
 
         Returns:
             str: The formatted header line.
         """
         text = self.strings["misc"]["root_match"].format(n=index)
-        return self._colorize(text.center(width), self.colors.match_header)
+
+        # Build the banner with the header centered and surrounded by
+        # double-line characters. Example target:
+        #
+        #     ══════════ Root Match #1 ══════════
+        #
+        # We add spaces around the header for readability.
+        inner = f" {text} "
+
+        # If the table is somehow narrower than the header itself,
+        # just return the header without trying to trim it.
+        if len(inner) >= width:
+            return self._colorize(inner, self.colors.match_header)
+
+        # Remaining space is split between left and right sides.
+        remaining = width - len(inner)
+        left = remaining // 2
+        right = remaining - left
+
+        banner = f"{'═' * left}{inner}{'═' * right}"
+
+        return self._colorize(banner, self.colors.match_header)
 
     def _visible_table_width(self, table: str) -> int:
         """
