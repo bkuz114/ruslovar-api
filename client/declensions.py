@@ -53,6 +53,7 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
             "prepositional": "Предложный",
         },
         "misc": {
+            "root_match": "Корень {n}",
             "yes": "да",
         },
         "root": "Корень",
@@ -84,6 +85,7 @@ LANG_STRINGS: dict[str, LanguageStrings] = {
             "prepositional": "Prepositional",
         },
         "misc": {
+            "root_match": "Root Match #{n}",
             "yes": "yes",
         },
         "root": "Root",
@@ -130,6 +132,9 @@ class Colors:
     ("this is a heading") without needing to know the active palette.
 
     Available roles:
+        match_header: headers that display for words that
+                      returned multiple roots (e.g., лук)
+                      e.g. "Root match #1", "Root match #2"
         header: section headings and metadata labels
         case:   grammatical case labels
         meta:   separators and secondary indicators
@@ -138,12 +143,14 @@ class Colors:
 
     THEMES = {
         "default": {
+            "match_header": "\033[1;35m",  # magenta
             "header": "\033[1;34m",  # bold blue
             "case": "\033[0;36m",  # cyan
             "meta": "\033[2;33m",  # dim yellow
             "word": "\033[1;37m",  # bold white
         },
         "high_contrast": {
+            "match_header": "\033[1;95m",  # bold bright magenta
             "header": "\033[1;97m",  # bold bright white
             "case": "\033[1;36m",  # bold bright cyan
             "meta": "\033[1;33m",  # bold bright yellow
@@ -189,6 +196,10 @@ class Colors:
             )
 
         return f"{self.palette[role]}{text}{self.RESET}"
+
+    def match_header(self, text: str) -> str:
+        """Wrap text as a 'Root Match {n}' header."""
+        return self._wrap("match_header", text)
 
     def header(self, text: str) -> str:
         """Wrap text as a section heading or metadata label."""
@@ -293,9 +304,17 @@ class TableFormatter:
 
         tables = [self._format_match(match) for match in matches]
 
-        # Determine the widest table so separator can be
+        # Determine the widest table so headers and separators can be
         # aligned to the actual content rather than a hardcoded width.
         max_table_width = max(self._visible_table_width(t) for t in tables)
+
+        # for lookups that resulted in multiple possible noun roots
+        # (e.g., лук, замок), add headers to each one: "Root match {n}"
+        if len(tables) > 1:
+            tables = [
+                f"{self._match_header(i, max_table_width)}\n{t}"
+                for i, t in enumerate(tables, start=1)
+            ]
 
         separator = self._colorize("─" * max_table_width, self.colors.meta)
         return f"\n{separator}\n".join(tables)
@@ -303,6 +322,26 @@ class TableFormatter:
     # ------------------------------------------------------------------
     # Internal formatting methods
     # ------------------------------------------------------------------
+
+    def _match_header(self, index: int, width: int) -> str:
+        """
+        Build a centered header for a root match when multiple matches
+        are present.
+
+        Example:
+
+            Root Match #1
+
+        Args:
+            index (int): One-based match number.
+            width (int): Display width of the widest table, used for
+                centering.
+
+        Returns:
+            str: The formatted header line.
+        """
+        text = self.strings["misc"]["root_match"].format(n=index)
+        return self._colorize(text.center(width), self.colors.match_header)
 
     def _visible_table_width(self, table: str) -> int:
         """
