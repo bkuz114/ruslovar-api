@@ -720,7 +720,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--theme",
-        choices=list(Colors.THEMES),
+        choices=Colors.themes(),
         default="default",
         help="Color theme for table output. Default: default.",
     )
