@@ -720,7 +720,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--theme",
-        choices=Colors.themes(),
+        choices=Colors.themes() + ["random"],
         default="default",
         help="Color theme for table output. Default: default.",
     )
@@ -779,7 +779,10 @@ def main() -> None:
             args.color == "auto" and sys.stdout.isatty()
         )
         strings = LANG_STRINGS[args.lang]
-        colors = Colors(theme=args.theme)
+        theme = args.theme.lower()
+        if theme == "random":
+            theme = Colors.random_theme()
+        colors = Colors(theme=theme)
         formatter = TableFormatter(strings, use_color, colors)
         print(formatter.format(result))
     else:
