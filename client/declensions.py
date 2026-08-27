@@ -14,6 +14,7 @@ Usage:
 import argparse
 import json
 import sys
+import random
 from typing import TypedDict
 
 import httpx
@@ -216,6 +217,16 @@ class Colors:
     def word(self, text: str) -> str:
         """Wrap text as a word form or value."""
         return self._wrap("word", text)
+
+    @classmethod
+    def themes(cls) -> list[str]:
+        """Return list of valid theme names."""
+        return list(cls.THEMES)
+
+    @classmethod
+    def random_theme(cls) -> str:
+        """Return a random theme name."""
+        return random.choice(cls.themes())
 
     @staticmethod
     def strip(text: str) -> str:
