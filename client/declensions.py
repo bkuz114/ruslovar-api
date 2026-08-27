@@ -150,11 +150,81 @@ class Colors:
             "meta": "\033[2;33m",  # dim yellow
             "word": "\033[1;37m",  # bold white
         },
+        "cyberpunk": {
+            "match_header": "\033[1;35m",  # neon purple
+            "header": "\033[1;36m",  # neon cyan
+            "case": "\033[1;33m",  # neon yellow
+            "meta": "\033[2;35m",  # dim purple
+            "word": "\033[1;37m",  # bold white
+        },
+        "dracula": {
+            "match_header": "\033[1;35m",  # bold purple
+            "header": "\033[1;36m",  # bold cyan
+            "case": "\033[0;34m",  # blue
+            "meta": "\033[2;37m",  # dim white
+            "word": "\033[1;37m",  # bold white
+        },
+        "forest": {
+            "match_header": "\033[1;32m",  # bold green
+            "header": "\033[0;32m",  # green
+            "case": "\033[0;36m",  # cyan
+            "meta": "\033[2;33m",  # dim yellow
+            "word": "\033[1;37m",  # bold white
+        },
         "high_contrast": {
             "match_header": "\033[1;95m",  # bold bright magenta
             "header": "\033[1;97m",  # bold bright white
             "case": "\033[1;36m",  # bold bright cyan
             "meta": "\033[1;33m",  # bold bright yellow
+            "word": "\033[1;37m",  # bold white
+        },
+        "midnight": {
+            "match_header": "\033[1;34m",  # bold blue
+            "header": "\033[0;34m",  # blue
+            "case": "\033[0;33m",  # gold
+            "meta": "\033[2;34m",  # dim blue
+            "word": "\033[1;37m",  # bold white
+        },
+        "monochrome": {
+            "match_header": "\033[1m",  # bold
+            "header": "\033[1m",  # bold
+            "case": "\033[2m",  # dim
+            "meta": "\033[2m",  # dim
+            "word": "\033[0m",  # normal
+        },
+        "ocean": {
+            "match_header": "\033[1;36m",  # bold cyan
+            "header": "\033[1;34m",  # bold blue
+            "case": "\033[0;36m",  # cyan
+            "meta": "\033[2;34m",  # dim blue
+            "word": "\033[1;37m",  # bold white
+        },
+        "pastel": {
+            "match_header": "\033[1;35m",  # soft purple
+            "header": "\033[1;34m",  # soft blue
+            "case": "\033[1;36m",  # soft cyan
+            "meta": "\033[2;37m",  # soft gray
+            "word": "\033[1;37m",  # soft white
+        },
+        "rainbow": {
+            "match_header": "\033[1;35m",  # magenta
+            "header": "\033[1;31m",  # red
+            "case": "\033[1;33m",  # yellow
+            "meta": "\033[1;32m",  # green
+            "word": "\033[1;36m",  # cyan
+        },
+        "solarized": {
+            "match_header": "\033[1;33m",  # bold yellow
+            "header": "\033[0;36m",  # cyan
+            "case": "\033[0;32m",  # green
+            "meta": "\033[2;37m",  # dim white
+            "word": "\033[0;37m",  # white
+        },
+        "sunset": {
+            "match_header": "\033[1;35m",  # bold magenta
+            "header": "\033[1;33m",  # bold yellow
+            "case": "\033[0;31m",  # red
+            "meta": "\033[2;31m",  # dim red
             "word": "\033[1;37m",  # bold white
         },
     }
