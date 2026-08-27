@@ -3,9 +3,11 @@ HTTP endpoint for noun declensions.
 """
 
 from fastapi import APIRouter, HTTPException, Query
+from pymysql import MySQLError
 
 from app import services
 from app.models import NounLookupResponse
+from app.models import NounBatchRequest, NounBatchResponse, NounBatchItem
 
 router = APIRouter(prefix="/nouns", tags=["nouns"])
 
@@ -44,3 +46,52 @@ def get_noun_declensions(
         return services.get_noun_declensions(word=word, strict=strict)
     except LookupError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post(
+    "/batch",
+    response_model=NounBatchResponse,
+    summary="Batch noun declensions",
+    description=(
+        "Returns declension tables for multiple Russian nouns. "
+        "Each word is processed independently; lookup failures (word not "
+        "found, strict mode violations) are returned as per-item errors "
+        "with HTTP 200. Non-200 responses occur only for system errors "
+        "(malformed request, database unreachable)."
+    ),
+)
+def get_batch_noun_declensions(request: NounBatchRequest):
+    """
+    POST /nouns/batch
+
+    Args:
+        request: NounBatchRequest containing the words and strict flag.
+
+    Returns:
+        NounBatchResponse with one result per input word.
+    """
+    results = []
+
+    # request includes a simple list of lookup words; query each one
+    for word in request.words:
+        try:
+            lookup_result = services.get_noun_declensions(word=word, strict=request.strict)
+            status = "success"
+            error = None
+        except LookupError as e:
+            status = "error"
+            lookup_result = None
+            error = str(e)
+        except MySQLError:
+            raise HTTPException(status_code=503, detail="Database unavailable")
+
+        results.append(
+            NounBatchItem(
+                word=word,
+                status=status,
+                result=lookup_result,
+                error=error,
+            )
+        )
+
+    return NounBatchResponse(results=results)

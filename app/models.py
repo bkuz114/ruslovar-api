@@ -15,7 +15,8 @@ values (gender, case names, words) remain in Russian. See docs/api.md for
 the full rationale.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Literal
 
 
 class CaseForms(BaseModel):
@@ -86,3 +87,31 @@ class NounLookupResponse(BaseModel):
 
     word: str
     matches: list[NounDeclensions]
+
+
+class NounBatchRequest(BaseModel):
+    """
+    Request body for a batch noun declension lookup.
+
+    Fields:
+        words: List of Russian nouns to look up (Cyrillic, UTF-8).
+        strict: If true, each word must be in dictionary form.
+    """
+
+    words: list[str] = Field(min_length=1)
+    strict: bool = False
+
+
+class NounBatchItem(BaseModel):
+    """Result for a single word in a batch request."""
+
+    word: str
+    status: Literal["success", "error"]
+    result: NounLookupResponse | None = None
+    error: str | None = None
+
+
+class NounBatchResponse(BaseModel):
+    """Response for a batch noun lookup request."""
+
+    results: list[NounBatchItem]
