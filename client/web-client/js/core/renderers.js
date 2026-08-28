@@ -322,15 +322,17 @@ export function createMatchesContainer(result, {
  * @param {string} [type='submit'] - Button type attribute. Use "button"
  *     for views that handle the click event manually instead of using
  *     form submission.
+ * @param {boolean} [disable=false] - Disable the submit button by default.
  * @returns {HTMLElement} The submit button element.
  */
-function createSubmitButton(type = 'submit') {
+function createSubmitButton(type = 'submit', disable = false) {
     const button = createElement(
         'button',
         'submit-button',
         getString('submit_button')
     );
     button.type = type;
+    button.disabled = disable;
     button.setAttribute('data-i18n', 'submit_button');
     return button;
 }
@@ -395,15 +397,17 @@ function createStrictModeGroup() {
  * @param {Object} [options] - Control options.
  * @param {string} [options.submitType='submit'] - Submit button type.
  *     Use "button" for views that handle clicks manually.
+ * @param {boolean} [disable=false] - Disable the submit button by default.
  * @returns {{element: HTMLElement, submitButton: HTMLElement, isStrictMode: Function}}
  *     Object containing the wrapper, the submit button, and a function
  *     to read strict mode state.
  */
 export function createSubmitControls({
     submitType = 'submit',
+    disable = false,
 } = {}) {
     const strictModeGroup = createStrictModeGroup();
-    const submitButton = createSubmitButton(submitType);
+    const submitButton = createSubmitButton(submitType, disable);
 
     const wrapper = createElement('div', 'submit-controls');
     wrapper.appendChild(strictModeGroup.element);
