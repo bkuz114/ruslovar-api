@@ -18,11 +18,14 @@
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--border-radius);
     padding: var(--space-md);
-    display: flex;
     align-items: center;
     gap: var(--space-md);
     flex-wrap: wrap;
     margin-bottom: var(--space-xl);
+}
+
+.file-input-group {
+    margin-bottom: var(--space-sm);
 }
 
 .file-input-group label {
