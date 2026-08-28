@@ -161,7 +161,9 @@ function buildDom(container) {
     form.appendChild(wordGroup);
 
     // Submit control (submit button + Strict mode checkbox)
-    const submitControls = createSubmitControls();
+    const submitControls = createSubmitControls({
+        disable: true
+    });
     form.appendChild(submitControls.element);
 
     container.appendChild(form);
@@ -190,6 +192,11 @@ function buildDom(container) {
  */
 function bindEvents() {
     elements.form.addEventListener('submit', handleFormSubmit);
+    // enable or disable submit button based on if text in textfield
+    elements.wordInput.addEventListener('input', () => {
+        const isEmpty = elements.wordInput.value.trim() === '';
+        elements.submitControls.submitButton.disabled = isEmpty;
+    });
 }
 
 /**
