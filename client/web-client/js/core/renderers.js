@@ -314,6 +314,109 @@ export function createMatchesContainer(result, {
 }
 
 /**
+ * Create a submit button.
+ *
+ * This is an internal helper used by createSubmitControls. It builds
+ * the button element with the shared "submit_button" label.
+ *
+ * @param {string} [type='submit'] - Button type attribute. Use "button"
+ *     for views that handle the click event manually instead of using
+ *     form submission.
+ * @returns {HTMLElement} The submit button element.
+ */
+function createSubmitButton(type = 'submit') {
+    const button = createElement(
+        'button',
+        'submit-button',
+        getString('submit_button')
+    );
+    button.type = type;
+    button.setAttribute('data-i18n', 'submit_button');
+    return button;
+}
+
+/**
+ * Create a strict mode checkbox group.
+ *
+ * This is an internal helper used by createSubmitControls. It builds
+ * the checkbox and label used to enable strict dictionary-form
+ * matching when querying the API.
+ *
+ * The function returns the wrapper element plus an accessor for the
+ * checkbox state. The checkbox itself is not exposed directly; callers
+ * use isStrictMode() to read the current value.
+ *
+ * @returns {{element: HTMLElement, isStrictMode: Function}} Object
+ *     containing the wrapper element and a function that returns
+ *     whether strict mode is checked.
+ */
+function createStrictModeGroup() {
+    const group = createElement('div', 'strict-mode-group');
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'strict-mode';
+    checkbox.name = 'strict';
+
+    const label = createElement(
+        'label',
+        '',
+        getString('strict_label')
+    );
+    label.setAttribute('for', 'strict-mode');
+    label.setAttribute('data-i18n', 'strict_label');
+
+    group.appendChild(checkbox);
+    group.appendChild(label);
+
+    return {
+        element: group,
+        isStrictMode: () => checkbox.checked,
+    };
+}
+
+/**
+ * Create the submission controls for a view.
+ *
+ * Builds a wrapper element containing the strict mode checkbox group
+ * and the submit button. This is the public interface for views; they
+ * should not build these controls separately.
+ *
+ * The returned object provides:
+ *   - element: the wrapper to append to the view DOM.
+ *   - submitButton: the button element, for views that need to bind a
+ *     click handler directly (e.g., batch view uses type="button").
+ *   - isStrictMode(): a function that returns the current checkbox state.
+ *
+ * If additional API parameters are added in the future, this function
+ * should be extended to build and expose them, so views do not need to
+ * change.
+ *
+ * @param {Object} [options] - Control options.
+ * @param {string} [options.submitType='submit'] - Submit button type.
+ *     Use "button" for views that handle clicks manually.
+ * @returns {{element: HTMLElement, submitButton: HTMLElement, isStrictMode: Function}}
+ *     Object containing the wrapper, the submit button, and a function
+ *     to read strict mode state.
+ */
+export function createSubmitControls({
+    submitType = 'submit',
+} = {}) {
+    const strictModeGroup = createStrictModeGroup();
+    const submitButton = createSubmitButton(submitType);
+
+    const wrapper = createElement('div', 'submit-controls');
+    wrapper.appendChild(strictModeGroup.element);
+    wrapper.appendChild(submitButton);
+
+    return {
+        element: wrapper,
+        submitButton,
+        isStrictMode: strictModeGroup.isStrictMode,
+    };
+}
+
+/**
  * Create a collapsible raw JSON section.
  *
  * Used by views to display the full API response in a <details> element.

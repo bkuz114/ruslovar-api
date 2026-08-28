@@ -79,6 +79,54 @@
 }
 
 /* --------------------------------------------------------------------------
+   Submit controls
+   -------------------------------------------------------------------------- */
+
+.strict-mode-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.strict-mode-group input[type='checkbox'] {
+    width: 1.25em;
+    height: 1.25em;
+}
+
+.strict-mode-group label {
+    margin-bottom: 0;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.submit-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.submit-button {
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    font-family: var(--font-family);
+}
+
+.submit-button:hover {
+    background-color: var(--color-primary-hover);
+}
+
+/* --------------------------------------------------------------------------
    Match tabs
    -------------------------------------------------------------------------- */
 

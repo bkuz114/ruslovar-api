@@ -37,6 +37,7 @@ import {
 import {
     createMatchesContainer,
     createRawJsonToggle,
+    createSubmitControls,
 } from '../core/renderers.js';
 import {
     ApiError
@@ -159,32 +160,10 @@ function buildDom(container) {
     wordGroup.appendChild(wordInput);
     form.appendChild(wordGroup);
 
-    // Strict mode checkbox.
-    const strictGroup = createElement('div', 'form-group form-group-inline');
+    // Submit control (submit button + Strict mode checkbox)
+    const submitControls = createSubmitControls();
+    form.appendChild(submitControls.element);
 
-    const strictCheckbox = document.createElement('input');
-    strictCheckbox.type = 'checkbox';
-    strictCheckbox.id = 'strict-mode';
-    strictCheckbox.name = 'strict';
-
-    const strictLabel = createElement('label', '', getString('strict_label'));
-    strictLabel.setAttribute('for', 'strict-mode');
-    strictLabel.setAttribute('data-i18n', 'strict_label');
-
-    strictGroup.appendChild(strictCheckbox);
-    strictGroup.appendChild(strictLabel);
-    form.appendChild(strictGroup);
-
-    // Submit button.
-    const submitButton = createElement(
-        'button',
-        'submit-button',
-        getString('submit_button')
-    );
-    submitButton.type = 'submit';
-    submitButton.setAttribute('data-i18n', 'submit_button');
-
-    form.appendChild(submitButton);
     container.appendChild(form);
 
     // --- Results area -------------------------------------------------
@@ -201,8 +180,7 @@ function buildDom(container) {
     elements = {
         form,
         wordInput,
-        strictCheckbox,
-        submitButton,
+        submitControls,
         resultsArea,
     };
 }
@@ -225,7 +203,7 @@ async function handleFormSubmit(event) {
     const word = elements.wordInput.value.trim();
     if (!word) return;
 
-    const strict = elements.strictCheckbox.checked;
+    const strict = elements.submitControls.isStrictMode();
 
     clearResults();
 

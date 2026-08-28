@@ -50,6 +50,7 @@ import {
 } from '../core/dom.js';
 import {
     createMatchesContainer,
+    createSubmitControls,
 } from '../core/renderers.js';
 import {
     ApiError
@@ -196,36 +197,14 @@ function buildDom(container) {
     fileGroup.appendChild(formatHint);
     controls.appendChild(fileGroup);
 
-    // Strict mode checkbox.
-    const strictGroup = createElement('div', 'strict-group');
+    // Submit controls (submit button + strict checkbox)
+    const submitControls = createSubmitControls({
+        submitType: 'button',
+    });
+    submitControls.submitButton.id = 'submit-button';
+    submitControls.submitButton.disabled = true;
+    controls.appendChild(submitControls.element);
 
-    const strictLabel = createElement('label', 'checkbox-label');
-
-    const strictCheckbox = document.createElement('input');
-    strictCheckbox.type = 'checkbox';
-    strictCheckbox.id = 'strict-mode';
-    strictCheckbox.name = 'strict';
-
-    const strictText = createElement('span', '', getString('strict_label'));
-    strictText.setAttribute('data-i18n', 'strict_label');
-
-    strictLabel.appendChild(strictCheckbox);
-    strictLabel.appendChild(strictText);
-    strictGroup.appendChild(strictLabel);
-    controls.appendChild(strictGroup);
-
-    // Submit button.
-    const submitButton = createElement(
-        'button',
-        'submit-button',
-        getString('submit_button')
-    );
-    submitButton.type = 'button';
-    submitButton.id = 'submit-button';
-    submitButton.disabled = true;
-    submitButton.setAttribute('data-i18n', 'submit_button');
-
-    controls.appendChild(submitButton);
     container.appendChild(controls);
 
     // --- Results area -------------------------------------------------
@@ -250,8 +229,7 @@ function buildDom(container) {
     // Cache references for later use.
     elements = {
         fileInput,
-        strictCheckbox,
-        submitButton,
+        submitControls,
         resultsArea,
     };
 }
@@ -261,7 +239,7 @@ function buildDom(container) {
  */
 function bindEvents() {
     elements.fileInput.addEventListener('change', handleFileSelection);
-    elements.submitButton.addEventListener('click', handleBatchSubmit);
+    elements.submitControls.submitButton.addEventListener('click', handleBatchSubmit);
 }
 
 /**
@@ -276,7 +254,7 @@ function bindEvents() {
 function handleFileSelection(event) {
     const file = event.target.files[0];
     if (!file) {
-        elements.submitButton.disabled = true;
+        elements.submitControls.submitButton.disabled = true;
         return;
     }
 
@@ -291,7 +269,7 @@ function handleFileSelection(event) {
             (sum, category) => sum + category.words.length,
             0
         );
-        elements.submitButton.disabled = totalWords === 0;
+        elements.submitControls.submitButton.disabled = totalWords === 0;
 
         showFileSummary(parsedCategories, totalWords);
     };
@@ -413,16 +391,16 @@ async function handleBatchSubmit() {
         return;
     }
 
-    elements.submitButton.disabled = true;
+    elements.submitControls.submitButton.disabled = true;
 
     try {
-        const data = await fetchNounBatch(allWords, elements.strictCheckbox.checked);
+        const data = await fetchNounBatch(allWords, elements.submitControls.isStrictMode());
         renderBatchResults(parsedCategories, data.results);
     } catch (error) {
         console.error('Batch request failed:', error);
         showError(getErrorMessage(error));
     } finally {
-        elements.submitButton.disabled = false;
+        elements.submitControls.submitButton.disabled = false;
     }
 }
 
