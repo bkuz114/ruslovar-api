@@ -201,7 +201,6 @@ function buildDom(container) {
     const submitControls = createSubmitControls({
         submitType: 'button',
     });
-    submitControls.submitButton.id = 'submit-button';
     submitControls.submitButton.disabled = true;
     controls.appendChild(submitControls.element);
 
