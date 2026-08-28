@@ -84,7 +84,6 @@ const VIEW_STRINGS = {
         uncategorized: 'Без категории',
         status_success: 'Успешно',
         status_error: 'Ошибка',
-        match_label: 'Вариант {n}',
         error_no_file: 'Файл не выбран.',
         error_empty_file: 'Файл не содержит слов.',
     },
@@ -99,7 +98,6 @@ const VIEW_STRINGS = {
         uncategorized: 'Uncategorized',
         status_success: 'Success',
         status_error: 'Error',
-        match_label: 'Match {n}',
         error_no_file: 'No file selected.',
         error_empty_file: 'File contains no words.',
     },
@@ -535,8 +533,7 @@ function createWordDetails(word, item) {
     if (success) {
         details.appendChild(
             createMatchesContainer(item.result, {
-                layout: 'stacked',
-                matchLabelViewId: VIEW_ID,
+                layout: 'stacked'
             })
         );
     } else if (error) {

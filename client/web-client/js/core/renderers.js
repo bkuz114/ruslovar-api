@@ -22,7 +22,6 @@
  */
 
 import {
-    getString,
     getSharedString
 } from './i18n.js';
 import {
@@ -263,13 +262,11 @@ function getMatchLabel(match, index, matches) {
  * @param {Object} result - NounLookupResponse object.
  * @param {Object} [options] - Rendering options.
  * @param {string} [options.layout='tabs'] - 'tabs' or 'stacked'.
- * @param {string} [options.matchLabelViewId] - View ID for resolving
  *     the "Match {n}" label. Required when layout is 'stacked'.
  * @returns {HTMLElement} Container with all matches rendered.
  */
 export function createMatchesContainer(result, {
     layout = 'tabs',
-    matchLabelViewId = null
 } = {}) {
     const container = createElement('div', `matches-container matches-${layout}`);
 
@@ -292,9 +289,8 @@ export function createMatchesContainer(result, {
         // In stacked layout, add a label when multiple matches exist.
         if (layout === 'stacked' && result.matches.length > 1) {
             const label = createElement('h3', 'match-label');
-            const labelText = getString(matchLabelViewId, 'match_label');
+            const labelText = getSharedString('match_label');
             label.setAttribute('data-i18n', 'match_label');
-            label.setAttribute('data-i18n-view', matchLabelViewId);
             label.setAttribute('data-i18n-arg', index + 1);
             label.textContent = labelText.replace('{n}', index + 1);
             panel.appendChild(label);
