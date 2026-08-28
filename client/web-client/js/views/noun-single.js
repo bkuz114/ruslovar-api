@@ -192,16 +192,7 @@ function buildDom(container) {
     resultsArea.id = 'results-area';
     resultsArea.setAttribute('aria-live', 'polite');
 
-    const placeholder = createElement(
-        'p',
-        'results-placeholder',
-        getString('results_placeholder', {
-            viewId: VIEW_ID
-        })
-    );
-    placeholder.id = 'results-placeholder';
-    placeholder.setAttribute('data-i18n', 'results_placeholder');
-    placeholder.setAttribute('data-i18n-view', VIEW_ID);
+    const placeholder = createResultsPlaceholder();
     resultsArea.appendChild(placeholder);
 
     container.appendChild(resultsArea);
@@ -312,11 +303,16 @@ function renderResults(data) {
 }
 
 /**
- * Clear the results area and restore the placeholder message.
+ * Create the results placeholder element.
+ *
+ * This element is displayed in the results area whenever there are no
+ * results to show. It provides the user with a hint about what action
+ * to take (e.g., "Enter a word to see declensions") and is replaced
+ * when results are rendered or when an error occurs.
+ *
+ * @returns {HTMLElement} The placeholder paragraph element.
  */
-function clearResults() {
-    clearElement(elements.resultsArea);
-
+function createResultsPlaceholder() {
     const placeholder = createElement(
         'p',
         'results-placeholder',
@@ -327,6 +323,15 @@ function clearResults() {
     placeholder.id = 'results-placeholder';
     placeholder.setAttribute('data-i18n', 'results_placeholder');
     placeholder.setAttribute('data-i18n-view', VIEW_ID);
+    return placeholder;
+}
+
+/**
+ * Clear the results area and restore the placeholder message.
+ */
+function clearResults() {
+    clearElement(elements.resultsArea);
+    const placeholder = createResultsPlaceholder();
     elements.resultsArea.appendChild(placeholder);
 }
 
