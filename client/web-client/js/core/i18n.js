@@ -242,19 +242,23 @@ export function applyLanguage(lang) {
         const viewId = element.getAttribute('data-i18n-view');
 
         let value;
+        let useSharedString = true;
 
         if (viewId) {
             // View-specific lookup first.
             value = getString(viewId, key, lang);
+            useSharedString = false;
 
             if (value === undefined) {
                 // Warn and fall back to shared.
                 console.warn(
                     `i18n.applyLanguage: Key "${key}" not found in view "${viewId}", falling back to shared strings`
                 );
-                value = getSharedString(key, lang);
+                useSharedString = true;
             }
-        } else {
+        }
+
+        if (useSharedString) {
             // Shared lookup only.
             value = getSharedString(key, lang);
         }
