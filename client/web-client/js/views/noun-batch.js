@@ -451,18 +451,25 @@ function renderBatchResults(categories, results) {
 }
 
 /**
- * Create a category section element.
+ * Create a collapsible category section.
+ *
+ * The category name is rendered as a <summary> element. Words belonging
+ * to the category are appended to the body of the <details> element and
+ * are hidden until the user expands the section.
+ *
+ * Categories are collapsed by default to keep the results scannable for
+ * large word lists.
  *
  * @param {{name: string, words: string[]}} category - Category data.
- * @returns {HTMLElement} The category section element.
+ * @returns {HTMLElement} The category section element (a <details> element).
  */
 function createCategorySection(category) {
-    const section = createElement('section', 'category-section');
+    const details = createElement('details', 'category-section');
 
-    const heading = createElement('h2', 'category-heading', category.name);
-    section.appendChild(heading);
+    const summary = createElement('summary', 'category-heading', category.name);
+    details.appendChild(summary);
 
-    return section;
+    return details;
 }
 
 /**

@@ -66,16 +66,21 @@
    Category sections
    -------------------------------------------------------------------------- */
 
-.category-section {
-    margin-bottom: var(--space-xl);
-}
-
 .category-heading {
     font-size: var(--font-size-lg);
     font-weight: 600;
     border-bottom: var(--border-width) solid var(--color-border);
     padding-bottom: var(--space-xs);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
+    cursor: pointer;
+}
+
+.category-heading:hover {
+    color: var(--color-primary);
+}
+
+.category-heading::-webkit-details-marker {
+    display: none;
 }
 
 /* --------------------------------------------------------------------------
