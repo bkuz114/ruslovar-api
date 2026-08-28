@@ -77,13 +77,9 @@ const VIEW_STRINGS = {
         view_label: 'Пакетный запрос',
         file_label: 'Файл со словами',
         file_format_hint: 'Одно слово в строке. Категории начинаются с #.',
-        strict_label: 'Строгий режим',
-        submit_button: 'Показать склонения',
         results_placeholder: 'Загрузите файл и нажмите кнопку.',
         file_summary: 'Загружено категорий: {categories}, слов: {words}.',
         uncategorized: 'Без категории',
-        status_success: 'Успешно',
-        status_error: 'Ошибка',
         error_no_file: 'Файл не выбран.',
         error_empty_file: 'Файл не содержит слов.',
     },
@@ -91,13 +87,9 @@ const VIEW_STRINGS = {
         view_label: 'Batch Lookup',
         file_label: 'Word list file',
         file_format_hint: 'One word per line. Categories start with #.',
-        strict_label: 'Strict mode',
-        submit_button: 'Show declensions',
         results_placeholder: 'Load a file and click the button.',
         file_summary: 'Loaded categories: {categories}, words: {words}.',
         uncategorized: 'Uncategorized',
-        status_success: 'Success',
-        status_error: 'Error',
         error_no_file: 'No file selected.',
         error_empty_file: 'File contains no words.',
     },
@@ -209,9 +201,8 @@ function buildDom(container) {
     strictCheckbox.id = 'strict-mode';
     strictCheckbox.name = 'strict';
 
-    const strictText = createElement('span', '', getString(VIEW_ID, 'strict_label'));
+    const strictText = createElement('span', '', getSharedString('strict_label'));
     strictText.setAttribute('data-i18n', 'strict_label');
-    strictText.setAttribute('data-i18n-view', VIEW_ID);
 
     strictLabel.appendChild(strictCheckbox);
     strictLabel.appendChild(strictText);
@@ -222,13 +213,12 @@ function buildDom(container) {
     const submitButton = createElement(
         'button',
         'submit-button',
-        getString(VIEW_ID, 'submit_button')
+        getSharedString('submit_button')
     );
     submitButton.type = 'button';
     submitButton.id = 'submit-button';
     submitButton.disabled = true;
     submitButton.setAttribute('data-i18n', 'submit_button');
-    submitButton.setAttribute('data-i18n-view', VIEW_ID);
 
     controls.appendChild(submitButton);
     container.appendChild(controls);
@@ -516,13 +506,11 @@ function createWordDetails(word, item) {
 
     if (success) {
         status.setAttribute('data-i18n', 'status_success');
-        status.setAttribute('data-i18n-view', VIEW_ID);
-        status.textContent = getString(VIEW_ID, 'status_success');
+        status.textContent = getSharedString('status_success');
         status.classList.add('status-success');
     } else {
         status.setAttribute('data-i18n', 'status_error');
-        status.setAttribute('data-i18n-view', VIEW_ID);
-        status.textContent = getString(VIEW_ID, 'status_error');
+        status.textContent = getSharedString('status_error');
         status.classList.add('status-error');
     }
 

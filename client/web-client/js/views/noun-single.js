@@ -64,8 +64,6 @@ const VIEW_STRINGS = {
         view_label: 'Одно слово',
         word_label: 'Существительное',
         word_placeholder: 'Например: кролик',
-        strict_label: 'Строгий режим',
-        submit_button: 'Показать склонения',
         results_placeholder: 'Введите слово, чтобы увидеть склонения.',
         error_not_found: 'Слово не найдено в словаре.',
         error_strict: 'Слово не в словарной форме.',
@@ -74,8 +72,6 @@ const VIEW_STRINGS = {
         view_label: 'Single Word',
         word_label: 'Noun',
         word_placeholder: 'e.g. кролик',
-        strict_label: 'Strict mode',
-        submit_button: 'Show declensions',
         results_placeholder: 'Enter a word to see declensions.',
         error_not_found: 'Word not found in dictionary.',
         error_strict: 'Word is not in dictionary form.',
@@ -168,10 +164,9 @@ function buildDom(container) {
     strictCheckbox.id = 'strict-mode';
     strictCheckbox.name = 'strict';
 
-    const strictLabel = createElement('label', '', getString(VIEW_ID, 'strict_label'));
+    const strictLabel = createElement('label', '', getSharedString('strict_label'));
     strictLabel.setAttribute('for', 'strict-mode');
     strictLabel.setAttribute('data-i18n', 'strict_label');
-    strictLabel.setAttribute('data-i18n-view', VIEW_ID);
 
     strictGroup.appendChild(strictCheckbox);
     strictGroup.appendChild(strictLabel);
@@ -181,11 +176,10 @@ function buildDom(container) {
     const submitButton = createElement(
         'button',
         'submit-button',
-        getString(VIEW_ID, 'submit_button')
+        getSharedString('submit_button')
     );
     submitButton.type = 'submit';
     submitButton.setAttribute('data-i18n', 'submit_button');
-    submitButton.setAttribute('data-i18n-view', VIEW_ID);
 
     form.appendChild(submitButton);
     container.appendChild(form);
