@@ -200,8 +200,8 @@ function buildDom(container) {
     // Submit controls (submit button + strict checkbox)
     const submitControls = createSubmitControls({
         submitType: 'button',
+        disable: true,
     });
-    submitControls.submitButton.disabled = true;
     controls.appendChild(submitControls.element);
 
     container.appendChild(controls);
