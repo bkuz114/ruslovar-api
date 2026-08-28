@@ -1,0 +1,156 @@
+/* ==========================================================================
+   Ruslovar API Demo — Shared Components Stylesheet
+   ==========================================================================
+   Styles for UI components rendered by js/core/renderers.js and shared
+   across multiple views. Includes declension tables, metadata sections,
+   invariant badges, match tabs, raw JSON toggles, and error messages.
+
+   All values reference custom properties defined in base.css.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Declension table
+   -------------------------------------------------------------------------- */
+
+.declension-section {
+    margin-bottom: var(--space-md);
+}
+
+.declension-heading {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.declension-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--space-md);
+}
+
+.declension-table th,
+.declension-table td {
+    padding: var(--space-sm) var(--space-md);
+    text-align: left;
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.declension-table th {
+    font-weight: 600;
+    background-color: var(--color-bg);
+}
+
+.declension-table td:first-child {
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Metadata section
+   -------------------------------------------------------------------------- */
+
+.metadata-section {
+    margin-bottom: var(--space-md);
+}
+
+.match-root {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.invariant-badge {
+    display: inline-block;
+    padding: 2px var(--space-sm);
+    background-color: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    margin-left: var(--space-sm);
+}
+
+.metadata-list {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-xs);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Match tabs
+   -------------------------------------------------------------------------- */
+
+.match-tabs {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.match-tab {
+    padding: var(--space-xs) var(--space-md);
+    border: var(--border-width) solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    font-family: var(--font-family);
+}
+
+.match-tab:hover {
+    border-color: var(--color-primary);
+}
+
+.match-tab.active {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    border-color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Raw JSON toggle
+   -------------------------------------------------------------------------- */
+
+.raw-json {
+    margin-top: var(--space-md);
+}
+
+.raw-json summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
+.raw-json pre {
+    margin-top: var(--space-sm);
+    padding: var(--space-md);
+    background-color: var(--color-bg);
+    border-radius: var(--border-radius);
+    overflow-x: auto;
+    font-size: var(--font-size-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Error message
+   -------------------------------------------------------------------------- */
+
+.error-message {
+    padding: var(--space-md);
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+    border: var(--border-width) solid var(--color-error);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--space-md);
+}
+
+/* --------------------------------------------------------------------------
+   Utility: hidden state
+   -------------------------------------------------------------------------- */
+
+.hidden {
+    display: none;
+}

@@ -1,0 +1,179 @@
+/* ==========================================================================
+   Ruslovar API Demo — Base Stylesheet
+   ==========================================================================
+   Contains design tokens, CSS reset, typography, shell layout, header,
+   navigation, and language switcher styles.
+
+   All colors, spacing, typography, and border values are defined as
+   custom properties in :root. Component and view stylesheets should
+   reference these variables rather than raw values.
+   ========================================================================== */
+
+:root {
+    /* --------------------------------------------------------------------------
+       Colors
+       -------------------------------------------------------------------------- */
+    --color-bg: #f5f5f5;
+    --color-surface: #ffffff;
+    --color-text: #1a1a1a;
+    --color-text-muted: #666666;
+    --color-border: #cccccc;
+    --color-primary: #2c5aa0;
+    --color-primary-hover: #234a85;
+    --color-error: #b22222;
+    --color-error-bg: #fdf0f0;
+
+    /* --------------------------------------------------------------------------
+       Spacing
+       -------------------------------------------------------------------------- */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+
+    /* --------------------------------------------------------------------------
+       Typography
+       -------------------------------------------------------------------------- */
+    --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-size-base: 1rem;
+    --font-size-sm: 0.875rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+
+    /* --------------------------------------------------------------------------
+       Borders
+       -------------------------------------------------------------------------- */
+    --border-radius: 4px;
+    --border-width: 1px;
+}
+
+/* --------------------------------------------------------------------------
+   Reset
+   -------------------------------------------------------------------------- */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Body
+   -------------------------------------------------------------------------- */
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    padding: var(--space-md) var(--space-lg);
+    background-color: var(--color-surface);
+    border-bottom: var(--border-width) solid var(--color-border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.site-title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   View navigation
+   -------------------------------------------------------------------------- */
+
+.view-nav {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+/* --------------------------------------------------------------------------
+   View selection dropdown
+   -------------------------------------------------------------------------- */
+
+.view-select {
+    padding: var(--space-xs) var(--space-sm);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    font-family: var(--font-family);
+    cursor: pointer;
+}
+
+.view-select:hover {
+    border-color: var(--color-primary);
+}
+
+.view-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Language switcher
+   -------------------------------------------------------------------------- */
+
+.language-switcher {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.lang-button {
+    padding: var(--space-xs) var(--space-md);
+    border: var(--border-width) solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    font-family: var(--font-family);
+}
+
+.lang-button:hover {
+    border-color: var(--color-primary);
+}
+
+.lang-button.active {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    border-color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   View mount container
+   -------------------------------------------------------------------------- */
+
+.view-mount {
+    /* max width of main container */
+    max-width: 50vw;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-lg);
+}

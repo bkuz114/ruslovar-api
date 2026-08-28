@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page_title">Демонстрация склонений</title>
+
+    <!-- Shared stylesheets: base tokens/layout and shared components -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+
+    <!-- View-specific stylesheets are lazy-loaded by each view module
+         when the view is first mounted. This keeps initial page load
+         lean and avoids loading unused styles. -->
+</head>
+
+<body>
+    <header class="site-header">
+        <h1 class="site-title" data-i18n="page_title">Демонстрация склонений</h1>
+
+        <div class="header-controls">
+            <!-- Demo navigation is populated dynamically by js/app.js
+                 from registered views. -->
+            <nav id="view-nav" class="view-nav" aria-label="Выбор демо">
+                <!-- Populated by app.js -->
+            </nav>
+
+            <div class="language-switcher" role="group" aria-label="Выбор языка">
+                <button id="lang-ru" class="lang-button" type="button" aria-pressed="true">RU</button>
+                <button id="lang-en" class="lang-button" type="button" aria-pressed="false">EN</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="view-mount" class="view-mount">
+        <!-- The active view is mounted here by js/app.js. -->
+    </main>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>

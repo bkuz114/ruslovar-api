@@ -1,0 +1,202 @@
+/* ==========================================================================
+   Ruslovar API Demo — Batch Noun Lookup View Stylesheet
+   ==========================================================================
+   Styles specific to the batch noun lookup view (file input, category
+   sections, word details panels, status badges).
+
+   Shared component styles (declension tables, metadata, etc.) are in
+   css/components.css. All values reference custom properties defined
+   in css/base.css.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Batch controls
+   -------------------------------------------------------------------------- */
+
+.batch-controls {
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-xl);
+}
+
+.file-input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.file-format-hint {
+    margin: var(--space-xs) 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    cursor: pointer;
+}
+
+.submit-button {
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    font-family: var(--font-family);
+}
+
+.submit-button:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   File summary
+   -------------------------------------------------------------------------- */
+
+.file-summary {
+    padding: var(--space-md);
+    color: var(--color-text-muted);
+    text-align: center;
+    font-size: var(--font-size-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Results area
+   -------------------------------------------------------------------------- */
+
+.results-area {
+    margin-top: var(--space-lg);
+}
+
+.results-placeholder {
+    color: var(--color-text-muted);
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+/* --------------------------------------------------------------------------
+   Category sections
+   -------------------------------------------------------------------------- */
+
+.category-section {
+    margin-bottom: var(--space-xl);
+}
+
+.category-heading {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    border-bottom: var(--border-width) solid var(--color-border);
+    padding-bottom: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+/* --------------------------------------------------------------------------
+   Word details panels
+   -------------------------------------------------------------------------- */
+
+.word-details {
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--space-sm);
+}
+
+.word-details summary {
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.word-details summary:hover {
+    background-color: var(--color-bg);
+}
+
+/* --------------------------------------------------------------------------
+   Match badges (displays for words with >1 root match)
+   -------------------------------------------------------------------------- */
+
+.match-count {
+    color: var(--color-text-muted);
+    font-weight: 400;
+    margin-left: var(--space-xs);
+}
+
+/* --------------------------------------------------------------------------
+   Status badges
+   -------------------------------------------------------------------------- */
+
+.status-badge {
+    display: inline-block;
+    padding: 2px var(--space-sm);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.status-success {
+    background-color: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.status-error {
+    background-color: var(--color-error-bg);
+    border: var(--border-width) solid var(--color-error);
+    color: var(--color-error);
+}
+
+/* --------------------------------------------------------------------------
+   Match panels (inside word details)
+   -------------------------------------------------------------------------- */
+
+.matches-container {
+    padding: 0 var(--space-md) var(--space-md);
+}
+
+.match-container {
+    padding: var(--space-md) 0;
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.match-container:first-child {
+    border-top: none;
+}
+
+.match-label {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Word-level errors
+   -------------------------------------------------------------------------- */
+
+.word-error {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--border-radius);
+    margin: 0 var(--space-md) var(--space-md);
+}
