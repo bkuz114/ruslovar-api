@@ -17,12 +17,12 @@
  *   - Handle edge cases such as multiple plural sets and duplicate roots.
  *
  * Dependencies:
- *   - i18n.js (getSharedString)
+ *   - i18n.js (getString)
  *   - dom.js (createElement)
  */
 
 import {
-    getSharedString
+    getString
 } from './i18n.js';
 import {
     createElement
@@ -56,7 +56,7 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
     }
 
     // Set initial text content.
-    let headingText = getSharedString(i18nKey);
+    let headingText = getString(i18nKey);
     if (headingIndex !== null) {
         headingText = headingText.replace('{n}', headingIndex);
     }
@@ -67,7 +67,7 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
     const table = createElement('table', 'declension-table');
     const tbody = createElement('tbody');
 
-    const caseLabels = getSharedString('case_labels');
+    const caseLabels = getString('case_labels');
 
     // Iterate cases in a fixed, grammatical order.
     for (const [caseKey, caseLabel] of Object.entries(caseLabels)) {
@@ -116,7 +116,7 @@ export function createMetadataSection(match) {
         const badge = createElement(
             'span',
             'invariant-badge',
-            getSharedString('invariant_label')
+            getString('invariant_label')
         );
         badge.setAttribute('data-i18n', 'invariant_label');
         section.appendChild(badge);
@@ -128,13 +128,13 @@ export function createMetadataSection(match) {
     if (match.gender) {
         const item = createElement('span', 'metadata-item');
 
-        const label = createElement('span', '', getSharedString('gender_label'));
+        const label = createElement('span', '', getString('gender_label'));
         label.setAttribute('data-i18n', 'gender_label');
 
         const value = createElement(
             'span',
             '',
-            getSharedString(`gender_values.${match.gender}`) || match.gender
+            getString(`gender_values.${match.gender}`) || match.gender
         );
         value.setAttribute('data-i18n', `gender_values.${match.gender}`);
 
@@ -149,11 +149,11 @@ export function createMetadataSection(match) {
     if (match.animacy !== null && match.animacy !== undefined) {
         const item = createElement('span', 'metadata-item');
 
-        const label = createElement('span', '', getSharedString('animacy_label'));
+        const label = createElement('span', '', getString('animacy_label'));
         label.setAttribute('data-i18n', 'animacy_label');
 
         const animacyKey = match.animacy ? 'animacy_animate' : 'animacy_inanimate';
-        const value = createElement('span', '', getSharedString(animacyKey));
+        const value = createElement('span', '', getString(animacyKey));
         value.setAttribute('data-i18n', animacyKey);
 
         item.appendChild(label);
@@ -289,7 +289,7 @@ export function createMatchesContainer(result, {
         // In stacked layout, add a label when multiple matches exist.
         if (layout === 'stacked' && result.matches.length > 1) {
             const label = createElement('h3', 'match-label');
-            const labelText = getSharedString('match_label');
+            const labelText = getString('match_label');
             label.setAttribute('data-i18n', 'match_label');
             label.setAttribute('data-i18n-arg', index + 1);
             label.textContent = labelText.replace('{n}', index + 1);
@@ -324,7 +324,7 @@ export function createMatchesContainer(result, {
 export function createRawJsonToggle(data) {
     const details = createElement('details', 'raw-json');
 
-    const summary = createElement('summary', '', getSharedString('raw_json_heading'));
+    const summary = createElement('summary', '', getString('raw_json_heading'));
     summary.setAttribute('data-i18n', 'raw_json_heading');
 
     details.appendChild(summary);

@@ -178,47 +178,61 @@ export function restoreLanguagePreference() {
 }
 
 /**
- * Resolve a string from a specific view's strings.
+ * Resolve a localized string.
  *
- * @param {string} viewId - The view's unique ID.
- * @param {string} key - Dot-notation key (e.g., "word_label").
- * @param {string} [lang=currentLanguage] - Language code to look up.
- * @returns {string|undefined} The resolved string, or undefined if not found.
- */
-export function getString(viewId, key, lang = currentLanguage) {
-    const view = getViewById(viewId);
-
-    if (!view) {
-        console.error(`i18n.getString: View "${viewId}" is not registered`);
-        return undefined;
-    }
-
-    if (!view.strings || !view.strings[lang]) {
-        console.error(`i18n.getString: View "${viewId}" has no strings for language "${lang}"`);
-        return undefined;
-    }
-
-    const value = getNestedValue(view.strings[lang], key);
-
-    if (value === undefined) {
-        console.error(`i18n.getString: Key "${key}" not found in view "${viewId}" for language "${lang}"`);
-    }
-
-    return value;
-}
-
-/**
- * Resolve a string from the shared strings table.
+ * This is the single entry point for all string lookups. It handles
+ * both shared strings and view-specific strings.
+ *
+ * If a viewId is provided, the string is resolved against that view's
+ * strings (stored on the view descriptor in the view registry).
+ * Otherwise, the string is resolved against the shared strings table.
  *
  * @param {string} key - Dot-notation key (e.g., "case_labels.nominative").
- * @param {string} [lang=currentLanguage] - Language code to look up.
+ * @param {Object} [options] - Lookup options.
+ * @param {string} [options.viewId] - If provided, resolve against this
+ *     view's strings instead of shared strings.
+ * @param {string} [options.lang=currentLanguage] - Language code to look up.
  * @returns {string|undefined} The resolved string, or undefined if not found.
  */
-export function getSharedString(key, lang = currentLanguage) {
-    const value = getNestedValue(SHARED_STRINGS[lang], key);
+export function getString(key, {
+    viewId = null,
+    lang = currentLanguage
+} = {}) {
+    // Determine which string table to search. View-specific strings are
+    // stored on the view descriptor in the view registry; shared strings
+    // live in this module.
+    let stringTable;
+    let sourceLabel; // Used in error messages to identify the lookup source.
+
+    if (viewId) {
+        const view = getViewById(viewId);
+
+        if (!view) {
+            console.error(`i18n.getString: View "${viewId}" is not registered`);
+            return undefined;
+        }
+
+        if (!view.strings || !view.strings[lang]) {
+            console.error(
+                `i18n.getString: View "${viewId}" has no strings for language "${lang}"`
+            );
+            return undefined;
+        }
+
+        stringTable = view.strings[lang];
+        sourceLabel = `view "${viewId}"`;
+    } else {
+        stringTable = SHARED_STRINGS[lang];
+        sourceLabel = 'shared strings';
+    }
+
+    // Perform the nested key lookup once, regardless of source.
+    const value = getNestedValue(stringTable, key);
 
     if (value === undefined) {
-        console.error(`i18n.getSharedString: Key "${key}" not found in shared strings for language "${lang}"`);
+        console.error(
+            `i18n.getString: Key "${key}" not found in ${sourceLabel} for language "${lang}"`
+        );
     }
 
     return value;
@@ -246,7 +260,10 @@ export function applyLanguage(lang) {
 
         if (viewId) {
             // View-specific lookup first.
-            value = getString(viewId, key, lang);
+            value = getString(key, {
+                viewId: viewId,
+                lang: lang
+            });
             useSharedString = false;
 
             if (value === undefined) {
@@ -260,7 +277,9 @@ export function applyLanguage(lang) {
 
         if (useSharedString) {
             // Shared lookup only.
-            value = getSharedString(key, lang);
+            value = getString(key, {
+                lang: lang
+            });
         }
 
         if (value !== undefined) {
@@ -286,15 +305,22 @@ export function applyLanguage(lang) {
         let value;
 
         if (viewId) {
-            value = getString(viewId, key, lang);
+            value = getString(key, {
+                viewId: viewId,
+                lang: lang
+            });
             if (value === undefined) {
                 console.warn(
                     `i18n.applyLanguage: Placeholder key "${key}" not found in view "${viewId}", falling back to shared strings`
                 );
-                value = getSharedString(key, lang);
+                value = getString(key, {
+                    lang: lang
+                });
             }
         } else {
-            value = getSharedString(key, lang);
+            value = getString(key, {
+                lang: lang
+            });
         }
 
         if (value !== undefined) {

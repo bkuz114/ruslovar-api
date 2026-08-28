@@ -160,7 +160,7 @@ function renderNavigation() {
     views.forEach((view) => {
         const option = document.createElement('option');
         option.value = view.id;
-        option.textContent = getString(view.id, view.labelKey);
+        option.textContent = getString(view.labelKey, {viewId: view.id});
         select.appendChild(option);
     });
 
@@ -188,7 +188,7 @@ function updateNavigationLabels() {
 
     options.forEach((option, index) => {
         if (views[index]) {
-            option.textContent = getString(views[index].id, views[index].labelKey);
+            option.textContent = getString(views[index].labelKey, {viewId: views[index].id});
         }
     });
 }

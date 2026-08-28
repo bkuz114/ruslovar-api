@@ -28,7 +28,7 @@
  * restructuring the view.
  *
  * Dependencies:
- *   - core/i18n.js (getString, getSharedString)
+ *   - core/i18n.js (getString)
  *   - core/api.js (fetchNounBatch)
  *   - core/dom.js (createElement, clearElement, loadStylesheet)
  *   - core/renderers.js (declension tables, metadata)
@@ -39,7 +39,6 @@
 
 import {
     getString,
-    getSharedString
 } from '../core/i18n.js';
 import {
     fetchNounBatch
@@ -163,12 +162,16 @@ function buildDom(container) {
 
     // --- Batch controls ------------------------------------------------
     const controls = createElement('section', 'batch-controls');
-    controls.setAttribute('aria-label', getString(VIEW_ID, 'file_label'));
+    controls.setAttribute('aria-label', getString('file_label', {
+        viewId: VIEW_ID
+    }));
 
     // File input group.
     const fileGroup = createElement('div', 'file-input-group');
 
-    const fileLabel = createElement('label', '', getString(VIEW_ID, 'file_label'));
+    const fileLabel = createElement('label', '', getString('file_label', {
+        viewId: VIEW_ID
+    }));
     fileLabel.setAttribute('for', 'file-input');
     fileLabel.setAttribute('data-i18n', 'file_label');
     fileLabel.setAttribute('data-i18n-view', VIEW_ID);
@@ -181,7 +184,9 @@ function buildDom(container) {
     const formatHint = createElement(
         'p',
         'file-format-hint',
-        getString(VIEW_ID, 'file_format_hint')
+        getString('file_format_hint', {
+            viewId: VIEW_ID
+        })
     );
     formatHint.setAttribute('data-i18n', 'file_format_hint');
     formatHint.setAttribute('data-i18n-view', VIEW_ID);
@@ -201,7 +206,7 @@ function buildDom(container) {
     strictCheckbox.id = 'strict-mode';
     strictCheckbox.name = 'strict';
 
-    const strictText = createElement('span', '', getSharedString('strict_label'));
+    const strictText = createElement('span', '', getString('strict_label'));
     strictText.setAttribute('data-i18n', 'strict_label');
 
     strictLabel.appendChild(strictCheckbox);
@@ -213,7 +218,7 @@ function buildDom(container) {
     const submitButton = createElement(
         'button',
         'submit-button',
-        getSharedString('submit_button')
+        getString('submit_button')
     );
     submitButton.type = 'button';
     submitButton.id = 'submit-button';
@@ -231,7 +236,9 @@ function buildDom(container) {
     const placeholder = createElement(
         'p',
         'results-placeholder',
-        getString(VIEW_ID, 'results_placeholder')
+        getString('results_placeholder', {
+            viewId: VIEW_ID
+        })
     );
     placeholder.id = 'results-placeholder';
     placeholder.setAttribute('data-i18n', 'results_placeholder');
@@ -331,7 +338,9 @@ function parseWordFile(text) {
         // First word appears before any category header.
         if (!currentCategory) {
             currentCategory = {
-                name: getString(VIEW_ID, 'uncategorized'),
+                name: getString('uncategorized', {
+                    viewId: VIEW_ID
+                }),
                 words: [],
             };
             categories.push(currentCategory);
@@ -360,14 +369,18 @@ function showFileSummary(categories, totalWords) {
         const errorDiv = createElement(
             'div',
             'error-message',
-            getString(VIEW_ID, 'error_empty_file')
+            getString('error_empty_file', {
+                viewId: VIEW_ID
+            })
         );
         errorDiv.setAttribute('role', 'alert');
         elements.resultsArea.appendChild(errorDiv);
         return;
     }
 
-    const summaryText = getString(VIEW_ID, 'file_summary')
+    const summaryText = getString('file_summary', {
+            viewId: VIEW_ID
+        })
         .replace('{categories}', categories.length)
         .replace('{words}', totalWords);
 
@@ -384,7 +397,9 @@ function showFileSummary(categories, totalWords) {
  */
 async function handleBatchSubmit() {
     if (!selectedFileText || !parsedCategories) {
-        showError(getString(VIEW_ID, 'error_no_file'));
+        showError(getString('error_no_file', {
+            viewId: VIEW_ID
+        }));
         return;
     }
 
@@ -392,7 +407,9 @@ async function handleBatchSubmit() {
     const allWords = parsedCategories.flatMap((category) => category.words);
 
     if (allWords.length === 0) {
-        showError(getString(VIEW_ID, 'error_empty_file'));
+        showError(getString('error_empty_file', {
+            viewId: VIEW_ID
+        }));
         return;
     }
 
@@ -417,10 +434,10 @@ async function handleBatchSubmit() {
  */
 function getErrorMessage(error) {
     if (error instanceof ApiError) {
-        return getSharedString('error_unknown');
+        return getString('error_unknown');
     }
 
-    return getSharedString('error_network');
+    return getString('error_network');
 }
 
 /**
@@ -506,11 +523,11 @@ function createWordDetails(word, item) {
 
     if (success) {
         status.setAttribute('data-i18n', 'status_success');
-        status.textContent = getSharedString('status_success');
+        status.textContent = getString('status_success');
         status.classList.add('status-success');
     } else {
         status.setAttribute('data-i18n', 'status_error');
-        status.textContent = getSharedString('status_error');
+        status.textContent = getString('status_error');
         status.classList.add('status-error');
     }
 
@@ -528,7 +545,7 @@ function createWordDetails(word, item) {
         const errorDiv = createElement(
             'div',
             'word-error',
-            item.error || getSharedString('error_unknown')
+            item.error || getString('error_unknown')
         );
         details.appendChild(errorDiv);
     } else {
@@ -537,7 +554,7 @@ function createWordDetails(word, item) {
         const errorDiv = createElement(
             'div',
             'word-error',
-            getSharedString('error_unknown')
+            getString('error_unknown')
         );
         details.appendChild(errorDiv);
     }

@@ -14,7 +14,7 @@
  * are not lost when the language changes.
  *
  * Dependencies:
- *   - core/i18n.js (getString, getSharedString)
+ *   - core/i18n.js (getString)
  *   - core/api.js (fetchNounDeclensions)
  *   - core/dom.js (createElement, clearElement, loadStylesheet)
  *   - core/renderers.js (declension tables, metadata, tabs, raw JSON)
@@ -25,7 +25,6 @@
 
 import {
     getString,
-    getSharedString
 } from '../core/i18n.js';
 import {
     fetchNounDeclensions
@@ -137,7 +136,9 @@ function buildDom(container) {
     // Word input field.
     const wordGroup = createElement('div', 'form-group');
 
-    const wordLabel = createElement('label', '', getString(VIEW_ID, 'word_label'));
+    const wordLabel = createElement('label', '', getString('word_label', {
+        viewId: VIEW_ID
+    }));
     wordLabel.setAttribute('for', 'word-input');
     wordLabel.setAttribute('data-i18n', 'word_label');
     wordLabel.setAttribute('data-i18n-view', VIEW_ID);
@@ -146,7 +147,9 @@ function buildDom(container) {
     wordInput.type = 'text';
     wordInput.id = 'word-input';
     wordInput.name = 'word';
-    wordInput.placeholder = getString(VIEW_ID, 'word_placeholder');
+    wordInput.placeholder = getString('word_placeholder', {
+        viewId: VIEW_ID
+    });
     wordInput.setAttribute('data-i18n-placeholder', 'word_placeholder');
     wordInput.setAttribute('data-i18n-view', VIEW_ID);
     wordInput.autocomplete = 'off';
@@ -164,7 +167,7 @@ function buildDom(container) {
     strictCheckbox.id = 'strict-mode';
     strictCheckbox.name = 'strict';
 
-    const strictLabel = createElement('label', '', getSharedString('strict_label'));
+    const strictLabel = createElement('label', '', getString('strict_label'));
     strictLabel.setAttribute('for', 'strict-mode');
     strictLabel.setAttribute('data-i18n', 'strict_label');
 
@@ -176,7 +179,7 @@ function buildDom(container) {
     const submitButton = createElement(
         'button',
         'submit-button',
-        getSharedString('submit_button')
+        getString('submit_button')
     );
     submitButton.type = 'submit';
     submitButton.setAttribute('data-i18n', 'submit_button');
@@ -192,7 +195,9 @@ function buildDom(container) {
     const placeholder = createElement(
         'p',
         'results-placeholder',
-        getString(VIEW_ID, 'results_placeholder')
+        getString('results_placeholder', {
+            viewId: VIEW_ID
+        })
     );
     placeholder.id = 'results-placeholder';
     placeholder.setAttribute('data-i18n', 'results_placeholder');
@@ -254,17 +259,21 @@ async function handleFormSubmit(event) {
 function getErrorMessage(error) {
     if (error instanceof ApiError) {
         if (error.status === 404 && error.message.includes('dictionary form')) {
-            return getString(VIEW_ID, 'error_strict');
+            return getString('error_strict', {
+                viewId: VIEW_ID
+            });
         }
 
         if (error.status === 404) {
-            return getString(VIEW_ID, 'error_not_found');
+            return getString('error_not_found', {
+                viewId: VIEW_ID
+            });
         }
 
-        return getSharedString('error_unknown');
+        return getString('error_unknown');
     }
 
-    return getSharedString('error_network');
+    return getString('error_network');
 }
 
 /**
@@ -311,7 +320,9 @@ function clearResults() {
     const placeholder = createElement(
         'p',
         'results-placeholder',
-        getString(VIEW_ID, 'results_placeholder')
+        getString('results_placeholder', {
+            viewId: VIEW_ID
+        })
     );
     placeholder.id = 'results-placeholder';
     placeholder.setAttribute('data-i18n', 'results_placeholder');
