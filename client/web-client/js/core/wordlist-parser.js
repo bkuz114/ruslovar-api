@@ -69,32 +69,79 @@ function findFirstNonBlankLineIndex(lines) {
 /**
  * Parse a word list file into a structured object.
  *
+ * This is the main entry point. It orchestrates two parsing steps:
+ *   1. parseFrontmatterBlock — optional YAML-style metadata block.
+ *   2. parseCategories — explicit heading-based categories.
+ *
  * @param {string} text - Raw file contents.
  * @returns {WordListDocument} Parsed document with metadata and categories.
  * @throws {Error} If the input is malformed.
  */
 export function parseWordList(text) {
     const lines = text.split(/\r?\n/);
-    // find lin number of first non-blank line instead
-    // of trimming so error messages can print line numbers
-    const firstNonBlankIndex = findFirstNonBlankLineIndex(lines);
 
-    // Parse optional frontmatter if the first line is a delimiter.
-    let metadata = {};
-    let categoryLinesStartIndex = firstNonBlankIndex;
+    // Parse optional frontmatter
+    const frontmatterResult = parseFrontmatterBlock(lines);
+    const metadata = frontmatterResult.metadata;
+    const index = frontmatterResult.nextIndex; // EOF or end of yaml
 
-    if (firstNonBlankIndex < lines.length && lines[firstNonBlankIndex].trim() === FRONTMATTER_DELIMITER) {
-        const frontmatterResult = parseFrontmatter(lines, firstNonBlankIndex);
-        metadata = frontmatterResult.metadata;
-        categoryLinesStartIndex = frontmatterResult.nextIndex;
-    }
-
-    const categories = parseCategories(lines, categoryLinesStartIndex);
+    // Parse categorized words
+    const categories = parseCategories(lines, index);
 
     return {
         metadata,
         categories,
     };
+}
+
+/**
+ * Detect and parse an optional YAML frontmatter block.
+ *
+ * Scans from the beginning of the file for an opening delimiter. If
+ * found, delegates to parseFrontmatter to read the key-value pairs.
+ * If no frontmatter is present, returns empty metadata and the index
+ * of the first non-blank line.
+ *
+ * Expected frontmatter format:
+ *
+ *     ---
+ *     title: My batch
+ *     description: Practice words
+ *     ---
+ *
+ * @param {string[]} lines - All file lines.
+ * @returns {{metadata: Object, nextIndex: number}} Parsed metadata (or
+ *     empty object if no frontmatter) and the index of the first line
+ *     after the frontmatter block (or first non-blank line if none).
+ * @throws {Error} If the closing delimiter is missing, or if a
+ *     key-value pair is malformed.
+ */
+function parseFrontmatterBlock(lines) {
+    let metadata = {};
+    // line that starts next block of file
+    // (immediately following end of YAML frontmatter,
+    // or first non-blank line if no YAML frontmatter.)
+    let endLine = 0;
+
+    // find line number of first non-blank line instead
+    // of trimming so error messages can print line numbers
+    const firstNonBlankIndex = findFirstNonBlankLineIndex(lines);
+
+    if (lines && firstNonBlankIndex < lines.length && lines[firstNonBlankIndex].trim() === FRONTMATTER_DELIMITER) {
+        // YAML frontmatter detected.
+        const metadataResult = parseFrontmatter(lines, firstNonBlankIndex);
+        metadata = metadataResult.metadata;
+        endLine = metadataResult.nextIndex; // line following yaml close
+    } else {
+        // first non-blank line was NOT frontmatter delim
+        // so there is no YAML frontmatter.
+        endLine = firstNonBlankIndex;
+    }
+
+    return {
+        metadata: metadata,
+        nextIndex: endLine
+    }
 }
 
 /**
