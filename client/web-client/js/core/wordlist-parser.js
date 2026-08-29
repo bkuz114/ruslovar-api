@@ -69,9 +69,10 @@ function findFirstNonBlankLineIndex(lines) {
 /**
  * Parse a word list file into a structured object.
  *
- * This is the main entry point. It orchestrates two parsing steps:
+ * This is the main entry point. It orchestrates three parsing steps:
  *   1. parseFrontmatterBlock — optional YAML-style metadata block.
- *   2. parseCategories — explicit heading-based categories.
+ *   2. parseImplicitCategory — leading words before any heading.
+ *   3. parseCategories — explicit heading-based categories.
  *
  * @param {string} text - Raw file contents.
  * @returns {WordListDocument} Parsed document with metadata and categories.
@@ -83,14 +84,24 @@ export function parseWordList(text) {
     // Parse optional frontmatter
     const frontmatterResult = parseFrontmatterBlock(lines);
     const metadata = frontmatterResult.metadata;
-    const index = frontmatterResult.nextIndex; // EOF or end of yaml
+    let index = frontmatterResult.nextIndex; // EOF or end of yaml
+
+    // Parse non-categorized words
+    const uncategorizedResult = parseImplicitCategory(lines, index);
+    const implicitCategory = uncategorizedResult.category;
+    index = uncategorizedResult.nextIndex; // EOF or end of uncategorized
 
     // Parse categorized words
     const categories = parseCategories(lines, index);
 
+    // If an implicit category was found before the first heading, prepend it
+    // to the explicit categories. Otherwise, just use the explicit list.
+    const allCategories = implicitCategory ? [implicitCategory, ...categories] :
+        categories;
+
     return {
-        metadata,
-        categories,
+        metadata: metadata,
+        categories: allCategories,
     };
 }
 
@@ -212,6 +223,79 @@ function parseFrontmatter(lines, startIndex) {
 }
 
 /**
+ * Parse leading words that appear before any category heading.
+ *
+ * The parser supports category-less word lists. Words at the top of the
+ * file, before the first '#' heading, are grouped into an implicit
+ * category with an empty name. This category is later merged with the
+ * explicit categories returned by parseCategories.
+ *
+ * Example input:
+ *
+ *     удочка
+ *     леска
+ *
+ *     # Рыбы
+ *     щука
+ *
+ * Returns:
+ *
+ *     {
+ *         category: {
+ *             name: "",
+ *             level: 1,
+ *             words: ["удочка", "леска"],
+ *             subcategories: []
+ *         },
+ *         nextIndex: 4  // points to the line containing "# Рыбы"
+ *     }
+ *
+ * If the first non-blank line is a heading, or if there are no words
+ * before the first heading, the category is null and nextIndex is the
+ * same as startIndex.
+ *
+ * @param {string[]} lines - All file lines.
+ * @param {number} startIndex - Index of the first line to parse (after
+ *     frontmatter, if any).
+ * @returns {{category: CategoryNode|null, nextIndex: number}} The implicit
+ *     category (or null if none), and the index of the first line after
+ *     the implicit word block.
+ * @throws {Error} If a malformed heading is encountered while scanning.
+ */
+function parseImplicitCategory(lines, startIndex) {
+    // initialize an empty category node to represent
+    // the implicit category (words with no category defined).
+    // only create it if non-categorized nodes found
+    // (that's how caller will know if such words were found)
+    let category = null;
+    let index = startIndex;
+
+    for (index = startIndex; index < lines.length; index++) {
+        const trimmed = lines[index].trim();
+
+        // Stop at the first category heading. The heading itself is not
+        // consumed here; parseCategories will handle it.
+        if (trimmed.startsWith('#')) {
+            break;
+        }
+
+        // Skip blank lines but continue scanning. We don't want blank
+        // lines to terminate the implicit block prematurely.
+        if (trimmed) {
+            if (!category) {
+                category = createCategoryNode('', 1);
+            }
+            category.words.push(trimmed);
+        }
+    }
+
+    return {
+        category,
+        nextIndex: index,
+    };
+}
+
+/**
  * Parse category headings and words into a hierarchical tree.
  *
  * @param {string[]} lines - All file lines.
@@ -302,8 +386,9 @@ function parseCategories(lines, startIndex) {
         // Word line.
         if (stack.length === 0) {
             throw new Error(
-                `Line ${i + 1}: Word "${trimmed}" appears before any category heading. ` +
-                `Words must be placed under a heading starting with '#'.`
+                `parseCategories: internal error — encountered word "${trimmed}" at line ${i + 1} ` +
+                `before any active category detected. parseCategories should only be called at EOF ` +
+                `or at a line starting with '#'.`
             );
         }
 
