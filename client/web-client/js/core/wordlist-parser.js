@@ -175,8 +175,37 @@ function parseFrontmatter(lines, startIndex) {
  *     heading levels are inconsistent.
  */
 function parseCategories(lines, startIndex) {
+    /**
+     * Top-level categories in the parsed document.
+     *
+     * Each entry is a CategoryNode with `name`, `level`, `words`, and
+     * `subcategories`. Words and subcategories are nested within their
+     * respective parent category.
+     *
+     * @type {Array<Object>}
+     */
     const rootCategories = [];
+
+    /**
+     * Stack of category nodes representing the current nesting path.
+     *
+     * The last element is the category that new words or subcategories
+     * should be added to. When a heading appears, the stack is adjusted
+     * so that the correct parent is on top.
+     *
+     * Example for input:
+     *   # A
+     *   ## B
+     *   ### C
+     *   word
+     *
+     * After processing "### C", the stack is [A, B, C]. "word" is added
+     * to C.
+     *
+     * @type {Array<Object>}
+     */
     const stack = [];
+
     for (let i = startIndex; i < lines.length; i++) {
         const line = lines[i];
         const trimmed = line.trim();
