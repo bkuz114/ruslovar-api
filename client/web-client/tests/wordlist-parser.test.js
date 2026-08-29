@@ -119,19 +119,82 @@ title: Test
     assert(threw, 'should throw on missing closing delimiter');
 }
 
-function testWordBeforeHeading() {
-    const input = `кролик
-# Nouns
+/**
+ * Test: words without any heading produce a single implicit category.
+ *
+ * Input:
+ *     удочка
+ *     леска
+ *
+ * Expected: one category with empty name containing both words.
+ */
+function testImplicitCategoryOnly() {
+    const input = `удочка
+леска
 `;
 
-    let threw = false;
-    try {
-        parseWordList(input);
-    } catch (e) {
-        threw = true;
-    }
+    const result = parseWordList(input);
 
-    assert(threw, 'should throw on word before heading');
+    assert(result.categories.length === 1, 'should have one category');
+    assert(result.categories[0].name === '', 'implicit category name should be empty');
+    assert(result.categories[0].level === 1, 'implicit category level should be 1');
+    assert(result.categories[0].words.length === 2, 'should have two words');
+    assert(result.categories[0].words[0] === 'удочка', 'first word should be удочка');
+    assert(result.categories[0].words[1] === 'леска', 'second word should be леска');
+    assert(result.categories[0].subcategories.length === 0, 'should have no subcategories');
+}
+
+/**
+ * Test: implicit category (words before any heading) coexists with
+ * explicit categories.
+ *
+ * Input:
+ *     удочка
+ *     леска
+ *
+ *     # Рыбы
+ *     щука
+ *
+ * Expected: two top-level categories. The first has an empty name
+ * (implicit). The second is named "Рыбы".
+ */
+function testImplicitCategoryWithExplicitCategories() {
+    const input = `удочка
+леска
+
+# Рыбы
+щука
+`;
+
+    const result = parseWordList(input);
+
+    assert(result.categories.length === 2, 'should have two top-level categories');
+    assert(result.categories[0].name === '', 'first category should be implicit');
+    assert(result.categories[0].words.length === 2, 'implicit should have two words');
+    assert(result.categories[1].name === 'Рыбы', 'second category should be Рыбы');
+    assert(result.categories[1].words.length === 1, 'Рыбы should have one word');
+}
+
+/**
+ * Test: explicit category headings only (no implicit category).
+ *
+ * Input:
+ *     # Рыбы
+ *     щука
+ *
+ * Expected: one category named "Рыбы" with one word.
+ */
+function testExplicitCategoriesOnly() {
+    const input = `# Рыбы
+щука
+`;
+
+    const result = parseWordList(input);
+
+    assert(result.categories.length === 1, 'should have one category');
+    assert(result.categories[0].name === 'Рыбы', 'category should be Рыбы');
+    assert(result.categories[0].words.length === 1, 'Рыбы should have one word');
+    assert(result.categories[0].words[0] === 'щука', 'word should be щука');
 }
 
 function testNestedHeadingWithoutParent() {
@@ -187,9 +250,11 @@ runTest('testEmptyFile', testEmptyFile);
 runTest('testWhitespaceOnlyFile', testWhitespaceOnlyFile);
 runTest('testLeadingBlankLinesBeforeFrontmatter', testLeadingBlankLinesBeforeFrontmatter);
 runTest('testMissingClosingFrontmatterDelimiter', testMissingClosingFrontmatterDelimiter);
-runTest('testWordBeforeHeading', testWordBeforeHeading);
 runTest('testNestedHeadingWithoutParent', testNestedHeadingWithoutParent);
 runTest('testMalformedFrontmatterEntry', testMalformedFrontmatterEntry);
+runTest('testImplicitCategoryOnly', testImplicitCategoryOnly);
+runTest('testImplicitCategoryWithExplicitCategories', testImplicitCategoryWithExplicitCategories);
+runTest('testExplicitCategoriesOnly', testExplicitCategoriesOnly);
 
 if (!process.exitCode) {
     console.log('All tests passed');
