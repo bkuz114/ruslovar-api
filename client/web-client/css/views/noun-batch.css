@@ -117,6 +117,24 @@
 }
 
 /* --------------------------------------------------------------------------
+   Empty categories
+   -------------------------------------------------------------------------- */
+
+.category-empty {
+    margin-bottom: var(--space-md);
+}
+
+.category-empty-heading {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    font-style: italic;
+    color: var(--color-text-muted);
+    border-bottom: var(--border-width) solid var(--color-border);
+    padding-bottom: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+/* --------------------------------------------------------------------------
    Word details panels
    -------------------------------------------------------------------------- */
 

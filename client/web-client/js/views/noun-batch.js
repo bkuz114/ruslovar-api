@@ -456,9 +456,12 @@ function renderBatchResults(categories, metadata, results) {
         if (category.name === '') {
             // Words before any category header: render directly without a heading.
             elements.resultsArea.appendChild(createUncategorizedSection(category, resultMap));
-        } else {
+        } else if (category.words.length > 0) {
             // Words within categories: render into collapsible sections with headings
             elements.resultsArea.appendChild(createCategorySection(category, resultMap));
+        } else {
+            // Categories with no words beneath them
+            elements.resultsArea.appendChild(createEmptyCategory(category));
         }
     });
 }
@@ -598,6 +601,40 @@ function createUncategorizedSection(category, resultMap) {
 
     const container = createElement('div', 'uncategorized-section');
     appendWordDetails(container, category, resultMap);
+    return container;
+}
+
+/**
+ * Create a static heading for a category with no words.
+ *
+ * Empty categories have a name but no words to display. They are
+ * rendered as plain headings without collapse/expand behavior, an
+ * arrow, or hover affordance. This communicates that the category
+ * exists but contains no results.
+ *
+ * @param {{name: string, words: string[]}} category - Empty category
+ *     data. The words array should be empty.
+ * @returns {HTMLElement} The empty category element (a <div>).
+ * @throws {TypeError} If category is invalid.
+ */
+function createEmptyCategory(category) {
+    if (!category || typeof category !== 'object') {
+        throw new TypeError('createEmptyCategory: category must be an object');
+    }
+
+    if (typeof category.name !== 'string') {
+        throw new TypeError('createEmptyCategory: category.name must be a string');
+    }
+
+    if (!Array.isArray(category.words)) {
+        throw new TypeError('createEmptyCategory: category.words must be an array');
+    }
+
+    const container = createElement('div', 'category-empty');
+
+    const heading = createElement('h2', 'category-empty-heading', category.name);
+    container.appendChild(heading);
+
     return container;
 }
 
