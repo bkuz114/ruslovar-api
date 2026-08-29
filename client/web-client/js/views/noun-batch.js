@@ -453,8 +453,13 @@ function renderBatchResults(categories, metadata, results) {
     });
 
     categories.forEach((category) => {
-        const section = createCategorySection(category, resultMap);
-        elements.resultsArea.appendChild(section);
+        if (category.name === '') {
+            // Words before any category header: render directly without a heading.
+            elements.resultsArea.appendChild(createUncategorizedSection(category, resultMap));
+        } else {
+            // Words within categories: render into collapsible sections with headings
+            elements.resultsArea.appendChild(createCategorySection(category, resultMap));
+        }
     });
 }
 
@@ -559,6 +564,41 @@ function createCategorySection(category, resultMap) {
     appendWordDetails(details, category, resultMap);
 
     return details;
+}
+
+/**
+ * Create an uncategorized section for words without a category heading.
+ *
+ * The implicit category has an empty name. Instead of rendering a
+ * collapsible section with a blank heading, the words are placed in a
+ * plain container and always visible.
+ *
+ * @param {{name: string, words: string[]}} category - Implicit category
+ *     data. The name should be an empty string.
+ * @param {Map<string, Object>} resultMap - Map of word to API result item.
+ * @returns {HTMLElement} The uncategorized section element (a <div>).
+ * @throws {TypeError} If category or resultMap is invalid.
+ */
+function createUncategorizedSection(category, resultMap) {
+    if (!category || typeof category !== 'object') {
+        throw new TypeError('createUncategorizedSection: category must be an object');
+    }
+
+    if (typeof category.name !== 'string') {
+        throw new TypeError('createUncategorizedSection: category.name must be a string');
+    }
+
+    if (!Array.isArray(category.words)) {
+        throw new TypeError('createUncategorizedSection: category.words must be an array');
+    }
+
+    if (!(resultMap instanceof Map)) {
+        throw new TypeError('createUncategorizedSection: resultMap must be a Map');
+    }
+
+    const container = createElement('div', 'uncategorized-section');
+    appendWordDetails(container, category, resultMap);
+    return container;
 }
 
 /**
