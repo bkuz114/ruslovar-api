@@ -49,6 +49,9 @@ import {
     loadStylesheet
 } from '../core/dom.js';
 import {
+    parseWordList
+} from '../core/wordlist-parser.js';
+import {
     createMatchesContainer,
     createSubmitControls,
 } from '../core/renderers.js';
@@ -261,7 +264,8 @@ function handleFileSelection(event) {
 
     reader.onload = (loadEvent) => {
         selectedFileText = loadEvent.target.result;
-        parsedCategories = parseWordFile(selectedFileText);
+        const parsed = parseWordList(selectedFileText);
+        parsedCategories = flattenCategories(parsed.categories);
 
         // Enable the submit button only if there are words to look up.
         const totalWords = parsedCategories.reduce(
@@ -274,59 +278,6 @@ function handleFileSelection(event) {
     };
 
     reader.readAsText(file);
-}
-
-/**
- * Parse a plain text file of words into categories.
- *
- * Expected format:
- *   - One word per line.
- *   - Lines starting with # define category names.
- *   - Blank lines are ignored.
- *   - Words before the first category header are grouped under the
- *     localized "Uncategorized" label.
- *
- * @param {string} text - Raw file contents.
- * @returns {Array<{name: string, words: string[]}>} Parsed categories.
- */
-function parseWordFile(text) {
-    const categories = [];
-    let currentCategory = null;
-
-    const lines = text.split(/\r?\n/);
-
-    for (const line of lines) {
-        const trimmed = line.trim();
-
-        // Skip blank lines.
-        if (!trimmed) continue;
-
-        // Category header.
-        if (trimmed.startsWith('#')) {
-            const name = trimmed.slice(1).trim();
-            currentCategory = {
-                name,
-                words: []
-            };
-            categories.push(currentCategory);
-            continue;
-        }
-
-        // First word appears before any category header.
-        if (!currentCategory) {
-            currentCategory = {
-                name: getString('uncategorized', {
-                    viewId: VIEW_ID
-                }),
-                words: [],
-            };
-            categories.push(currentCategory);
-        }
-
-        currentCategory.words.push(trimmed);
-    }
-
-    return categories;
 }
 
 /**
@@ -415,6 +366,32 @@ function getErrorMessage(error) {
     }
 
     return getString('error_network');
+}
+
+/**
+ * Flatten a category tree into a flat list.
+ *
+ * The parser returns a nested category structure. The existing batch
+ * view renderer expects a flat list of categories. This function walks
+ * the tree and returns an array of { name, words } objects, preserving
+ * the order of appearance.
+ *
+ * @param {Array<Object>} categories - Category nodes from the parser.
+ * @returns {Array<{name: string, words: string[]}>} Flat category list.
+ */
+function flattenCategories(categories) {
+    const flat = [];
+
+    function visit(category) {
+        flat.push({
+            name: category.name,
+            words: category.words
+        });
+        category.subcategories.forEach(visit);
+    }
+
+    categories.forEach(visit);
+    return flat;
 }
 
 /**
