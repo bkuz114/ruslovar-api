@@ -52,6 +52,36 @@
 }
 
 /* --------------------------------------------------------------------------
+   Metadata display
+   -------------------------------------------------------------------------- */
+
+.metadata-display {
+    background-color: var(--color-metadata-bg);
+    border: var(--border-width) solid var(--color-metadata-border);
+    border-radius: var(--border-radius);
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.metadata-item {
+    display: flex;
+    gap: var(--space-sm);
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+}
+
+.metadata-key {
+    color: var(--color-metadata-key);
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.metadata-value {
+    color: var(--color-metadata-value);
+    font-weight: 400;
+}
+
+/* --------------------------------------------------------------------------
    Results area
    -------------------------------------------------------------------------- */
 

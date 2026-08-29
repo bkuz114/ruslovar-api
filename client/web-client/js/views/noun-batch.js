@@ -106,13 +106,22 @@ const VIEW_STRINGS = {
 let elements = {};
 
 /**
- * Stores the parsed categories from the most recent file selection.
- * Retained so the submit handler can use the already-parsed data
- * without re-reading the file.
+ * Stores the parsed word list document from the most recent file
+ * selection. Retained so the submit handler can use the already-parsed
+ * data without re-reading the file.
  *
- * @type {Array<{name: string, words: string[]}>|null}
+ * This is set to the object returned by parseWordList(), with one
+ * modification: the categories tree is flattened into a flat list.
+ * Metadata is preserved as parsed.
+ *
+ * The resulting object has two keys:
+ *   - metadata: {Object} Frontmatter key-value pairs.
+ *   - categories: {Array<{name: string, words: string[]}>} Flat list
+ *     of categories.
+ *
+ * @type {Object|null}
  */
-let parsedCategories = null;
+let parsedDocument = null;
 
 /**
  * Stores the raw text content of the selected file.
@@ -151,7 +160,7 @@ registerView({
      */
     unmount() {
         elements = {};
-        parsedCategories = null;
+        parsedDocument = null;
         selectedFileText = null;
     },
 });
@@ -265,7 +274,13 @@ function handleFileSelection(event) {
     reader.onload = (loadEvent) => {
         selectedFileText = loadEvent.target.result;
         const parsed = parseWordList(selectedFileText);
-        parsedCategories = flattenCategories(parsed.categories);
+        // Flatten the category tree once after parsing. The rest of the
+        // view expects a flat list of categories; normalizing here avoids
+        // repeated flattening at each call site.
+        parsed.categories = flattenCategories(parsed.categories);
+        // set global
+        parsedDocument = parsed;
+        const parsedCategories = parsed.categories;
 
         // Enable the submit button only if there are words to look up.
         const totalWords = parsedCategories.reduce(
@@ -324,7 +339,7 @@ function showFileSummary(categories, totalWords) {
  * by category.
  */
 async function handleBatchSubmit() {
-    if (!selectedFileText || !parsedCategories) {
+    if (!selectedFileText || !parsedDocument) {
         showError(getString('error_no_file', {
             viewId: VIEW_ID
         }));
@@ -332,7 +347,7 @@ async function handleBatchSubmit() {
     }
 
     // Flatten category structure into one word list for the API request.
-    const allWords = parsedCategories.flatMap((category) => category.words);
+    const allWords = parsedDocument.categories.flatMap((category) => category.words);
 
     if (allWords.length === 0) {
         showError(getString('error_empty_file', {
@@ -345,7 +360,7 @@ async function handleBatchSubmit() {
 
     try {
         const data = await fetchNounBatch(allWords, elements.submitControls.isStrictMode());
-        renderBatchResults(parsedCategories, data.results);
+        renderBatchResults(parsedDocument.categories, parsedDocument.metadata, data.results);
     } catch (error) {
         console.error('Batch request failed:', error);
         showError(getErrorMessage(error));
@@ -397,15 +412,39 @@ function flattenCategories(categories) {
 /**
  * Render batch results grouped by category.
  *
- * Uses the original category structure from the parsed file and maps
- * API results back to their words. Each word is displayed inside a
+ * Displays frontmatter metadata (if present) above the results, then
+ * renders each category as a collapsible section. Words within each
+ * category are matched to their API result and displayed inside a
  * collapsible <details> panel.
  *
- * @param {Array<{name: string, words: string[]}>} categories - Parsed categories.
+ * @param {Array<{name: string, words: string[]}>} categories - Flat list
+ *     of parsed categories. Each category has a name and a words array.
+ * @param {Object} metadata - Frontmatter metadata key-value pairs. May
+ *     be empty.
  * @param {Array<Object>} results - Response items from the batch API.
+ *     Each item corresponds to one requested word.
+ * @throws {TypeError} If categories or results is not an array, or if
+ *     metadata is not an object.
  */
-function renderBatchResults(categories, results) {
+function renderBatchResults(categories, metadata, results) {
+    if (!Array.isArray(categories)) {
+        throw new TypeError('renderBatchResults: categories must be an array');
+    }
+
+    if (!metadata || typeof metadata !== 'object') {
+        throw new TypeError('renderBatchResults: metadata must be an object');
+    }
+
+    if (!Array.isArray(results)) {
+        throw new TypeError('renderBatchResults: results must be an array');
+    }
+
     clearElement(elements.resultsArea);
+
+    // Display frontmatter metadata above results, if present.
+    if (Object.keys(metadata).length > 0) {
+        elements.resultsArea.appendChild(createMetadataDisplay(metadata));
+    }
 
     // Map words to their result items for fast lookup.
     const resultMap = new Map();
@@ -424,6 +463,32 @@ function renderBatchResults(categories, results) {
 
         elements.resultsArea.appendChild(section);
     });
+}
+
+/**
+ * Create a metadata display section.
+ *
+ * Renders frontmatter metadata (key-value pairs) as a styled list.
+ * Used by batch views to show file metadata (e.g., title) above results.
+ *
+ * @param {Object} metadata - Flat key-value metadata object.
+ * @returns {HTMLElement} The metadata display container.
+ */
+function createMetadataDisplay(metadata) {
+    const container = createElement('div', 'metadata-display');
+
+    for (const [key, value] of Object.entries(metadata)) {
+        const item = createElement('div', 'metadata-item');
+
+        const keyEl = createElement('span', 'metadata-key', key);
+        const valueEl = createElement('span', 'metadata-value', value);
+
+        item.appendChild(keyEl);
+        item.appendChild(valueEl);
+        container.appendChild(item);
+    }
+
+    return container;
 }
 
 /**
