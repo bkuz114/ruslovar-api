@@ -453,14 +453,7 @@ function renderBatchResults(categories, metadata, results) {
     });
 
     categories.forEach((category) => {
-        const section = createCategorySection(category);
-
-        category.words.forEach((word) => {
-            const item = resultMap.get(word);
-            const details = createWordDetails(word, item);
-            section.appendChild(details);
-        });
-
+        const section = createCategorySection(category, resultMap);
         elements.resultsArea.appendChild(section);
     });
 }
@@ -492,6 +485,42 @@ function createMetadataDisplay(metadata) {
 }
 
 /**
+ * Append word detail panels to a container.
+ *
+ * For each word in the category, looks up its API result and creates a
+ * collapsible <details> panel. The panels are appended directly to the
+ * provided container, which may be a category section or the results
+ * area itself (for categories without a visible heading).
+ *
+ * @param {HTMLElement} container - Element to append word panels to.
+ * @param {{name: string, words: string[]}} category - Category data.
+ * @param {Map<string, Object>} resultMap - Map of word to API result item.
+ */
+function appendWordDetails(container, category, resultMap) {
+    if (!container || typeof container.appendChild !== 'function') {
+        throw new TypeError('appendWordDetails: container must be a DOM element');
+    }
+
+    if (!category || typeof category !== 'object') {
+        throw new TypeError('appendWordDetails: category must be an object');
+    }
+
+    if (!Array.isArray(category.words)) {
+        throw new TypeError('appendWordDetails: category.words must be an array');
+    }
+
+    if (!(resultMap instanceof Map)) {
+        throw new TypeError('appendWordDetails: resultMap must be a Map');
+    }
+
+    category.words.forEach((word) => {
+        const item = resultMap.get(word);
+        const details = createWordDetails(word, item);
+        container.appendChild(details);
+    });
+}
+
+/**
  * Create a collapsible category section.
  *
  * The category name is rendered as a <summary> element. Words belonging
@@ -502,13 +531,32 @@ function createMetadataDisplay(metadata) {
  * large word lists.
  *
  * @param {{name: string, words: string[]}} category - Category data.
+ * @param {Map<string, Object>} resultMap - Map of word to API result item.
  * @returns {HTMLElement} The category section element (a <details> element).
  */
-function createCategorySection(category) {
+function createCategorySection(category, resultMap) {
+    if (!category || typeof category !== 'object') {
+        throw new TypeError('createCategorySection: category must be an object');
+    }
+
+    if (typeof category.name !== 'string') {
+        throw new TypeError('createCategorySection: category.name must be a string');
+    }
+
+    if (!Array.isArray(category.words)) {
+        throw new TypeError('createCategorySection: category.words must be an array');
+    }
+
+    if (!(resultMap instanceof Map)) {
+        throw new TypeError('createCategorySection: resultMap must be a Map');
+    }
+
     const details = createElement('details', 'category-section');
 
     const summary = createElement('summary', 'category-heading', category.name);
     details.appendChild(summary);
+
+    appendWordDetails(details, category, resultMap);
 
     return details;
 }
