@@ -233,11 +233,12 @@ title
 }
 
 function runTest(name, testFn) {
+    console.log(`▶ ${name}`);
     try {
         testFn();
-        console.log(`✓ ${name}`);
+        console.log(`✓ ${name} passed`);
     } catch (e) {
-        console.error(`✗ ${name}`);
+        console.error(`✗ ${name} failed`);
         console.error(`  ${e.message}`);
         process.exitCode = 1;
     }
