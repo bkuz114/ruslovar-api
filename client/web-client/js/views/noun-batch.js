@@ -107,30 +107,15 @@ const VIEW_STRINGS = {
 let elements = {};
 
 /**
- * Stores the parsed word list document from the most recent file
- * selection. Retained so the submit handler can use the already-parsed
+ * Stores the WordListDocument object associated with the most
+ * recent file selection (class which stores the file data, parses
+ * it, and allows for traversal of categories, words, etc.)
+ * Retained so the submit handler can use the already-parsed
  * data without re-reading the file.
  *
- * The object has two keys:
- *   - metadata: {Object} Frontmatter key-value pairs.
- *   - categories: {Array<Object>} Category tree from the parser.
+ * See core/wordlist-parser.js for detailed API.
  *
- * Each category object has the following shape:
- * {
- *     id: string                // a unique id based on line number
- *     name: string,             // Category name (empty for implicit)
- *     level: number,            // Heading level (1 or greater)
- *     words: Array<Object>,        // word objects from words directly under this category
- *     subcategories: Array<Object> // Nested category objects
- * }
- *
- * Each word object in 'words' has the following shape:
- * {
- *     id: string                // a unique id based on line number
- *     name: string,             // the word
- * }
- *
- * @type {Object|null}
+ * @type {WordListDocument|null}
  */
 let parsedDocument = null;
 
