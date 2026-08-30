@@ -110,14 +110,17 @@ let elements = {};
  * selection. Retained so the submit handler can use the already-parsed
  * data without re-reading the file.
  *
- * This is set to the object returned by parseWordList(), with one
- * modification: the categories tree is flattened into a flat list.
- * Metadata is preserved as parsed.
- *
- * The resulting object has two keys:
+ * The object has two keys:
  *   - metadata: {Object} Frontmatter key-value pairs.
- *   - categories: {Array<{name: string, words: string[]}>} Flat list
- *     of categories.
+ *   - categories: {Array<Object>} Category tree from the parser.
+ *
+ * Each category object has the following shape:
+ * {
+ *     name: string,             // Category name (empty for implicit)
+ *     level: number,            // Heading level (1 or greater)
+ *     words: string[],          // Words directly under this category
+ *     subcategories: Array<Object> // Nested category objects
+ * }
  *
  * @type {Object|null}
  */
@@ -254,11 +257,30 @@ function bindEvents() {
 }
 
 /**
+ * Recursively count all words in the parsed category tree.
+ *
+ * Walks the category tree and sums the number of words in each
+ * category and its subcategories.
+ *
+ * @param {Array<Object>} categories - Category nodes from the parser.
+ * @returns {number} Total number of words across all categories.
+ */
+function countWords(categories) {
+    let total = 0;
+    categories.forEach((category) => {
+        total += category.words.length;
+        if (category.subcategories) {
+            total += countWords(category.subcategories);
+        }
+    });
+    return total;
+}
+
+/**
  * Process raw file content after it has been read.
  *
- * Parses the content, flattens the category tree, stores the parsed
- * document in module state, updates the submit button enabled state,
- * and displays the file summary.
+ * Parses the content, stores the parsed document in module state, updates
+ * the submit button enabled state, and displays the file summary.
  *
  * This is the shared entry point for both manual file selection and
  * example file loading.
@@ -273,21 +295,13 @@ function handleFileContent(content) {
 
     const parsed = parseWordList(content);
 
-    // Flatten the category tree once after parsing. The rest of the
-    // view expects a flat list of categories; normalizing here avoids
-    // repeated flattening at each call site.
-    parsed.categories = flattenCategories(parsed.categories);
-
     // Store the parsed document in module state.
     parsedDocument = parsed;
 
     const parsedCategories = parsed.categories;
 
     // Enable the submit button only if there are words to look up.
-    const totalWords = parsedCategories.reduce(
-        (sum, category) => sum + category.words.length,
-        0
-    );
+    const totalWords = countWords(parsedCategories);
     elements.submitControls.submitButton.disabled = totalWords === 0;
 
     showFileSummary(parsedCategories, totalWords);
@@ -356,6 +370,68 @@ function showFileSummary(categories, totalWords) {
 }
 
 /**
+ * Takes the list of categoryNode objects created from the
+ * parsed file and extracts all words found within them.
+ *
+ * The resulting list is used for the batch API request.
+ *
+ * Each category follows the format:
+ * {
+ *   name: string,
+ *   level?: number,
+ *   words: Array<string>,
+ *   subcategories?: Category[]
+ * }
+ *
+ * The function assumes the data contract is valid and will throw if
+ * required keys are missing or malformed. Word order and duplicates
+ * are preserved as they appear in the category tree.
+ *
+ * @param {Array} categories - Array of category objects (possibly nested)
+ * @returns {string[]} Flattened array of word strings
+ * @throws {TypeError} If categories is not an array or a category is malformed
+ */
+function extractWordList(categories) {
+    if (!Array.isArray(categories)) {
+        throw new TypeError('extractWordList expects an array of categories');
+    }
+
+    const words = [];
+
+    /**
+     * Recursively traverses category tree, collecting word strings.
+     * @param {Array} categoryList 
+     */
+    function traverse(categoryList) {
+        for (const category of categoryList) {
+            // Extract words from current category
+            if (!Array.isArray(category.words)) {
+                throw new TypeError(`Category "${category.name}" is missing a valid "words" array`);
+            }
+
+            for (const word of category.words) {
+                if (typeof word !== 'string') {
+                    throw new TypeError(`Category "${category.name}" contains a non-string word`);
+                }
+                words.push(word);
+            }
+
+            if (!Array.isArray(category.subcategories)) {
+                throw new TypeError(`Category "${category.name}" is missing a valid "subcategories" array`);
+            }
+
+            // Recursively process subcategories if they exist
+            if (category.subcategories.length > 0) {
+                traverse(category.subcategories);
+            }
+        }
+    }
+
+    traverse(categories);
+    return words;
+}
+
+/**
  * Handle batch submission.
  *
  * Reads the already-parsed categories, flattens them into a single
@@ -370,8 +446,8 @@ async function handleBatchSubmit() {
         return;
     }
 
-    // Flatten category structure into one word list for the API request.
-    const allWords = parsedDocument.categories.flatMap((category) => category.words);
+    // Extract all words found in the parsed document for the API request.
+    const allWords = extractWordList(parsedDocument.categories);
 
     if (allWords.length === 0) {
         showError(getString('error_empty_file', {
@@ -405,32 +481,6 @@ function getErrorMessage(error) {
     }
 
     return getString('error_network');
-}
-
-/**
- * Flatten a category tree into a flat list.
- *
- * The parser returns a nested category structure. The existing batch
- * view renderer expects a flat list of categories. This function walks
- * the tree and returns an array of { name, words } objects, preserving
- * the order of appearance.
- *
- * @param {Array<Object>} categories - Category nodes from the parser.
- * @returns {Array<{name: string, words: string[]}>} Flat category list.
- */
-function flattenCategories(categories) {
-    const flat = [];
-
-    function visit(category) {
-        flat.push({
-            name: category.name,
-            words: category.words
-        });
-        category.subcategories.forEach(visit);
-    }
-
-    categories.forEach(visit);
-    return flat;
 }
 
 /**
@@ -476,7 +526,8 @@ function renderBatchResults(categories, metadata, results) {
         resultMap.set(item.word, item);
     });
 
-    categories.forEach((category) => {
+    // render a category based on its type
+    function renderCategory(category, resultMap) {
         if (category.name === '') {
             // Words before any category header: render directly without a heading.
             elements.resultsArea.appendChild(createUncategorizedSection(category, resultMap));
@@ -487,7 +538,21 @@ function renderBatchResults(categories, metadata, results) {
             // Categories with no words beneath them
             elements.resultsArea.appendChild(createEmptyCategory(category));
         }
-    });
+    }
+
+    // Recursively render all categories in the tree. The visual output
+    // is flat: each category is appended directly to the results area,
+    // regardless of its depth in the parsed document.
+    function renderCategoryTree(categoryList) {
+        categoryList.forEach((category) => {
+            renderCategory(category, resultMap);
+            if (category.subcategories && category.subcategories.length > 0) {
+                renderCategoryTree(category.subcategories);
+            }
+        });
+    }
+
+    renderCategoryTree(categories);
 }
 
 /**
