@@ -33,6 +33,7 @@
  *   - core/dom.js (createElement, clearElement, loadStylesheet)
  *   - core/renderers.js (declension tables, metadata)
  *   - core/errors.js (ApiError)
+ *   - core/wordlist-parser.js (WordListDocument for parsing word lists file)
  *   - core/view-registry.js (registerView)
  *   - css/views/noun-batch.css (lazy-loaded on first mount)
  */
@@ -49,7 +50,7 @@ import {
     loadStylesheet
 } from '../core/dom.js';
 import {
-    parseWordList
+    WordListDocument,
 } from '../core/wordlist-parser.js';
 import {
     createMatchesContainer,
@@ -264,26 +265,6 @@ function bindEvents() {
 }
 
 /**
- * Recursively count all words in the parsed category tree.
- *
- * Walks the category tree and sums the number of words in each
- * category and its subcategories.
- *
- * @param {Array<Object>} categories - Category nodes from the parser.
- * @returns {number} Total number of words across all categories.
- */
-function countWords(categories) {
-    let total = 0;
-    categories.forEach((category) => {
-        total += category.words.length;
-        if (category.subcategories) {
-            total += countWords(category.subcategories);
-        }
-    });
-    return total;
-}
-
-/**
  * Process raw file content after it has been read.
  *
  * Parses the content, stores the parsed document in module state, updates
@@ -300,18 +281,18 @@ function handleFileContent(content) {
         throw new TypeError('handleFileContent: content must be a string');
     }
 
-    const parsed = parseWordList(content);
+    // parse the word list document
+    const doc = new WordListDocument(content);
+    doc.parse();
 
     // Store the parsed document in module state.
-    parsedDocument = parsed;
-
-    const parsedCategories = parsed.categories;
+    parsedDocument = doc;
 
     // Enable the submit button only if there are words to look up.
-    const totalWords = countWords(parsedCategories);
+    const totalWords = doc.countWords();
     elements.submitControls.submitButton.disabled = totalWords === 0;
 
-    showFileSummary(parsedCategories, totalWords);
+    showFileSummary(doc.categories, totalWords);
 }
 
 /**
@@ -377,76 +358,6 @@ function showFileSummary(categories, totalWords) {
 }
 
 /**
- * Takes the list of categoryNode objects created from the
- * parsed file and extracts all unique words found within them.
- *
- * The resulting list is used for the batch API request.
- *
- * Duplicates are removed to reduce HTTP overhead and speed up the
- * request. However, the UI still renders all words as they appear in
- * the source file, including duplicates. This function only affects
- * what is sent to the API.
- *
- * Each category follows the format:
- * {
- *   name: string,
- *   level?: number,
- *   words: Array<{ word: string, ... }>,
- *   subcategories?: Category[]
- * }
- *
- * The function assumes the data contract is valid and will throw if
- * required keys are missing or malformed. Word order is preserved based
- * on first occurrence in the category tree; duplicates are removed.
- *
- * @param {Array} categories - Array of category objects (possibly nested)
- * @returns {string[]} Flattened array of unique word strings
- * @throws {TypeError} If categories is not an array or a category is malformed
- */
-function extractWordList(categories) {
-    if (!Array.isArray(categories)) {
-        throw new TypeError('extractWordList expects an array of categories');
-    }
-
-    // store found words in a set to handle duplicates
-    const wordSet = new Set();
-
-    /**
-     * Recursively traverses category tree, collecting unique word strings.
-     * @param {Array} categoryList 
-     */
-    function traverse(categoryList) {
-        for (const category of categoryList) {
-            // Extract words from current category
-            if (!Array.isArray(category.words)) {
-                throw new TypeError(`Category "${category.name}" is missing a valid "words" array`);
-            }
-
-            for (const wordObj of category.words) {
-                if (typeof wordObj !== 'object') {
-                    throw new TypeError(`Category "${category.name}" contains a malformed word node`);
-                }
-                const word = getWordFromWordObj(wordObj);
-                wordSet.add(word);
-            }
-
-            if (!Array.isArray(category.subcategories)) {
-                throw new TypeError(`Category "${category.name}" is missing a valid "subcategories" array`);
-            }
-
-            // Recursively process subcategories if they exist
-            if (category.subcategories.length > 0) {
-                traverse(category.subcategories);
-            }
-        }
-    }
-
-    traverse(categories);
-    // return as a list
-    return [...wordSet];
-}
-
-/**
  * Handle batch submission.
  *
  * Reads the already-parsed categories, flattens them into a single
@@ -462,7 +373,9 @@ async function handleBatchSubmit() {
     }
 
     // Extract all words found in the parsed document for the API request.
-    const allWords = extractWordList(parsedDocument.categories);
+    const allWords = parsedDocument.allWords();
+    // remove duplicates for HTTP request (less HTTP overhead only; dupes will still render on UI)
+    const uniqueWords = [...new Set(allWords)];
 
     if (allWords.length === 0) {
         showError(getString('error_empty_file', {
@@ -474,7 +387,7 @@ async function handleBatchSubmit() {
     elements.submitControls.submitButton.disabled = true;
 
     try {
-        const data = await fetchNounBatch(allWords, elements.submitControls.isStrictMode());
+        const data = await fetchNounBatch(uniqueWords, elements.submitControls.isStrictMode());
         renderBatchResults(parsedDocument.categories, parsedDocument.metadata, data.results);
     } catch (error) {
         console.error('Batch request failed:', error);
@@ -627,35 +540,13 @@ function appendWordDetails(container, category, resultMap) {
     }
 
     category.words.forEach((wordObj) => {
-        // wordObj is a wordNode created by the parser;
+        // wordObj is a WordNode object created by the parser;
         // get the actual word from it
-        const word = getWordFromWordObj(wordObj);
+        const word = wordObj.word;
         const item = resultMap.get(word);
         const details = createWordDetails(wordObj, item);
         container.appendChild(details);
     });
-}
-
-/**
- * Extract the word string from a word node object.
- *
- * Word nodes are created by the parser and wrap the raw word string.
- * This helper centralizes access to the word text and validates the
- * node shape.
- *
- * @param {Object} wordObj - Word node from the parser.
- * @returns {string} The word text.
- * @throws {TypeError} If wordObj is missing or does not contain a
- *     non-empty "word" string.
- */
-function getWordFromWordObj(wordObj) {
-    if (!wordObj) {
-        throw new TypeError('getWordFromWordObj: missing "wordObj"');
-    }
-    if (!wordObj.word) {
-        throw new TypeError('getWordFromWordObj: word object either missing "word" attribute or is empty');
-    }
-    return wordObj.word;
 }
 
 /**
@@ -777,8 +668,8 @@ function createEmptyCategory(category) {
  * @returns {HTMLElement} The word details element.
  */
 function createWordDetails(wordObj, item) {
-    // wordObj is the object created by the parser; get word
-    const word = getWordFromWordObj(wordObj);
+    // wordObj is a WordNode created by the parser; get word
+    const word = wordObj.word;
 
     const details = createElement('details', 'word-details');
 
