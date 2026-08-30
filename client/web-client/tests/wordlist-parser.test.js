@@ -8,6 +8,11 @@ function assert(condition, message) {
     }
 }
 
+/**
+ * Test: parses a full document with frontmatter, nested categories,
+ * and words. Verifies metadata, top-level categories, subcategories,
+ * word counts, and word text.
+ */
 function testValidInput() {
     const input = `---
 title: Test Batch
@@ -52,6 +57,10 @@ description: Practice words
     assert(adjectives.words[0] === 'красный', 'Adjectives word should be "красный"');
 }
 
+/**
+ * Test: parses a document without frontmatter. Verifies metadata is
+ * empty and the single category is parsed correctly.
+ */
 function testNoFrontmatter() {
     const input = `# Nouns
 кролик
@@ -65,6 +74,10 @@ function testNoFrontmatter() {
     assert(result.categories[0].words.length === 1, 'Nouns should have one word');
 }
 
+/**
+ * Test: parses an empty file. Verifies metadata and categories are
+ * both empty.
+ */
 function testEmptyFile() {
     const input = ``;
 
@@ -74,6 +87,10 @@ function testEmptyFile() {
     assert(result.categories.length === 0, 'categories should be empty');
 }
 
+/**
+ * Test: parses a whitespace-only file. Verifies metadata and
+ * categories are both empty.
+ */
 function testWhitespaceOnlyFile() {
     const input = `   
     
@@ -85,6 +102,10 @@ function testWhitespaceOnlyFile() {
     assert(result.categories.length === 0, 'categories should be empty');
 }
 
+/**
+ * Test: leading blank lines before frontmatter are ignored. Verifies
+ * frontmatter is still parsed and categories are present.
+ */
 function testLeadingBlankLinesBeforeFrontmatter() {
     const input = `
 
@@ -101,6 +122,9 @@ title: Test
     assert(result.categories.length === 1, 'should have one category');
 }
 
+/**
+ * Test: frontmatter without a closing delimiter throws an error.
+ */
 function testMissingClosingFrontmatterDelimiter() {
     // No '#' heading after the frontmatter, so the parser reaches the
     // end of the file without finding the closing delimiter.
@@ -197,6 +221,9 @@ function testExplicitCategoriesOnly() {
     assert(result.categories[0].words[0] === 'щука', 'word should be щука');
 }
 
+/**
+ * Test: nested heading without a parent throws an error.
+ */
 function testNestedHeadingWithoutParent() {
     const input = `## Masculine
 стол
@@ -212,6 +239,9 @@ function testNestedHeadingWithoutParent() {
     assert(threw, 'should throw on nested heading without parent');
 }
 
+/**
+ * Test: malformed frontmatter entry (missing colon) throws an error.
+ */
 function testMalformedFrontmatterEntry() {
     // Missing colon on a frontmatter line.
     const input = `---
