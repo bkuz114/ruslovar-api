@@ -371,9 +371,14 @@ function showFileSummary(categories, totalWords) {
 
 /**
  * Takes the list of categoryNode objects created from the
- * parsed file and extracts all words found within them.
+ * parsed file and extracts all unique words found within them.
  *
  * The resulting list is used for the batch API request.
+ *
+ * Duplicates are removed to reduce HTTP overhead and speed up the
+ * request. However, the UI still renders all words as they appear in
+ * the source file, including duplicates. This function only affects
+ * what is sent to the API.
  *
  * Each category follows the format:
  * {
@@ -384,11 +389,11 @@ function showFileSummary(categories, totalWords) {
  * }
  *
  * The function assumes the data contract is valid and will throw if
- * required keys are missing or malformed. Word order and duplicates
- * are preserved as they appear in the category tree.
+ * required keys are missing or malformed. Word order is preserved based
+ * on first occurrence in the category tree; duplicates are removed.
  *
  * @param {Array} categories - Array of category objects (possibly nested)
- * @returns {string[]} Flattened array of word strings
+ * @returns {string[]} Flattened array of unique word strings
  * @throws {TypeError} If categories is not an array or a category is malformed
  */
 function extractWordList(categories) {
@@ -396,10 +401,11 @@ function extractWordList(categories) {
         throw new TypeError('extractWordList expects an array of categories');
     }
 
-    const words = [];
+    // store found words in a set to handle duplicates
+    const wordSet = new Set();
 
     /**
-     * Recursively traverses category tree, collecting word strings.
+     * Recursively traverses category tree, collecting unique word strings.
      * @param {Array} categoryList 
      */
     function traverse(categoryList) {
@@ -413,7 +419,7 @@ function extractWordList(categories) {
                 if (typeof word !== 'string') {
                     throw new TypeError(`Category "${category.name}" contains a non-string word`);
                 }
-                words.push(word);
+                wordSet.add(word);
             }
 
             if (!Array.isArray(category.subcategories)) {
@@ -428,7 +434,8 @@ function extractWordList(categories) {
     }
 
     traverse(categories);
-    return words;
+    // return as a list
+    return [...wordSet];
 }
 
 /**
