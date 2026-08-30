@@ -245,8 +245,10 @@ function parseFrontmatter(lines, startIndex) {
  *             name: "",
  *             level: 1,
  *             words: [
- *                 { word: "удочка" },
- *                 { word: "леска" }
+ *                 { word: "удочка", id: "line-5" },
+ *                 { word: "леска", id: "line-6" }
+ *                 // (note: id is unique string generated in
+ *                 // createWordNode based on line number word appears on)
  *             ],
  *             subcategories: []
  *         },
@@ -286,9 +288,9 @@ function parseImplicitCategory(lines, startIndex) {
         // lines to terminate the implicit block prematurely.
         if (trimmed) {
             if (!category) {
-                category = createCategoryNode('', 1);
+                category = createCategoryNode('', 1, index);
             }
-            category.words.push(createWordNode(trimmed));
+            category.words.push(createWordNode(trimmed, index));
         }
     }
 
@@ -358,7 +360,7 @@ function parseCategories(lines, startIndex) {
                 );
             }
 
-            const category = createCategoryNode(name, level);
+            const category = createCategoryNode(name, level, i);
 
             if (level === 1) {
                 rootCategories.push(category);
@@ -396,7 +398,7 @@ function parseCategories(lines, startIndex) {
         }
 
         const currentCategory = stack[stack.length - 1];
-        currentCategory.words.push(createWordNode(trimmed));
+        currentCategory.words.push(createWordNode(trimmed, i));
     }
 
     return rootCategories;
@@ -423,18 +425,38 @@ function getHeadingLevel(line) {
 }
 
 /**
+ * Create a deterministic ID from a line number.
+ *
+ * Context:
+ * - A unique id will be needed by state management in batch
+ *   view to re-open categories and words when navigating back
+ *   and reloading previous state.
+ * - Line number is chosen as the base for IDs because:
+ *   1. they will be unique per document
+ *   2. deterministic (same word/category in a document generates same id)
+ *   3. helpful in debugging or inspecting saved state
+ *
+ * @param {number} line - Line number from the source file.
+ * @returns {string} Deterministic line-based ID.
+ */
+function createLineId(line) {
+    // prefix with line- so it's clear what the number represents
+    return `line-${line}`;
+}
+
+/**
  * Create a word node.
  *
- * A word node is a lightweight object that wraps a word string. It
- * exists so future metadata (such as line-number-based IDs) can be
- * attached to individual words without changing the shape of the
- * parsed document.
+ * A word node wraps a word string with a deterministic ID derived from
+ * the line number where the word appears in the source file.
  *
  * @param {string} word - The word text.
+ * @param {number} line - Line number where the word appears.
  * @returns {WordNode} New word node.
  */
-function createWordNode(word) {
+function createWordNode(word, line) {
     return {
+        id: createLineId(line),
         word,
     };
 }
@@ -442,12 +464,18 @@ function createWordNode(word) {
 /**
  * Create a category node.
  *
+ * A category node represents a heading in the source file. It gets a
+ * deterministic ID derived from the line number where the heading
+ * appears.
+ *
  * @param {string} name - Category name.
  * @param {number} level - Heading level (1 or greater).
+ * @param {number} line - Line number where the heading appears.
  * @returns {CategoryNode} New category node.
  */
-function createCategoryNode(name, level) {
+function createCategoryNode(name, level, line) {
     return {
+        id: createLineId(line),
         name,
         level,
         words: [],
@@ -467,6 +495,7 @@ function createCategoryNode(name, level) {
 
 /**
  * @typedef {Object} CategoryNode
+ * @property {string} id - Deterministic line-based ID.
  * @property {string} name - Category name (without '#' characters).
  * @property {number} level - Heading level (1 or greater).
  * @property {Array<WordNode>} words - Word nodes directly under this category.
@@ -475,5 +504,6 @@ function createCategoryNode(name, level) {
 
 /**
  * @typedef {Object} WordNode
+ * @property {string} id - Deterministic line-based ID.
  * @property {string} word - The word text.
  */
