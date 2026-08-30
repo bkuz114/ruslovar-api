@@ -254,6 +254,46 @@ function bindEvents() {
 }
 
 /**
+ * Process raw file content after it has been read.
+ *
+ * Parses the content, flattens the category tree, stores the parsed
+ * document in module state, updates the submit button enabled state,
+ * and displays the file summary.
+ *
+ * This is the shared entry point for both manual file selection and
+ * example file loading.
+ *
+ * @param {string} content - Raw file contents.
+ * @throws {TypeError} If content is not a string.
+ */
+function handleFileContent(content) {
+    if (typeof content !== 'string') {
+        throw new TypeError('handleFileContent: content must be a string');
+    }
+
+    const parsed = parseWordList(content);
+
+    // Flatten the category tree once after parsing. The rest of the
+    // view expects a flat list of categories; normalizing here avoids
+    // repeated flattening at each call site.
+    parsed.categories = flattenCategories(parsed.categories);
+
+    // Store the parsed document in module state.
+    parsedDocument = parsed;
+
+    const parsedCategories = parsed.categories;
+
+    // Enable the submit button only if there are words to look up.
+    const totalWords = parsedCategories.reduce(
+        (sum, category) => sum + category.words.length,
+        0
+    );
+    elements.submitControls.submitButton.disabled = totalWords === 0;
+
+    showFileSummary(parsedCategories, totalWords);
+}
+
+/**
  * Handle file selection.
  *
  * Reads the selected file, parses it, stores the parsed data, and
@@ -273,23 +313,7 @@ function handleFileSelection(event) {
 
     reader.onload = (loadEvent) => {
         selectedFileText = loadEvent.target.result;
-        const parsed = parseWordList(selectedFileText);
-        // Flatten the category tree once after parsing. The rest of the
-        // view expects a flat list of categories; normalizing here avoids
-        // repeated flattening at each call site.
-        parsed.categories = flattenCategories(parsed.categories);
-        // set global
-        parsedDocument = parsed;
-        const parsedCategories = parsed.categories;
-
-        // Enable the submit button only if there are words to look up.
-        const totalWords = parsedCategories.reduce(
-            (sum, category) => sum + category.words.length,
-            0
-        );
-        elements.submitControls.submitButton.disabled = totalWords === 0;
-
-        showFileSummary(parsedCategories, totalWords);
+        handleFileContent(selectedFileText);
     };
 
     reader.readAsText(file);
