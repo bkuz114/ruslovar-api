@@ -116,10 +116,17 @@ let elements = {};
  *
  * Each category object has the following shape:
  * {
+ *     id: string                // a unique id based on line number
  *     name: string,             // Category name (empty for implicit)
  *     level: number,            // Heading level (1 or greater)
- *     words: string[],          // Words directly under this category
+ *     words: Array<Object>,        // word objects from words directly under this category
  *     subcategories: Array<Object> // Nested category objects
+ * }
+ *
+ * Each word object in 'words' has the following shape:
+ * {
+ *     id: string                // a unique id based on line number
+ *     name: string,             // the word
  * }
  *
  * @type {Object|null}
