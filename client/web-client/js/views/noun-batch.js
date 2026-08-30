@@ -384,7 +384,7 @@ function showFileSummary(categories, totalWords) {
  * {
  *   name: string,
  *   level?: number,
- *   words: Array<string>,
+ *   words: Array<{ word: string, ... }>,
  *   subcategories?: Category[]
  * }
  *
@@ -415,10 +415,11 @@ function extractWordList(categories) {
                 throw new TypeError(`Category "${category.name}" is missing a valid "words" array`);
             }
 
-            for (const word of category.words) {
-                if (typeof word !== 'string') {
-                    throw new TypeError(`Category "${category.name}" contains a non-string word`);
+            for (const wordObj of category.words) {
+                if (typeof wordObj !== 'object') {
+                    throw new TypeError(`Category "${category.name}" contains a malformed word node`);
                 }
+                const word = getWordFromWordObj(wordObj);
                 wordSet.add(word);
             }
 
@@ -597,7 +598,8 @@ function createMetadataDisplay(metadata) {
  * area itself (for categories without a visible heading).
  *
  * @param {HTMLElement} container - Element to append word panels to.
- * @param {{name: string, words: string[]}} category - Category data.
+ * @param {{name: string, words: Array<Object>}} category - Category data.
+ *     The words array contains word node objects from the parser.
  * @param {Map<string, Object>} resultMap - Map of word to API result item.
  */
 function appendWordDetails(container, category, resultMap) {
@@ -617,11 +619,36 @@ function appendWordDetails(container, category, resultMap) {
         throw new TypeError('appendWordDetails: resultMap must be a Map');
     }
 
-    category.words.forEach((word) => {
+    category.words.forEach((wordObj) => {
+        // wordObj is a wordNode created by the parser;
+        // get the actual word from it
+        const word = getWordFromWordObj(wordObj);
         const item = resultMap.get(word);
-        const details = createWordDetails(word, item);
+        const details = createWordDetails(wordObj, item);
         container.appendChild(details);
     });
+}
+
+/**
+ * Extract the word string from a word node object.
+ *
+ * Word nodes are created by the parser and wrap the raw word string.
+ * This helper centralizes access to the word text and validates the
+ * node shape.
+ *
+ * @param {Object} wordObj - Word node from the parser.
+ * @returns {string} The word text.
+ * @throws {TypeError} If wordObj is missing or does not contain a
+ *     non-empty "word" string.
+ */
+function getWordFromWordObj(wordObj) {
+    if (!wordObj) {
+        throw new TypeError('getWordFromWordObj: missing "wordObj"');
+    }
+    if (!wordObj.word) {
+        throw new TypeError('getWordFromWordObj: word object either missing "word" attribute or is empty');
+    }
+    return wordObj.word;
 }
 
 /**
@@ -737,11 +764,15 @@ function createEmptyCategory(category) {
 /**
  * Create a collapsible details panel for a single word.
  *
- * @param {string} word - The word being displayed.
+ * @param {Object} wordObj - Word node from the parser. The node
+ *     contains the word text under the "word" property.
  * @param {Object|undefined} item - API result item for this word, if any.
  * @returns {HTMLElement} The word details element.
  */
-function createWordDetails(word, item) {
+function createWordDetails(wordObj, item) {
+    // wordObj is the object created by the parser; get word
+    const word = getWordFromWordObj(wordObj);
+
     const details = createElement('details', 'word-details');
 
     // Summary row: word plus a status badge.

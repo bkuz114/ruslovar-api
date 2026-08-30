@@ -244,7 +244,10 @@ function parseFrontmatter(lines, startIndex) {
  *         category: {
  *             name: "",
  *             level: 1,
- *             words: ["удочка", "леска"],
+ *             words: [
+ *                 { word: "удочка" },
+ *                 { word: "леска" }
+ *             ],
  *             subcategories: []
  *         },
  *         nextIndex: 4  // points to the line containing "# Рыбы"
@@ -285,7 +288,7 @@ function parseImplicitCategory(lines, startIndex) {
             if (!category) {
                 category = createCategoryNode('', 1);
             }
-            category.words.push(trimmed);
+            category.words.push(createWordNode(trimmed));
         }
     }
 
@@ -393,7 +396,7 @@ function parseCategories(lines, startIndex) {
         }
 
         const currentCategory = stack[stack.length - 1];
-        currentCategory.words.push(trimmed);
+        currentCategory.words.push(createWordNode(trimmed));
     }
 
     return rootCategories;
@@ -417,6 +420,23 @@ function getHeadingLevel(line) {
         level++;
     }
     return level;
+}
+
+/**
+ * Create a word node.
+ *
+ * A word node is a lightweight object that wraps a word string. It
+ * exists so future metadata (such as line-number-based IDs) can be
+ * attached to individual words without changing the shape of the
+ * parsed document.
+ *
+ * @param {string} word - The word text.
+ * @returns {WordNode} New word node.
+ */
+function createWordNode(word) {
+    return {
+        word,
+    };
 }
 
 /**
@@ -449,6 +469,11 @@ function createCategoryNode(name, level) {
  * @typedef {Object} CategoryNode
  * @property {string} name - Category name (without '#' characters).
  * @property {number} level - Heading level (1 or greater).
- * @property {string[]} words - Words directly under this category.
+ * @property {Array<WordNode>} words - Word nodes directly under this category.
  * @property {Array<CategoryNode>} subcategories - Nested subcategories.
+ */
+
+/**
+ * @typedef {Object} WordNode
+ * @property {string} word - The word text.
  */
