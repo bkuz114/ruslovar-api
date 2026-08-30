@@ -288,9 +288,9 @@ function parseImplicitCategory(lines, startIndex) {
         // lines to terminate the implicit block prematurely.
         if (trimmed) {
             if (!category) {
-                category = createCategoryNode('', 1, index);
+                category = createCategoryNode('', 1, index + 1);
             }
-            category.words.push(createWordNode(trimmed, index));
+            category.words.push(createWordNode(trimmed, index + 1));
         }
     }
 
@@ -360,7 +360,7 @@ function parseCategories(lines, startIndex) {
                 );
             }
 
-            const category = createCategoryNode(name, level, i);
+            const category = createCategoryNode(name, level, i + 1);
 
             if (level === 1) {
                 rootCategories.push(category);
@@ -398,7 +398,7 @@ function parseCategories(lines, startIndex) {
         }
 
         const currentCategory = stack[stack.length - 1];
-        currentCategory.words.push(createWordNode(trimmed, i));
+        currentCategory.words.push(createWordNode(trimmed, i + 1));
     }
 
     return rootCategories;
@@ -440,6 +440,12 @@ function getHeadingLevel(line) {
  * @returns {string} Deterministic line-based ID.
  */
 function createLineId(line) {
+    if (!Number.isInteger(line) || line < 1) {
+        throw new TypeError(
+            `createLineId: line must be a positive integer. Got ${line}`
+        );
+    }
+
     // prefix with line- so it's clear what the number represents
     return `line-${line}`;
 }
