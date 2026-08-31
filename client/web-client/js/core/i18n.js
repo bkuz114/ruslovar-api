@@ -239,6 +239,72 @@ export function getString(key, {
 }
 
 /**
+ * Resolve a localized string for an element, attempting view-specific
+ * lookup first and falling back to shared strings when necessary.
+ *
+ * @param {string} key - Dot-notation key to resolve (e.g.,
+ *     "case_labels.nominative").
+ * @param {string} lang - Language code to look up ("ru" or "en").
+ * @param {string|null} [viewId=null] - Optional view ID to scope the
+ *     lookup. If null or empty, the key resolves against shared strings
+ *     only. If provided and the key is not found in that view's strings,
+ *     a warning is logged and shared strings are checked as a fallback.
+ * @returns {string|undefined} The resolved string, or undefined if not
+ *     found in either the view-specific or shared string tables.
+ */
+export function resolveI18nValue(key, lang, viewId) {
+    // Validate key (the i18n key to lookup) is a non-empty string.
+    if (typeof key !== 'string' || key.length === 0) {
+        console.error(
+            `i18n.resolveI18nValue: Invalid key argument. Expected non-empty string, received:`,
+            key
+        );
+        return;
+    }
+
+    // Validate lang is one of the supported language codes.
+    if (!SUPPORTED_LANGUAGES.includes(lang)) {
+        console.error(
+            `i18n.resolveI18nValue: Unsupported language. Expected one of ${SUPPORTED_LANGUAGES.join(', ')}, received:`,
+            lang
+        );
+        return;
+    }
+
+    let useSharedString = true;
+    let value = null;
+
+    // Only attempt view-specific lookup when a non-empty viewId is
+    // provided. Empty strings are treated as "no view scope" to match
+    // the behavior of getAttribute() returning null.
+    if (viewId) {
+        // View-specific lookup first.
+        value = getString(key, {
+            viewId: viewId,
+            lang: lang
+        });
+        useSharedString = false;
+
+        if (value === undefined) {
+            // Warn and fall back to shared.
+            console.warn(
+                `i18n.applyLanguage: Key "${key}" not found in view "${viewId}", falling back to shared strings`
+            );
+            useSharedString = true;
+        }
+    }
+
+    if (useSharedString) {
+        // Shared lookup only.
+        value = getString(key, {
+            lang: lang
+        });
+    }
+
+    return value;
+}
+
+/**
  * Apply the given language to all [data-i18n] and
  * [data-i18n-placeholder] elements in the document.
  *
@@ -255,40 +321,13 @@ export function applyLanguage(lang) {
         const key = element.getAttribute('data-i18n');
         const viewId = element.getAttribute('data-i18n-view');
 
-        let value;
-        let useSharedString = true;
-
-        if (viewId) {
-            // View-specific lookup first.
-            value = getString(key, {
-                viewId: viewId,
-                lang: lang
-            });
-            useSharedString = false;
-
-            if (value === undefined) {
-                // Warn and fall back to shared.
-                console.warn(
-                    `i18n.applyLanguage: Key "${key}" not found in view "${viewId}", falling back to shared strings`
-                );
-                useSharedString = true;
-            }
-        }
-
-        if (useSharedString) {
-            // Shared lookup only.
-            value = getString(key, {
-                lang: lang
-            });
-        }
-
+        const value = resolveI18nValue(key, lang, viewId);
         if (value !== undefined) {
             // Apply placeholder substitution if needed.
             const arg = element.getAttribute('data-i18n-arg');
             if (arg !== null && typeof value === 'string') {
                 value = value.replace('{n}', arg);
             }
-
             element.textContent = value;
         } else {
             console.error(
@@ -302,27 +341,7 @@ export function applyLanguage(lang) {
         const key = element.getAttribute('data-i18n-placeholder');
         const viewId = element.getAttribute('data-i18n-view');
 
-        let value;
-
-        if (viewId) {
-            value = getString(key, {
-                viewId: viewId,
-                lang: lang
-            });
-            if (value === undefined) {
-                console.warn(
-                    `i18n.applyLanguage: Placeholder key "${key}" not found in view "${viewId}", falling back to shared strings`
-                );
-                value = getString(key, {
-                    lang: lang
-                });
-            }
-        } else {
-            value = getString(key, {
-                lang: lang
-            });
-        }
-
+        const value = resolveI18nValue(key, lang, viewId);
         if (value !== undefined) {
             element.setAttribute('placeholder', value);
         } else {
