@@ -198,6 +198,24 @@ export function getString(key, {
     viewId = null,
     lang = currentLanguage
 } = {}) {
+    // Validate key (the i18n key to lookup) is a non-empty string.
+    if (typeof key !== 'string' || key.length === 0) {
+        console.error(
+            `i18n.getString: Invalid key argument. Expected non-empty string, received:`,
+            key
+        );
+        return undefined;
+    }
+
+    // Validate lang is one of the supported language codes.
+    if (!SUPPORTED_LANGUAGES.includes(lang)) {
+        console.error(
+            `i18n.getString: Unsupported language. Expected one of ${SUPPORTED_LANGUAGES.join(', ')}, received:`,
+            lang
+        );
+        return undefined;
+    }
+
     // Determine which string table to search. View-specific strings are
     // stored on the view descriptor in the view registry; shared strings
     // live in this module.
@@ -222,6 +240,14 @@ export function getString(key, {
         stringTable = view.strings[lang];
         sourceLabel = `view "${viewId}"`;
     } else {
+        // Validate the shared string table exists for this language.
+        if (!SHARED_STRINGS[lang]) {
+            console.error(
+                `i18n.getString: No shared string table exists for language "${lang}"`
+            );
+            return undefined;
+        }
+
         stringTable = SHARED_STRINGS[lang];
         sourceLabel = 'shared strings';
     }
