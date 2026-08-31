@@ -23,7 +23,7 @@
 
 import {
     getString
-} from './i18n.js';
+} from './../i18n.js';
 import {
     createElement
 } from './dom.js';

@@ -48,7 +48,7 @@ import {
     NetworkError,
     HttpError,
     ParseError
-} from './errors.js';
+} from './../errors.js';
 
 // ---------------------------------------------------------------------------
 // Development Mode Flag

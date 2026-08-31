@@ -31,8 +31,8 @@
  *
  * Dependencies:
  *   - core/i18n.js (getString)
- *   - core/dom.js (createElement, clearElement, loadStylesheet)
- *   - core/renderers.js (declension tables, metadata, tabs, raw JSON)
+ *   - core/dom/dom.js (createElement, clearElement, loadStylesheet)
+ *   - core/dom/renderers.js (declension tables, metadata, tabs, raw JSON)
  *   - core/errors.js (ApiError)
  *   - core/view-registry.js (registerView)
  *   - css/views/noun-single.css (lazy-loaded on first mount)
@@ -45,12 +45,12 @@ import {
     createElement,
     clearElement,
     loadStylesheet
-} from '../core/dom.js';
+} from '../core/dom/dom.js';
 import {
     createMatchesContainer,
     createRawJsonToggle,
     createSubmitControls,
-} from '../core/renderers.js';
+} from '../core/dom/renderers.js';
 import {
     ApiError
 } from '../core/errors.js';

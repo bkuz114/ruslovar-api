@@ -21,9 +21,9 @@
  * Dependencies:
  *   - core/config.js
  *   - core/i18n.js
- *   - core/dom.js
+ *   - core/dom/dom.js
  *   - core/store.js
- *   - core/data-layer.js
+ *   - core/data-layer/data-layer.js
  *   - core/view-registry.js
  *   - views/noun-single.js (self-registering)
  *   - views/noun-batch.js (self-registering)
@@ -43,7 +43,7 @@ import {
 import {
     clearElement,
     createElement
-} from './core/dom.js';
+} from './core/dom/dom.js';
 import {
     getState as getStoredState,
     setState as setStoredState,
@@ -52,7 +52,7 @@ import {
 import {
     createRequestContext,
     abortRequestsForView
-} from './core/data-layer.js';
+} from './core/data-layer/data-layer.js';
 import {
     getViews,
     getViewById

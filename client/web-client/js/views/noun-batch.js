@@ -51,10 +51,10 @@
  *
  * Dependencies:
  *   - core/i18n.js (getString)
- *   - core/dom.js (createElement, clearElement, loadStylesheet)
- *   - core/renderers.js (declension tables, metadata)
+ *   - core/dom/dom.js (createElement, clearElement, loadStylesheet)
+ *   - core/dom/renderers.js (declension tables, metadata)
  *   - core/errors.js (ApiError)
- *   - core/wordlist-parser.js (WordListDocument for parsing word lists file)
+ *   - core/parsers/wordlist-parser.js (WordListDocument for parsing word lists file)
  *   - core/view-registry.js (registerView)
  *   - css/views/noun-batch.css (lazy-loaded on first mount)
  */
@@ -66,14 +66,14 @@ import {
     createElement,
     clearElement,
     loadStylesheet
-} from '../core/dom.js';
+} from '../core/dom/dom.js';
 import {
     WordListDocument,
-} from '../core/wordlist-parser.js';
+} from '../core/parsers/wordlist-parser.js';
 import {
     createMatchesContainer,
     createSubmitControls,
-} from '../core/renderers.js';
+} from '../core/dom/renderers.js';
 import {
     ApiError
 } from '../core/errors.js';
@@ -161,7 +161,7 @@ let elements = {};
  * Retained so the submit handler can use the already-parsed
  * data without re-reading the file.
  *
- * See core/wordlist-parser.js for detailed API.
+ * See core/parsers/wordlist-parser.js for detailed API.
  *
  * @type {WordListDocument|null}
  */
