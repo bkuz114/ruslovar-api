@@ -370,7 +370,7 @@ export function applyLanguage(lang) {
         const key = element.getAttribute('data-i18n');
         const viewId = element.getAttribute('data-i18n-view');
 
-        const value = resolveI18nValue(key, lang, viewId);
+        let value = resolveI18nValue(key, lang, viewId);
         if (value !== undefined) {
             // Apply placeholder substitution if needed.
             const arg = element.getAttribute('data-i18n-arg');
