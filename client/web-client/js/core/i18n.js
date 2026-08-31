@@ -128,17 +128,40 @@ let currentLanguage = DEFAULT_LANGUAGE;
  * Retrieve a value from a nested object using dot notation.
  *
  * Example:
- *   getNestedValue({ a: { b: 1 } }, "a.b") → 1
+ *   getNestedValue(SHARED_STRINGS.en, "case_labels.nominative")
+ *     → "Nominative"
+ *
+ *   getNestedValue(SHARED_STRINGS.en, "case_labels.accusative")
+ *     → undefined (key does not exist)
  *
  * @param {Object} obj - The object to search.
- * @param {string} path - Dot-separated key path.
+ * @param {string} path - Dot-separated key path (e.g., "a.b.c").
  * @returns {*} The value at the path, or undefined if any intermediate
- *     key is missing or null.
+ *     key is missing or if the path cannot be traversed.
  */
 function getNestedValue(obj, path) {
-    return path.split('.').reduce((acc, key) => {
-        return acc && typeof acc === 'object' ? acc[key] : undefined;
-    }, obj);
+    // Split the dot-notation path into individual key segments.
+    // Example: "case_labels.nominative" → ["case_labels", "nominative"]
+    const segments = path.split('.');
+
+    // Start at the root of the object we're searching.
+    let current = obj;
+
+    // Walk down the object one level at a time.
+    for (const segment of segments) {
+        // can't descend further. (e.g., trying to access "nominative" on undefined.)
+        if (!current || typeof current !== 'object') {
+            return undefined;
+        }
+        // Descend into the next level of the object.
+        // Example: current is { nominative: 'Именительный' },
+        // segment is "nominative", so current becomes 'Именительный'.
+        current = current[segment];
+    }
+    // After processing all segments, current is the value at the path.
+    // Example: current is 'Именительный' after walking
+    // ["case_labels", "nominative"].
+    return current;
 }
 
 /**
