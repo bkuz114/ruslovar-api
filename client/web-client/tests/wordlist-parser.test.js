@@ -393,7 +393,8 @@ function testAllNodes() {
 
 /**
  * Test: toJSON returns a plain serializable object matching the live
- * node structure.
+ * node structure, including rawText, freeze, isParsed, lineNumber,
+ * and per-node freeze state.
  */
 function testToJSON() {
     const input = `---
@@ -403,23 +404,39 @@ title: Test
 кролик
 `;
 
-    const doc = parse(input);
+    const doc = parse(input, {
+        freeze: true
+    });
     const json = doc.toJSON();
 
+    // Document-level fields.
+    assert(json.rawText === input, 'JSON should include rawText');
+    assert(json.freeze === true, 'JSON should include freeze');
+    assert(json.isParsed === true, 'JSON should include isParsed');
+
+    // Metadata.
     assert(json.metadata.title === 'Test', 'JSON metadata should include title');
+
+    // Categories.
     assert(Array.isArray(json.categories), 'JSON categories should be an array');
     assert(json.categories.length === 1, 'JSON should have one category');
 
     const category = json.categories[0];
     assert(category.type === 'category', 'JSON category should have type "category"');
+    assert(category.id === 'line-4', 'JSON category id should be "line-4"');
+    assert(category.lineNumber === 4, 'JSON category should include lineNumber');
     assert(category.name === 'Nouns', 'JSON category should be "Nouns"');
     assert(category.level === 1, 'JSON category level should be 1');
+    assert(category.freeze === true, 'JSON category should include freeze');
     assert(Array.isArray(category.words), 'JSON category words should be an array');
     assert(category.words.length === 1, 'JSON category should have one word');
 
     const word = category.words[0];
     assert(word.type === 'word', 'JSON word should have type "word"');
+    assert(word.id === 'line-5', 'JSON word id should be "line-5"');
+    assert(word.lineNumber === 5, 'JSON word should include lineNumber');
     assert(word.word === 'кролик', 'JSON word should be "кролик"');
+    assert(word.freeze === true, 'JSON word should include freeze');
 
     // Ensure it can be stringified without circular reference errors.
     const stringified = JSON.stringify(json);
@@ -543,6 +560,260 @@ function testNodeTypesAndIds() {
 }
 
 /**
+ * Test: WordNode exposes lineNumber getter and includes it in toJSON().
+ */
+function testWordNodeLineNumber() {
+    const word = new WordNode('кролик', 5);
+
+    assert(word.lineNumber === 5, 'lineNumber getter should return 5');
+    assert(word.id === 'line-5', 'id should be "line-5"');
+
+    const json = word.toJSON();
+    assert(json.lineNumber === 5, 'toJSON should include lineNumber');
+}
+
+/**
+ * Test: CategoryNode exposes lineNumber getter and includes it in
+ * toJSON().
+ */
+function testCategoryNodeLineNumber() {
+    const category = new CategoryNode('Nouns', 1, 4);
+
+    assert(category.lineNumber === 4, 'lineNumber getter should return 4');
+    assert(category.id === 'line-4', 'id should be "line-4"');
+
+    const json = category.toJSON();
+    assert(json.lineNumber === 4, 'toJSON should include lineNumber');
+}
+
+/**
+ * Test: WordNode toJSON includes freeze state and fromJSON restores it.
+ */
+function testWordNodeRoundTrip() {
+    const word = new WordNode('кролик', 5, true);
+    const json = word.toJSON();
+
+    assert(json.freeze === true, 'toJSON should report freeze as true');
+
+    const restored = WordNode.fromJSON(json);
+
+    assert(restored instanceof WordNode, 'restored should be a WordNode');
+    assert(restored.word === 'кролик', 'restored word should be "кролик"');
+    assert(restored.lineNumber === 5, 'restored lineNumber should be 5');
+    assert(restored.id === 'line-5', 'restored id should be "line-5"');
+    assert(Object.isFrozen(restored), 'restored node should be frozen');
+}
+
+/**
+ * Test: WordNode fromJSON without freeze preserves unfrozen state.
+ */
+function testWordNodeRoundTripUnfrozen() {
+    const word = new WordNode('кролик', 5, false);
+    const json = word.toJSON();
+
+    assert(json.freeze === false, 'toJSON should report freeze as false');
+
+    const restored = WordNode.fromJSON(json);
+
+    assert(!Object.isFrozen(restored), 'restored node should not be frozen');
+}
+
+/**
+ * Test: WordNode fromJSON with missing required fields throws.
+ */
+function testWordNodeFromJSONValidation() {
+    let threw = false;
+
+    try {
+        WordNode.fromJSON({
+            word: 'кролик'
+        });
+    } catch (e) {
+        threw = true;
+        assert(e instanceof TypeError, 'missing fields should throw TypeError');
+        assert(e.message.includes('missing required field'), 'error should mention missing required fields');
+    }
+
+    assert(threw, 'should throw on missing fields');
+}
+
+/**
+ * Test: CategoryNode round-trip preserves structure, nesting, and
+ * freeze state.
+ */
+function testCategoryNodeRoundTrip() {
+    const word = new WordNode('стол', 6, false);
+    const subcategory = new CategoryNode('Masculine', 2, 5, [word], [], false);
+    const category = new CategoryNode('Nouns', 1, 4, [], [subcategory], true);
+
+    const json = category.toJSON();
+    const restored = CategoryNode.fromJSON(json);
+
+    assert(restored instanceof CategoryNode, 'restored should be a CategoryNode');
+    assert(restored.name === 'Nouns', 'restored name should be "Nouns"');
+    assert(restored.level === 1, 'restored level should be 1');
+    assert(restored.lineNumber === 4, 'restored lineNumber should be 4');
+    assert(restored.id === 'line-4', 'restored id should be "line-4"');
+    assert(restored.subcategories.length === 1, 'restored should have one subcategory');
+    assert(restored.subcategories[0].name === 'Masculine', 'restored subcategory should be "Masculine"');
+    assert(restored.subcategories[0].words.length === 1, 'restored subcategory should have one word');
+    assert(restored.subcategories[0].words[0].word === 'стол', 'restored word should be "стол"');
+    assert(Object.isFrozen(restored), 'restored category should be frozen');
+    assert(Object.isFrozen(restored.words), 'restored words array should be frozen');
+    assert(Object.isFrozen(restored.subcategories), 'restored subcategories array should be frozen');
+}
+
+/**
+ * Test: CategoryNode fromJSON with missing required fields throws.
+ */
+function testCategoryNodeFromJSONValidation() {
+    let threw = false;
+
+    try {
+        CategoryNode.fromJSON({
+            name: 'Nouns'
+        });
+    } catch (e) {
+        threw = true;
+        assert(e instanceof TypeError, 'missing fields should throw TypeError');
+        assert(e.message.includes('missing required field'), 'error should mention missing required fields');
+    }
+
+    assert(threw, 'should throw on missing fields');
+}
+
+/**
+ * Test: WordListDocument fromJSON reconstructs a parsed document with
+ * full state (rawText, freeze, isParsed, metadata, categories).
+ */
+function testWordListDocumentRoundTrip() {
+    const input = `---
+title: Test Batch
+---
+# Nouns
+кролик
+`;
+
+    const doc = parse(input, {
+        freeze: true
+    });
+    const json = doc.toJSON();
+
+    assert(json.rawText === input, 'toJSON should include rawText');
+    assert(json.freeze === true, 'toJSON should include freeze');
+    assert(json.isParsed === true, 'toJSON should include isParsed');
+
+    const restored = WordListDocument.fromJSON(json);
+
+    assert(restored instanceof WordListDocument, 'restored should be a WordListDocument');
+    assert(restored.hasBeenParsed, 'restored should be parsed');
+    assert(restored.metadata.title === 'Test Batch', 'restored metadata should include title');
+    assert(restored.categories.length === 1, 'restored should have one category');
+    assert(restored.categories[0].name === 'Nouns', 'restored category should be "Nouns"');
+    assert(restored.categories[0].words[0].word === 'кролик', 'restored word should be "кролик"');
+    assert(restored.countWords() === 1, 'restored countWords should work');
+    assert(restored.allWords()[0] === 'кролик', 'restored allWords should work');
+    assert(restored.getNodeById(restored.categories[0].id) === restored.categories[0], 'restored getNodeById should find category');
+    assert(restored.getNodeById(restored.categories[0].words[0].id) === restored.categories[0].words[0], 'restored getNodeById should find word');
+    assert(Object.isFrozen(restored), 'restored document should be frozen');
+    assert(Object.isFrozen(restored.categories), 'restored categories array should be frozen');
+    assert(Object.isFrozen(restored.categories[0]), 'restored category should be frozen');
+    assert(Object.isFrozen(restored.categories[0].words[0]), 'restored word should be frozen');
+}
+
+/**
+ * Test: WordListDocument fromJSON accepts a JSON string (not just a
+ * plain object).
+ */
+function testWordListDocumentFromJSONString() {
+    const input = `# Nouns
+кролик
+`;
+
+    const doc = parse(input);
+    const jsonString = JSON.stringify(doc);
+
+    const restored = WordListDocument.fromJSON(jsonString);
+
+    assert(restored instanceof WordListDocument, 'restored should be a WordListDocument');
+    assert(restored.hasBeenParsed, 'restored should be parsed');
+    assert(restored.categories[0].name === 'Nouns', 'restored category should be "Nouns"');
+}
+
+/**
+ * Test: WordListDocument fromJSON with missing required fields throws.
+ */
+function testWordListDocumentFromJSONValidation() {
+    let threw = false;
+
+    try {
+        WordListDocument.fromJSON({
+            rawText: '# Nouns'
+        });
+    } catch (e) {
+        threw = true;
+        assert(e instanceof TypeError, 'missing fields should throw TypeError');
+        assert(e.message.includes('missing required field'), 'error should mention missing required fields');
+    }
+
+    assert(threw, 'should throw on missing fields');
+}
+
+/**
+ * Test: WordListDocument fromJSON preserves unparsed state.
+ *
+ * A document constructed but not parsed cannot be serialized via
+ * toJSON() (it throws), so this case is not reachable through normal
+ * round-trip. However, fromJSON() should still handle it if given
+ * valid data with isParsed: false.
+ */
+function testWordListDocumentFromJSONUnparsed() {
+    const data = {
+        rawText: '# Nouns\nкролик\n',
+        freeze: false,
+        isParsed: false,
+        metadata: {},
+        categories: [],
+    };
+
+    const restored = WordListDocument.fromJSON(data);
+
+    assert(restored instanceof WordListDocument, 'restored should be a WordListDocument');
+    assert(restored.hasBeenParsed === false, 'restored should not be parsed');
+
+    let threw = false;
+    try {
+        restored.countWords();
+    } catch (e) {
+        threw = true;
+    }
+
+    assert(threw, 'should throw when accessing countWords on unparsed restored document');
+}
+
+/**
+ * Test: WordNode and CategoryNode fromJSON validate freeze field type.
+ */
+function testFromJSONFreezeValidation() {
+    let threw = false;
+
+    try {
+        WordNode.fromJSON({
+            type: 'word',
+            id: 'line-5',
+            lineNumber: 5,
+            word: 'кролик',
+            freeze: 'yes',
+        });
+    } catch (e) {
+        threw = true;
+        assert(e instanceof TypeError, 'invalid freeze should throw TypeError');
+    }
+
+    assert(threw, 'should throw on invalid freeze in WordNode.fromJSON');
+}
+
+/**
  * Run a single named test.
  *
  * @param {string} name - Test name.
@@ -582,6 +853,18 @@ runTest('testFreezeOption', testFreezeOption);
 runTest('testAccessBeforeParseThrows', testAccessBeforeParseThrows);
 runTest('testConstructorValidation', testConstructorValidation);
 runTest('testNodeTypesAndIds', testNodeTypesAndIds);
+runTest('testWordNodeLineNumber', testWordNodeLineNumber);
+runTest('testCategoryNodeLineNumber', testCategoryNodeLineNumber);
+runTest('testWordNodeRoundTrip', testWordNodeRoundTrip);
+runTest('testWordNodeRoundTripUnfrozen', testWordNodeRoundTripUnfrozen);
+runTest('testWordNodeFromJSONValidation', testWordNodeFromJSONValidation);
+runTest('testCategoryNodeRoundTrip', testCategoryNodeRoundTrip);
+runTest('testCategoryNodeFromJSONValidation', testCategoryNodeFromJSONValidation);
+runTest('testWordListDocumentRoundTrip', testWordListDocumentRoundTrip);
+runTest('testWordListDocumentFromJSONString', testWordListDocumentFromJSONString);
+runTest('testWordListDocumentFromJSONValidation', testWordListDocumentFromJSONValidation);
+runTest('testWordListDocumentFromJSONUnparsed', testWordListDocumentFromJSONUnparsed);
+runTest('testFromJSONFreezeValidation', testFromJSONFreezeValidation);
 
 if (!process.exitCode) {
     console.log('All tests passed');
