@@ -86,6 +86,18 @@ let elements = {};
 let baseUrl = null;
 
 /**
+ * Name of data-i18n attribute to set on the mount container
+ * (where views get loaded) so that i18n language switching
+ * can be view-aware and assign the appropriate view-specific
+ * strings (when they exist)
+ *
+ * This attribute is used in i18n.js to resolve localization
+ * values; if you update this value, you must update i18n.js
+ * accordingly.
+ */
+const I18N_VIEW_KEY = 'data-i18n-view';
+
+/**
  * Boot the application.
  *
  * Called once when the module is loaded. Awaits configuration loading
@@ -122,6 +134,9 @@ async function init() {
     renderNavigation();
 
     // Mount the first registered view by default.
+    // Do BEFORE applyLanguage, as mounting view will
+    // make i18n aware of what's the current view so
+    // it can render view-specific elements.
     const views = getViews();
     if (views.length > 0) {
         mountView(views[0].id);
@@ -297,6 +312,12 @@ function mountView(viewId) {
         requestContext
     };
 
+    // set data-i18n-view on the view mount container
+    // (container that the view will get loaded into)
+    // so that i18n will be view-aware when applying language
+    // after the mount
+    elements.viewMount.setAttribute(I18N_VIEW_KEY, viewId);
+
     // Mount the new view. The view is responsible for building its own
     // DOM inside the container and restoring its state if context.state
     // is present.
@@ -389,6 +410,10 @@ function unmountActiveView() {
             console.error(`unmountActiveView: unmount() failed for view "${activeViewId}":`, error);
         }
     }
+
+    // clear existing i18n-view data attribute on mount container
+    // (a new mount will override it, but keep here for defensiveness)
+    elements.viewMount.removeAttribute(I18N_VIEW_KEY);
 
     activeViewId = null;
 }

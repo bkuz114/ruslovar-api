@@ -23,6 +23,33 @@ import {
 } from './view-registry.js';
 
 /**
+ * data-* attributes used to resolve i18n keys.
+ *
+ * These attributes determine where a localized string ultimately
+ * comes from: the shared dictionary below, or a view-specific
+ * dictionary.
+ */
+
+// Attr set by the shell on a view's mount container when it's mounted.
+// Holds the view's ID. i18n string lookup will use this view's
+// strings if the attr is present and no other override exists.
+//
+// Note: not always present. Example: the page title is not inside
+// a mounted view, so it has no mount container. In that case,
+// the shared dictionary is always used.
+//
+// IF YOU EDIT THIS VALUE YOU MUST UPDATE app.js ACCORDINGLY!
+const I18N_VIEW_KEY = "data-i18n-view";
+
+// Attr that can be set on an element to force lookup in a specific
+// view's dictionary. Holds the ID of the view to use.
+const I18N_VIEW_OVERRIDE_KEY = "data-i18n-force-view";
+
+// Attr that can be set on an element to force use of the shared
+// dictionary for that element. View-specific lookup is skipped.
+const I18N_SHARE_OVERRIDE_KEY = "data-i18n-force-shared";
+
+/**
  * Shared UI strings used across multiple views (case labels, gender
  * values, common headings, error messages, etc.).
  *
@@ -215,11 +242,13 @@ export function restoreLanguagePreference() {
  * @param {string} [options.viewId] - If provided, resolve against this
  *     view's strings instead of shared strings.
  * @param {string} [options.lang=currentLanguage] - Language code to look up.
+ * @param {boolean} [options.logErrorIfNotFound=true] - If can't resolve, console.error
  * @returns {string|undefined} The resolved string, or undefined if not found.
  */
 export function getString(key, {
     viewId = null,
-    lang = currentLanguage
+    lang = currentLanguage,
+    logErrorIfNotFound = true
 } = {}) {
     // Validate key (the i18n key to lookup) is a non-empty string.
     if (typeof key !== 'string' || key.length === 0) {
@@ -278,7 +307,7 @@ export function getString(key, {
     // Perform the nested key lookup once, regardless of source.
     const value = getNestedValue(stringTable, key);
 
-    if (value === undefined) {
+    if (value === undefined && logErrorIfNotFound) {
         console.error(
             `i18n.getString: Key "${key}" not found in ${sourceLabel} for language "${lang}"`
         );
@@ -339,10 +368,6 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
     // Get key from requested i18n attr ("data-i18n").
     const key = element.getAttribute(i18n_attr);
 
-    // Check if element has a data-i18n-view attribute. If so,
-    // attempt to resolve against that view's strings first.
-    const viewId = element.getAttribute('data-i18n-view');
-
     // Validate that the i18n attribute exists and contains a non-empty value.
     if (!key || key.length === 0) {
         console.warn(
@@ -352,25 +377,51 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
         return;
     }
 
+    /**
+     * String resolution precedence:
+     *
+     * 1. If data-i18n-force-shared is present → shared dictionary only.
+     * 2. Else if data-i18n-force-view is present → use that view's dictionary.
+     * 3. Else if data-i18n-view found on ancestor → use that view's dictionary.
+     * 4. Else → shared dictionary.
+     */
+
+    if (element.hasAttribute(I18N_VIEW_OVERRIDE_KEY) && element.hasAttribute(I18N_SHARE_OVERRIDE_KEY)) {
+        console.error(
+            `i18n.resolveElementI18nValue: Element has both '${I18N_VIEW_OVERRIDE_KEY}' and '${I18N_SHARE_OVERRIDE_KEY}'`,
+            element
+        );
+    }
+
+    // Get current loaded view. Set by shell on view's mount container during mount.
+    // Should be present unless element outside mounted container (e.g. page title, etc.)
+    const currViewId = element.closest(`[${I18N_VIEW_KEY}]`)?.getAttribute(I18N_VIEW_KEY);
+
+    // Check for data-i18n-force-view (to force lookup in a specific view's dictionary)
+    const forcedViewId = element.getAttribute(I18N_VIEW_OVERRIDE_KEY);
+
+    // Check for data-i18n-force-shared (to force shared string)
+    const forceShared = element.hasAttribute(I18N_SHARE_OVERRIDE_KEY);
+
+    const viewIdToCheck = forcedViewId || currViewId;
+
+    // Will use shared if 1. force override, or 2. no view key (e.g. regular DOM)
     let useSharedString = true;
     let value = null;
 
-    // Only attempt view-specific lookup when a non-empty viewId is
-    // provided. Empty strings are treated as "no view scope" to match
-    // the behavior of getAttribute() returning null.
-    if (viewId) {
-        // View-specific lookup first.
+    if (viewIdToCheck && !forceShared) {
+        // try to find view specific key
         value = getString(key, {
-            viewId: viewId,
-            lang: lang
+            viewId: viewIdToCheck,
+            lang: lang,
+            // don't error if no view specific
+            // string as no guarantee there is one
+            logErrorIfNotFound: false
         });
         useSharedString = false;
 
         if (value === undefined) {
-            // Warn and fall back to shared.
-            console.warn(
-                `i18n.resolveElementI18nValue: Key "${key}" not found in view "${viewId}", falling back to shared strings`
-            );
+            // Fall back to shared.
             useSharedString = true;
         }
     }
@@ -385,7 +436,13 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
     // Could not resolve the key in either shared or view lookup.
     if (value === undefined) {
         console.error(
-            `i18n.resolveElementI18nValue: Unable to resolve key "${key}" for view "${viewId || 'shared'}"`
+            `i18n.resolveElementI18nValue: Could not find a string for key "${key}".\n` +
+            ` • View ID found on closest ancestor with '${I18N_VIEW_KEY}': ${currViewId}\n` +
+            ` • View ID the element explicitly asked to use (via '${I18N_VIEW_OVERRIDE_KEY}'): ${forcedViewId}\n` +
+            ` • Element forced to use common strings, not view strings? ('${I18N_SHARE_OVERRIDE_KEY}'): ${forceShared}\n` +
+            ` • View ID the system ultimately checked for this key: ${viewIdToCheck}\n` +
+            ` • Shared dictionary ultimately used to get string?: ${useSharedString}`,
+            element
         );
         return;
     }

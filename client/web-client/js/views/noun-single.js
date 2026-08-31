@@ -250,7 +250,6 @@ function buildDom(container) {
     }));
     wordLabel.setAttribute('for', 'word-input');
     wordLabel.setAttribute('data-i18n', 'word_label');
-    wordLabel.setAttribute('data-i18n-view', VIEW_ID);
 
     const wordInput = document.createElement('input');
     wordInput.type = 'text';
@@ -260,7 +259,6 @@ function buildDom(container) {
         viewId: VIEW_ID
     });
     wordInput.setAttribute('data-i18n-placeholder', 'word_placeholder');
-    wordInput.setAttribute('data-i18n-view', VIEW_ID);
     wordInput.autocomplete = 'off';
     wordInput.required = true;
 
@@ -463,7 +461,6 @@ function createResultsPlaceholder() {
     );
     placeholder.id = 'results-placeholder';
     placeholder.setAttribute('data-i18n', 'results_placeholder');
-    placeholder.setAttribute('data-i18n-view', VIEW_ID);
     return placeholder;
 }
 

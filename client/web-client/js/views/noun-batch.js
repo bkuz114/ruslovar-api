@@ -312,7 +312,6 @@ function buildDom(container) {
     }));
     fileLabel.setAttribute('for', 'file-input');
     fileLabel.setAttribute('data-i18n', 'file_label');
-    fileLabel.setAttribute('data-i18n-view', VIEW_ID);
 
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -327,7 +326,6 @@ function buildDom(container) {
         })
     );
     formatHint.setAttribute('data-i18n', 'file_format_hint');
-    formatHint.setAttribute('data-i18n-view', VIEW_ID);
 
     fileGroup.appendChild(fileLabel);
     fileGroup.appendChild(fileInput);
@@ -357,7 +355,6 @@ function buildDom(container) {
     );
     placeholder.id = 'results-placeholder';
     placeholder.setAttribute('data-i18n', 'results_placeholder');
-    placeholder.setAttribute('data-i18n-view', VIEW_ID);
     resultsArea.appendChild(placeholder);
 
     container.appendChild(resultsArea);
