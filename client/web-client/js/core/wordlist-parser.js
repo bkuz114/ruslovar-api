@@ -54,8 +54,11 @@
  *     doc.allNodes();     // [CategoryNode|WordNode, ...] in document order
  *
  * The toJSON() methods return plain objects suitable for JSON
- * serialization and state restoration. View render functions should
- * accept these plain objects, which mirror the live node getters.
+ * serialization and state restoration. The fromJSON() methods
+ * reconstruct live documents and nodes from those plain objects,
+ * enabling full round-trip serialization. View render functions
+ * should accept these plain objects, which mirror the live node
+ * getters.
  *
  * Dependencies:
  *   - None (standalone module)
@@ -91,10 +94,42 @@ function createLineId(line) {
 }
 
 /**
+ * Validate that a plain object contains all required fields.
+ *
+ * Uses the `in` operator so falsy values (null, false, empty string,
+ * empty array, empty object) are considered present. Only missing
+ * properties trigger a TypeError.
+ *
+ * @param {Object} data - Object to validate.
+ * @param {string[]} requiredFields - Field names that must exist.
+ * @param {string} source - Name of the calling method for error messages.
+ * @throws {TypeError} If data is not an object or any required field
+ *     is missing.
+ */
+function validateRequiredFields(data, requiredFields, source) {
+    if (!data || typeof data !== 'object') {
+        throw new TypeError(
+            `${source}: data must be a plain object`
+        );
+    }
+
+    const missing = requiredFields.filter(field => !(field in data));
+
+    if (missing.length > 0) {
+        throw new TypeError(
+            `${source}: data is missing required field(s): ${missing.join(', ')}`
+        );
+    }
+}
+
+/**
  * Represents a single word in the parsed document.
  *
  * A word node wraps a word string with a deterministic ID derived from
  * the line number where the word appears in the source file.
+ *
+ * Supports JSON serialization via toJSON() and reconstruction via
+ * WordNode.fromJSON().
  */
 export class WordNode {
     /**
@@ -126,6 +161,7 @@ export class WordNode {
         this._type = 'word';
         this._id = createLineId(lineNumber);
         this._word = word;
+        this._lineNumber = lineNumber;
 
         if (freeze) {
             Object.freeze(this);
@@ -147,21 +183,50 @@ export class WordNode {
         return this._word;
     }
 
+    /** @returns {number} 1-based source line number. */
+    get lineNumber() {
+        return this._lineNumber;
+    }
+
     /**
      * Convert this node to a plain serializable object.
      *
      * The returned object mirrors the live getters so view render
      * functions can work with either live nodes or plain JSON.
      *
-     * @returns {{type: string, id: string, word: string}} Plain object
-     *     representation.
+     * @returns {{type: string, id: string, lineNumber: number,
+     *     word: string, freeze: boolean}} Plain object representation.
      */
     toJSON() {
         return {
             type: this._type,
             id: this._id,
+            lineNumber: this._lineNumber,
             word: this._word,
+            freeze: Object.isFrozen(this),
         };
+    }
+
+    /**
+     * Reconstruct a WordNode from a plain object produced by toJSON().
+     *
+     * The input must include type, id, lineNumber, word, and freeze
+     * fields. The freeze field determines whether the reconstructed
+     * node is frozen.
+     *
+     * @param {Object} data - Plain object produced by toJSON().
+     * @returns {WordNode} Reconstructed word node.
+     * @throws {TypeError} If data is malformed or missing required
+     *     fields.
+     */
+    static fromJSON(data) {
+        validateRequiredFields(
+            data,
+            ['type', 'id', 'lineNumber', 'word', 'freeze'],
+            'WordNode.fromJSON'
+        );
+
+        return new WordNode(data.word, data.lineNumber, data.freeze);
     }
 }
 
@@ -171,6 +236,9 @@ export class WordNode {
  * A category node wraps a heading name, nesting level, and child word
  * and category nodes. It gets a deterministic ID derived from the line
  * number where the heading appears in the source file.
+ *
+ * Supports JSON serialization via toJSON() and reconstruction via
+ * CategoryNode.fromJSON().
  */
 export class CategoryNode {
     /**
@@ -231,6 +299,7 @@ export class CategoryNode {
         this._id = createLineId(lineNumber);
         this._name = name;
         this._level = level;
+        this._lineNumber = lineNumber;
         this._words = words;
         this._subcategories = subcategories;
 
@@ -259,6 +328,11 @@ export class CategoryNode {
     /** @returns {number} Heading level (1 or greater). */
     get level() {
         return this._level;
+    }
+
+    /** @returns {number} 1-based source line number. */
+    get lineNumber() {
+        return this._lineNumber;
     }
 
     /** @returns {WordNode[]} Word nodes directly under this category. */
@@ -314,21 +388,62 @@ export class CategoryNode {
      * The returned object mirrors the live getters so view render
      * functions can work with either live nodes or plain JSON.
      *
-     * @returns {{type: string, id: string, name: string, level: number,
-     *     words: Object[], subcategories: Object[]}} Plain object
+     * @returns {{type: string, id: string, lineNumber: number,
+     *     name: string, level: number, words: Object[],
+     *     subcategories: Object[], freeze: boolean}} Plain object
      *     representation.
      */
     toJSON() {
         return {
             type: this._type,
             id: this._id,
+            lineNumber: this._lineNumber,
             name: this._name,
             level: this._level,
             words: this._words.map(wordNode => wordNode.toJSON()),
             subcategories: this._subcategories.map(
                 categoryNode => categoryNode.toJSON()
             ),
+            freeze: Object.isFrozen(this),
         };
+    }
+
+    /**
+     * Reconstruct a CategoryNode from a plain object produced by
+     * toJSON().
+     *
+     * The input must include type, id, lineNumber, name, level, words,
+     * subcategories, and freeze fields. Word and subcategory objects
+     * are recursively reconstructed.
+     *
+     * @param {Object} data - Plain object produced by toJSON().
+     * @returns {CategoryNode} Reconstructed category node.
+     * @throws {TypeError} If data is malformed or missing required
+     *     fields.
+     */
+    static fromJSON(data) {
+        validateRequiredFields(
+            data,
+            ['type', 'id', 'lineNumber', 'name', 'level', 'words', 'subcategories', 'freeze'],
+            'CategoryNode.fromJSON'
+        );
+
+        const words = data.words.map(
+            wordData => WordNode.fromJSON(wordData)
+        );
+
+        const subcategories = data.subcategories.map(
+            categoryData => CategoryNode.fromJSON(categoryData)
+        );
+
+        return new CategoryNode(
+            data.name,
+            data.level,
+            data.lineNumber,
+            words,
+            subcategories,
+            data.freeze
+        );
     }
 }
 
@@ -342,6 +457,9 @@ export class CategoryNode {
  * When constructed with { freeze: true }, the document becomes deeply
  * frozen as the final step of parse(). After that point, the document
  * is immutable and parse() cannot be called again.
+ *
+ * Supports JSON serialization via toJSON() and full round-trip
+ * reconstruction via WordListDocument.fromJSON().
  */
 export class WordListDocument {
     /**
@@ -350,6 +468,7 @@ export class WordListDocument {
      * @param {boolean} [options.freeze=false] - Whether to deeply freeze
      *     this document, its categories, and its word nodes as the final
      *     step of parse(). Once frozen, the document cannot be re-parsed.
+     *     The freeze flag is preserved through toJSON()/fromJSON().
      * @throws {TypeError} If rawText is not a string, options is not an
      *     object, or options.freeze is not a boolean.
      */
@@ -533,7 +652,11 @@ export class WordListDocument {
      * The returned object mirrors the live getters so view render
      * functions can work with either live nodes or plain JSON.
      *
-     * @returns {{metadata: Object, categories: Object[]}} Plain object
+     * Includes rawText, freeze, and isParsed so that fromJSON() can
+     * reconstruct the document in its exact current state.
+     *
+     * @returns {{rawText: string, freeze: boolean, isParsed: boolean,
+     *     metadata: Object, categories: Object[]}} Plain object
      *     representation.
      * @throws {Error} If parse() has not been called.
      */
@@ -541,6 +664,9 @@ export class WordListDocument {
         this._assertParsed();
 
         return {
+            rawText: this._rawText,
+            freeze: this._freeze,
+            isParsed: this._isParsed,
             metadata: {
                 ...this._metadata
             },
@@ -548,6 +674,83 @@ export class WordListDocument {
                 categoryNode => categoryNode.toJSON()
             ),
         };
+    }
+
+    /**
+     * Reconstruct a WordListDocument from a JSON string or plain object.
+     *
+     * The input must have the shape produced by toJSON():
+     *     {
+     *         rawText: string,
+     *         freeze: boolean,
+     *         isParsed: boolean,
+     *         metadata: Object,
+     *         categories: Array<Object>
+     *     }
+     *
+     * Each category and word object must include a lineNumber field.
+     * The id field is derived from lineNumber during reconstruction.
+     *
+     * @param {string|Object} json - JSON string or plain object produced
+     *     by toJSON().
+     * @returns {WordListDocument} Reconstructed document in the same
+     *     state (parsed or unparsed) as when toJSON() was called.
+     * @throws {TypeError} If json is not a string or object, or if the
+     *     structure is malformed or missing required fields.
+     */
+    static fromJSON(json) {
+        const data = typeof json === 'string' ? JSON.parse(json) : json;
+
+        validateRequiredFields(
+            data,
+            ['rawText', 'freeze', 'isParsed', 'metadata', 'categories'],
+            'WordListDocument.fromJSON'
+        );
+
+        // Construct an unfrozen document first. Property assignment
+        // below requires the document to be mutable. Freezing (if
+        // requested) happens only after the document is fully built.
+        const doc = new WordListDocument(data.rawText, {
+            freeze: data.freeze,
+        });
+
+        doc._metadata = {
+            ...data.metadata
+        };
+
+        // Reconstruct the category tree. Nodes may already be frozen
+        // individually (because their serialized freeze flag was true).
+        // This is fine: frozen nodes can be assembled into the tree
+        // without issue, and Object.freeze() is idempotent.
+        doc._categories = data.categories.map(
+            categoryData => CategoryNode.fromJSON(categoryData)
+        );
+
+        // Create a fresh mutable Map for node registration. This must
+        // happen before _deepFreezeDocument() because the _registerNode
+        // calls below add entries via Map.set(), which cannot be called
+        // on a frozen Map.
+        doc._nodeMap = new Map();
+
+        // Register all nodes so getNodeById() works without re-parsing.
+        // This mutates _nodeMap, which is still unfrozen at this point.
+        for (const category of doc._categories) {
+            doc._registerTree(category);
+        }
+
+        // Restore the parsed state. This must happen before freezing
+        // because assigning to _isParsed on a frozen document would
+        // throw in strict mode.
+        doc._isParsed = data.isParsed;
+
+        // If the original document was frozen, freeze the reconstructed
+        // document to match. This is idempotent for nodes that were
+        // already frozen during their own fromJSON() calls.
+        if (doc._isParsed && doc._freeze) {
+            doc._deepFreezeDocument();
+        }
+
+        return doc;
     }
 
     /**
@@ -564,6 +767,49 @@ export class WordListDocument {
                 'WordListDocument: parse() must be called before ' +
                 'accessing parsed data'
             );
+        }
+    }
+
+    /**
+     * Recursively register a category and all its descendants in the
+     * document's ID lookup map.
+     *
+     * Why this is needed in addition to _registerNode:
+     *
+     * During normal parsing, nodes are registered incrementally as the
+     * parser builds the tree. Each CategoryNode and WordNode is added
+     * to _nodeMap as soon as it is created, ensuring getNodeById()
+     * works immediately after parse() completes.
+     *
+     * However, when reconstructing a document via fromJSON(), nodes are
+     * created through CategoryNode.fromJSON() and WordNode.fromJSON().
+     * These static methods build the tree structure but do not register
+     * nodes with any document, because they are standalone and have no
+     * reference to a WordListDocument instance leaving _nodeMap empty.
+     *
+     * This method fills that gap. It walks the reconstructed tree and
+     * registers every node, restoring the invariant that all nodes in
+     * the document are present in _nodeMap. Without this step,
+     * getNodeById() would return null for every ID in a reconstructed
+     * document.
+     *
+     * @param {CategoryNode} category - Category node to register,
+     *     along with all of its descendants.
+     * @returns {void}
+     * @private
+     */
+    _registerTree(category) {
+        // Register the category itself first.
+        this._registerNode(category);
+
+        // Register all word nodes directly under this category.
+        for (const wordNode of category.words) {
+            this._registerNode(wordNode);
+        }
+
+        // Recursively register all subcategories and their contents.
+        for (const subcategory of category.subcategories) {
+            this._registerTree(subcategory);
         }
     }
 
