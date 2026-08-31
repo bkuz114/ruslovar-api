@@ -18,6 +18,28 @@
  *   - Send a single POST request to /api/v1/nouns/batch.
  *   - Render results grouped by category with collapsible word panels.
  *   - Display per-word success/error status.
+ *   - Preserve view state across mount/unmount cycles.
+ *
+ * State preservation:
+ *   The view implements getState() and restores from context.state in
+ *   mount(). The state shape is:
+ *     {
+ *       version: 1,
+ *       fileName: string,            // Original file name (for display)
+ *       parsedDocument: Object,      // Serialized WordListDocument
+ *       results: Object|null,        // Full API response from batch submission
+ *       strict: boolean,             // Strict mode checkbox state
+ *       openNodeIds: string[],       // IDs of open categories and words
+ *       scrollTop: number            // Results area scroll position
+ *     }
+ *
+ *   The shell captures getState() before unmount and passes the saved
+ *   state to mount() via context.state on subsequent mounts. The view
+ *   validates the state version before restoring.
+ *
+ *   The parsed document is serialized via WordListDocument.toJSON()
+ *   and restored via WordListDocument.fromJSON(), enabling full
+ *   round-trip reconstruction without re-parsing the original file.
  *
  * Language switching updates [data-i18n] elements in place; results
  * are not lost when the language changes.
@@ -29,7 +51,6 @@
  *
  * Dependencies:
  *   - core/i18n.js (getString)
- *   - core/api.js (fetchNounBatch)
  *   - core/dom.js (createElement, clearElement, loadStylesheet)
  *   - core/renderers.js (declension tables, metadata)
  *   - core/errors.js (ApiError)
@@ -41,9 +62,6 @@
 import {
     getString,
 } from '../core/i18n.js';
-import {
-    fetchNounBatch
-} from '../core/api.js';
 import {
     createElement,
     clearElement,
@@ -67,6 +85,33 @@ import {
  * Unique identifier for this view. Used by the view registry and i18n.
  */
 const VIEW_ID = 'noun-batch';
+
+/**
+ * Request context for this view.
+ *
+ * Supplied by the shell during mount(). Provides pre-bound API methods
+ * that automatically carry this view's identity and request policy.
+ *
+ * The data layer (data-layer.js) owns HTTP request lifecycles: it caches
+ * responses, deduplicates in-flight requests, and can abort requests when a view
+ * is unmounted. To do that, it needs to know which view initiated each
+ * request. This object will have that information bound to it, along with
+ * conveenience functions for querying the backend, so that the view can call
+ * them and not need to pass its own ID or policy at call time.
+ *
+ * @type {Object|null}
+ */
+let requestContext = null;
+
+/**
+ * State schema version for this view.
+ *
+ * Increment this when the state shape changes. The view validates the
+ * version on restore and discards state if the version is unsupported.
+ *
+ * @type {number}
+ */
+const STATE_VERSION = 1;
 
 /**
  * View-specific strings for the batch noun lookup demo.
@@ -102,6 +147,9 @@ const VIEW_STRINGS = {
 /**
  * DOM element references for this view.
  *
+ * Populated during buildDom() and reset during unmount(). These are
+ * ephemeral references to the view's rendered DOM, not persistent state.
+ *
  * @type {Object}
  */
 let elements = {};
@@ -120,11 +168,36 @@ let elements = {};
 let parsedDocument = null;
 
 /**
- * Stores the raw text content of the selected file.
+ * The original file name of the selected word list file.
  *
- * @type {string|null}
+ * Stored for display purposes and included in state so it can be
+ * restored on remount. May be an empty string if the content came
+ * from an example file or other source without a file name.
+ *
+ * @type {string}
  */
-let selectedFileText = null;
+let selectedFileName = '';
+
+/**
+ * The most recent API response from a batch submission.
+ *
+ * Retained so getState() can include results without having to
+ * reconstruct them from the DOM. Set when handleBatchSubmit()
+ * completes successfully. Cleared when a new file is loaded.
+ *
+ * @type {Object|null}
+ */
+let lastResults = null;
+
+/**
+ * Set of node IDs (categories and words) that are currently open.
+ *
+ * Updated by toggle event listeners on <details> elements. Serialized
+ * to an array in getState() and restored from an array on mount.
+ *
+ * @type {Set<string>}
+ */
+let openNodeIds = new Set();
 
 /**
  * Register the view with the application shell.
@@ -133,31 +206,87 @@ registerView({
     id: VIEW_ID,
     labelKey: 'view_label',
     strings: VIEW_STRINGS,
+    requestPolicy: 'abort-on-unmount',
 
     /**
      * Mount the view into the provided container.
      *
      * Builds the file input, strict mode checkbox, submit button, and
-     * results area. Binds event listeners.
+     * results area. Binds event listeners. Restores state if
+     * context.state is present and valid.
      *
      * @param {HTMLElement} container - The mount container element.
+     * @param {Object} context - Mount context from the shell.
+     * @param {Object|undefined} context.state - Saved state from a
+     *     previous mount, or undefined if this is the first mount.
+     * @param {URLSearchParams} context.urlParams - Current URL query
+     *     parameters, for deep-link support.
+     * @param {boolean} context.isFirstMount - True if no saved state
+     *     exists for this view.
      */
-    mount(container) {
+    mount(container, context) {
         loadStylesheet('css/views/noun-batch.css');
         buildDom(container);
         bindEvents();
+
+        // Store the request context to be used for making HTTP requests
+        // (this will pass the view's info to the data layer so that it
+        // can handle aborting or allowing them to continue during navigation)
+        if (!context.requestContext) {
+            throw new Error(
+                `noun-batch: mount() received a malformed context. ` +
+                `Expected context.requestContext to be a request context object ` +
+                `created by the shell via createRequestContext(). ` +
+                `Received: ${context.requestContext === undefined ? 'undefined' : 'null'}.`
+            );
+        }
+        requestContext = context.requestContext;
+
+        // Restore state if present and valid. Otherwise, show the
+        // initial placeholder.
+        if (context.state && context.state.version === STATE_VERSION) {
+            restoreFromState(context.state);
+        }
     },
 
     /**
      * Clean up the view when it is deactivated.
      *
-     * Resets internal state. Event listeners are automatically discarded
-     * when the DOM elements are removed from the document.
+     * Resets DOM references and module state. The shell captures state
+     * via getState() before calling unmount(), so any state the view
+     * wants to preserve must be returned by getState().
+     *
+     * Event listeners are automatically discarded when the DOM elements
+     * are removed from the document.
      */
     unmount() {
         elements = {};
         parsedDocument = null;
-        selectedFileText = null;
+        selectedFileName = '';
+        lastResults = null;
+        openNodeIds = new Set();
+        requestContext = null;
+    },
+
+    /**
+     * Capture the current state of the view.
+     *
+     * Returns a plain, JSON-serializable object representing everything
+     * needed to reconstruct the view's current UI state. Called by the
+     * shell before unmount.
+     *
+     * @returns {Object} State snapshot.
+     */
+    getState() {
+        return {
+            version: STATE_VERSION,
+            fileName: selectedFileName,
+            parsedDocument: parsedDocument ? parsedDocument.toJSON() : null,
+            results: lastResults,
+            strict: elements.submitControls ? elements.submitControls.isStrictMode() : false,
+            openNodeIds: [...openNodeIds],
+            scrollTop: elements.resultsArea ? elements.resultsArea.scrollTop : 0,
+        };
     },
 });
 
@@ -259,9 +388,10 @@ function bindEvents() {
  * example file loading.
  *
  * @param {string} content - Raw file contents.
+ * @param {string} [fileName] - Original file name, if available.
  * @throws {TypeError} If content is not a string.
  */
-function handleFileContent(content) {
+function handleFileContent(content, fileName = '') {
     if (typeof content !== 'string') {
         throw new TypeError('handleFileContent: content must be a string');
     }
@@ -270,8 +400,13 @@ function handleFileContent(content) {
     const doc = new WordListDocument(content);
     doc.parse();
 
-    // Store the parsed document in module state.
+    // Store the parsed document and file name in module state.
     parsedDocument = doc;
+    selectedFileName = fileName;
+
+    // A new file invalidates previous results and expansion state.
+    lastResults = null;
+    openNodeIds = new Set();
 
     // Enable the submit button only if there are words to look up.
     const totalWords = doc.countWords();
@@ -299,8 +434,7 @@ function handleFileSelection(event) {
     const reader = new FileReader();
 
     reader.onload = (loadEvent) => {
-        selectedFileText = loadEvent.target.result;
-        handleFileContent(selectedFileText);
+        handleFileContent(loadEvent.target.result, file.name);
     };
 
     reader.readAsText(file);
@@ -350,7 +484,7 @@ function showFileSummary(categories, totalWords) {
  * by category.
  */
 async function handleBatchSubmit() {
-    if (!selectedFileText || !parsedDocument) {
+    if (!parsedDocument) {
         showError(getString('error_no_file', {
             viewId: VIEW_ID
         }));
@@ -372,8 +506,15 @@ async function handleBatchSubmit() {
     elements.submitControls.submitButton.disabled = true;
 
     try {
-        const data = await fetchNounBatch(uniqueWords, elements.submitControls.isStrictMode());
-        renderBatchResults(parsedDocument.categories, parsedDocument.metadata, data.results);
+        // use this view's saved requestContext to make
+        // the HTTP request to the backend. This requestContext
+        // object comes from the data layer; it has the view's
+        // info attached so the data layer can track who sent
+        // this request and manage it (e.g. abort it on unmount
+        // or allow it to continue -- whatever the view registesred)
+        const data = await requestContext.fetchNounBatch(uniqueWords, elements.submitControls.isStrictMode());
+        lastResults = data;
+        renderBatchResults(parsedDocument.categories, parsedDocument.metadata, data.results, openNodeIds);
     } catch (error) {
         console.error('Batch request failed:', error);
         showError(getErrorMessage(error));
@@ -397,6 +538,72 @@ function getErrorMessage(error) {
 }
 
 /**
+ * Restore the view from a saved state snapshot.
+ *
+ * Reconstructs the WordListDocument from serialized JSON, restores the
+ * file name, results, strict mode, expansion state, and scroll position.
+ * The DOM is rendered from the restored document and results.
+ *
+ * Expansion state restoration uses a snapshot Set (restoredOpenIds) for
+ * rendering. Any toggle events that fire during rendering may mutate
+ * openNodeIds, but after rendering completes, openNodeIds is reset to
+ * a pristine copy of the snapshot. This eliminates ordering concerns
+ * between listener attachment and initial open state.
+ *
+ * @param {Object} state - Saved state from a previous mount.
+ */
+function restoreFromState(state) {
+    // Reconstruct the WordListDocument from serialized JSON.
+    if (state.parsedDocument) {
+        parsedDocument = WordListDocument.fromJSON(state.parsedDocument);
+    } else {
+        parsedDocument = null;
+    }
+
+    selectedFileName = state.fileName || '';
+    lastResults = state.results || null;
+
+    // Restore strict mode checkbox.
+    if (elements.submitControls && typeof elements.submitControls.setStrictMode === 'function') {
+        elements.submitControls.setStrictMode(Boolean(state.strict));
+    }
+
+    // Restore expansion state from the saved array.
+    const restoredOpenIds = new Set(state.openNodeIds || []);
+
+    // If we have a parsed document, render the file summary and results.
+    if (parsedDocument) {
+        const totalWords = parsedDocument.countWords();
+        elements.submitControls.submitButton.disabled = totalWords === 0;
+
+        showFileSummary(parsedDocument.categories, totalWords);
+
+        if (lastResults && lastResults.results) {
+            renderBatchResults(
+                parsedDocument.categories,
+                parsedDocument.metadata,
+                lastResults.results,
+                restoredOpenIds
+            );
+        }
+    }
+
+    // Reset openNodeIds to a pristine copy of the snapshot. Any toggle
+    // events that fired during rendering have mutated openNodeIds, but
+    // those mutations are discarded here.
+    openNodeIds = new Set(restoredOpenIds);
+
+    // Restore scroll position after the DOM has been laid out.
+    if (state.scrollTop && state.scrollTop > 0) {
+        requestAnimationFrame(() => {
+            if (elements.resultsArea) {
+                elements.resultsArea.scrollTop = state.scrollTop;
+            }
+        });
+    }
+}
+
+/**
  * Render batch results grouped by category.
  *
  * Displays frontmatter metadata (if present) above the results, then
@@ -410,10 +617,11 @@ function getErrorMessage(error) {
  *     be empty.
  * @param {Array<Object>} results - Response items from the batch API.
  *     Each item corresponds to one requested word.
+ * @param {Set<string>} openIds - Set of node IDs that should be open.
  * @throws {TypeError} If categories or results is not an array, or if
  *     metadata is not an object.
  */
-function renderBatchResults(categories, metadata, results) {
+function renderBatchResults(categories, metadata, results, openIds) {
     if (!Array.isArray(categories)) {
         throw new TypeError('renderBatchResults: categories must be an array');
     }
@@ -424,6 +632,10 @@ function renderBatchResults(categories, metadata, results) {
 
     if (!Array.isArray(results)) {
         throw new TypeError('renderBatchResults: results must be an array');
+    }
+
+    if (!(openIds instanceof Set)) {
+        throw new TypeError('renderBatchResults: openIds must be a Set');
     }
 
     clearElement(elements.resultsArea);
@@ -440,13 +652,13 @@ function renderBatchResults(categories, metadata, results) {
     });
 
     // render a category based on its type
-    function renderCategory(category, resultMap) {
+    function renderCategory(category, resultMap, openIds) {
         if (category.name === '') {
             // Words before any category header: render directly without a heading.
-            elements.resultsArea.appendChild(createUncategorizedSection(category, resultMap));
+            elements.resultsArea.appendChild(createUncategorizedSection(category, resultMap, openIds));
         } else if (category.words.length > 0) {
             // Words within categories: render into collapsible sections with headings
-            elements.resultsArea.appendChild(createCategorySection(category, resultMap));
+            elements.resultsArea.appendChild(createCategorySection(category, resultMap, openIds));
         } else {
             // Categories with no words beneath them
             elements.resultsArea.appendChild(createEmptyCategory(category));
@@ -458,7 +670,7 @@ function renderBatchResults(categories, metadata, results) {
     // regardless of its depth in the parsed document.
     function renderCategoryTree(categoryList) {
         categoryList.forEach((category) => {
-            renderCategory(category, resultMap);
+            renderCategory(category, resultMap, openIds);
             if (category.subcategories && category.subcategories.length > 0) {
                 renderCategoryTree(category.subcategories);
             }
@@ -506,8 +718,9 @@ function createMetadataDisplay(metadata) {
  * @param {{name: string, words: Array<Object>}} category - Category data.
  *     The words array contains word node objects from the parser.
  * @param {Map<string, Object>} resultMap - Map of word to API result item.
+ * @param {Set<string>} openIds - Set of node IDs that should be open.
  */
-function appendWordDetails(container, category, resultMap) {
+function appendWordDetails(container, category, resultMap, openIds) {
     if (!container || typeof container.appendChild !== 'function') {
         throw new TypeError('appendWordDetails: container must be a DOM element');
     }
@@ -524,12 +737,16 @@ function appendWordDetails(container, category, resultMap) {
         throw new TypeError('appendWordDetails: resultMap must be a Map');
     }
 
+    if (!(openIds instanceof Set)) {
+        throw new TypeError('appendWordDetails: openIds must be a Set');
+    }
+
     category.words.forEach((wordObj) => {
         // wordObj is a WordNode object created by the parser;
         // get the actual word from it
         const word = wordObj.word;
         const item = resultMap.get(word);
-        const details = createWordDetails(wordObj, item);
+        const details = createWordDetails(wordObj, item, openIds);
         container.appendChild(details);
     });
 }
@@ -541,14 +758,16 @@ function appendWordDetails(container, category, resultMap) {
  * to the category are appended to the body of the <details> element and
  * are hidden until the user expands the section.
  *
- * Categories are collapsed by default to keep the results scannable for
- * large word lists.
+ * Categories are collapsed by default unless their node ID is present
+ * in openIds. A toggle listener keeps openNodeIds in sync when the
+ * user expands or collapses the section.
  *
  * @param {{name: string, words: string[]}} category - Category data.
  * @param {Map<string, Object>} resultMap - Map of word to API result item.
+ * @param {Set<string>} openIds - Set of node IDs that should be open.
  * @returns {HTMLElement} The category section element (a <details> element).
  */
-function createCategorySection(category, resultMap) {
+function createCategorySection(category, resultMap, openIds) {
     if (!category || typeof category !== 'object') {
         throw new TypeError('createCategorySection: category must be an object');
     }
@@ -565,12 +784,30 @@ function createCategorySection(category, resultMap) {
         throw new TypeError('createCategorySection: resultMap must be a Map');
     }
 
+    if (!(openIds instanceof Set)) {
+        throw new TypeError('createCategorySection: openIds must be a Set');
+    }
+
     const details = createElement('details', 'category-section');
+
+    // Set initial open state before attaching the toggle listener.
+    if (openIds.has(category.id)) {
+        details.open = true;
+    }
+
+    // Attach toggle listener after setting initial open state.
+    details.addEventListener('toggle', () => {
+        if (details.open) {
+            openNodeIds.add(category.id);
+        } else {
+            openNodeIds.delete(category.id);
+        }
+    });
 
     const summary = createElement('summary', 'category-heading', category.name);
     details.appendChild(summary);
 
-    appendWordDetails(details, category, resultMap);
+    appendWordDetails(details, category, resultMap, openIds);
 
     return details;
 }
@@ -585,10 +822,11 @@ function createCategorySection(category, resultMap) {
  * @param {{name: string, words: string[]}} category - Implicit category
  *     data. The name should be an empty string.
  * @param {Map<string, Object>} resultMap - Map of word to API result item.
+ * @param {Set<string>} openIds - Set of node IDs that should be open.
  * @returns {HTMLElement} The uncategorized section element (a <div>).
  * @throws {TypeError} If category or resultMap is invalid.
  */
-function createUncategorizedSection(category, resultMap) {
+function createUncategorizedSection(category, resultMap, openIds) {
     if (!category || typeof category !== 'object') {
         throw new TypeError('createUncategorizedSection: category must be an object');
     }
@@ -605,8 +843,12 @@ function createUncategorizedSection(category, resultMap) {
         throw new TypeError('createUncategorizedSection: resultMap must be a Map');
     }
 
+    if (!(openIds instanceof Set)) {
+        throw new TypeError('createUncategorizedSection: openIds must be a Set');
+    }
+
     const container = createElement('div', 'uncategorized-section');
-    appendWordDetails(container, category, resultMap);
+    appendWordDetails(container, category, resultMap, openIds);
     return container;
 }
 
@@ -647,16 +889,35 @@ function createEmptyCategory(category) {
 /**
  * Create a collapsible details panel for a single word.
  *
+ * The panel is collapsed by default unless its node ID is present in
+ * openIds. A toggle listener keeps openNodeIds in sync when the user
+ * expands or collapses the panel.
+ *
  * @param {Object} wordObj - Word node from the parser. The node
  *     contains the word text under the "word" property.
  * @param {Object|undefined} item - API result item for this word, if any.
+ * @param {Set<string>} openIds - Set of node IDs that should be open.
  * @returns {HTMLElement} The word details element.
  */
-function createWordDetails(wordObj, item) {
+function createWordDetails(wordObj, item, openIds) {
     // wordObj is a WordNode created by the parser; get word
     const word = wordObj.word;
 
     const details = createElement('details', 'word-details');
+
+    // Set initial open state before attaching the toggle listener.
+    if (openIds.has(wordObj.id)) {
+        details.open = true;
+    }
+
+    // Attach toggle listener after setting initial open state.
+    details.addEventListener('toggle', () => {
+        if (details.open) {
+            openNodeIds.add(wordObj.id);
+        } else {
+            openNodeIds.delete(wordObj.id);
+        }
+    });
 
     // Summary row: word plus a status badge.
     const summary = createElement('summary');
