@@ -291,22 +291,38 @@ export function getString(key, {
  * Resolve a localized string for an element, attempting view-specific
  * lookup first and falling back to shared strings when necessary.
  *
- * @param {string} key - Dot-notation key to resolve (e.g.,
- *     "case_labels.nominative").
+ * The key and optional view scope are read from the element's attributes.
+ * The i18n_attr parameter specifies which attribute contains the
+ * dot-notation key (e.g., "data-i18n" or "data-i18n-placeholder").
+ *
+ * If the element has a data-i18n-view attribute, the key is first resolved
+ * against that view's strings. If not found there, shared strings are
+ * checked as a fallback. Elements without data-i18n-view resolve against
+ * shared strings only.
+ *
+ * @param {HTMLElement} element - The element to resolve the string for.
+ * @param {string} i18n_attr - The attribute containing the dot-notation
+ *     i18n key (e.g., "data-i18n").
  * @param {string} lang - Language code to look up ("ru" or "en").
- * @param {string|null} [viewId=null] - Optional view ID to scope the
- *     lookup. If null or empty, the key resolves against shared strings
- *     only. If provided and the key is not found in that view's strings,
- *     a warning is logged and shared strings are checked as a fallback.
- * @returns {string|undefined} The resolved string, or undefined if not
- *     found in either the view-specific or shared string tables.
+ * @returns {string|undefined} The resolved string, or undefined if the
+ *     element is invalid, the key is missing, or the key cannot be
+ *     resolved in either the view-specific or shared string tables.
  */
-export function resolveI18nValue(key, lang, viewId) {
-    // Validate key (the i18n key to lookup) is a non-empty string.
-    if (typeof key !== 'string' || key.length === 0) {
+export function resolveElementI18nValue(element, i18n_attr, lang) {
+    // Validate element is an HTMLElement.
+    if (!(element instanceof HTMLElement)) {
         console.error(
-            `i18n.resolveI18nValue: Invalid key argument. Expected non-empty string, received:`,
-            key
+            `i18n.resolveElementI18nValue: Invalid element argument. Expected HTMLElement, received:`,
+            element
+        );
+        return;
+    }
+
+    // Validate i18n_attr is a non-empty string.
+    if (typeof i18n_attr !== 'string' || i18n_attr.length === 0) {
+        console.error(
+            `i18n.resolveElementI18nValue: Invalid i18n_attr argument. Expected non-empty string, received:`,
+            i18n_attr
         );
         return;
     }
@@ -314,8 +330,24 @@ export function resolveI18nValue(key, lang, viewId) {
     // Validate lang is one of the supported language codes.
     if (!SUPPORTED_LANGUAGES.includes(lang)) {
         console.error(
-            `i18n.resolveI18nValue: Unsupported language. Expected one of ${SUPPORTED_LANGUAGES.join(', ')}, received:`,
+            `i18n.resolveElementI18nValue: Unsupported language. Expected one of ${SUPPORTED_LANGUAGES.join(', ')}, received:`,
             lang
+        );
+        return;
+    }
+
+    // Get key from requested i18n attr ("data-i18n").
+    const key = element.getAttribute(i18n_attr);
+
+    // Check if element has a data-i18n-view attribute. If so,
+    // attempt to resolve against that view's strings first.
+    const viewId = element.getAttribute('data-i18n-view');
+
+    // Validate that the i18n attribute exists and contains a non-empty value.
+    if (!key || key.length === 0) {
+        console.warn(
+            `i18n.resolveElementI18nValue: Element is missing "${i18n_attr}" attribute or it is empty.`,
+            element
         );
         return;
     }
@@ -337,7 +369,7 @@ export function resolveI18nValue(key, lang, viewId) {
         if (value === undefined) {
             // Warn and fall back to shared.
             console.warn(
-                `i18n.applyLanguage: Key "${key}" not found in view "${viewId}", falling back to shared strings`
+                `i18n.resolveElementI18nValue: Key "${key}" not found in view "${viewId}", falling back to shared strings`
             );
             useSharedString = true;
         }
@@ -348,6 +380,14 @@ export function resolveI18nValue(key, lang, viewId) {
         value = getString(key, {
             lang: lang
         });
+    }
+
+    // Could not resolve the key in either shared or view lookup.
+    if (value === undefined) {
+        console.error(
+            `i18n.resolveElementI18nValue: Unable to resolve key "${key}" for view "${viewId || 'shared'}"`
+        );
+        return;
     }
 
     return value;
@@ -367,10 +407,7 @@ export function resolveI18nValue(key, lang, viewId) {
 export function applyLanguage(lang) {
     // Update elements with text content.
     document.querySelectorAll('[data-i18n]').forEach((element) => {
-        const key = element.getAttribute('data-i18n');
-        const viewId = element.getAttribute('data-i18n-view');
-
-        let value = resolveI18nValue(key, lang, viewId);
+        let value = resolveElementI18nValue(element, "data-i18n", lang);
         if (value !== undefined) {
             // Apply placeholder substitution if needed.
             const arg = element.getAttribute('data-i18n-arg');
@@ -378,25 +415,14 @@ export function applyLanguage(lang) {
                 value = value.replace('{n}', arg);
             }
             element.textContent = value;
-        } else {
-            console.error(
-                `i18n.applyLanguage: Unable to resolve key "${key}" for view "${viewId || 'shared'}"`
-            );
         }
     });
 
     // Update elements with placeholder attributes.
     document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
-        const key = element.getAttribute('data-i18n-placeholder');
-        const viewId = element.getAttribute('data-i18n-view');
-
-        const value = resolveI18nValue(key, lang, viewId);
+        const value = resolveElementI18nValue(element, "data-i18n-placeholder", lang);
         if (value !== undefined) {
             element.setAttribute('placeholder', value);
-        } else {
-            console.error(
-                `i18n.applyLanguage: Unable to resolve placeholder key "${key}" for view "${viewId || 'shared'}"`
-            );
         }
     });
 
