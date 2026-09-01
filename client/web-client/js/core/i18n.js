@@ -64,32 +64,68 @@ export const I18N_ARG_KEY = "data-i18n-arg";
  */
 export const I18N_PLACEHOLDER_KEY = "data-i18n-placeholder";
 
-
-
-/**
- * data-* attributes used to resolve i18n keys.
- *
- * These attributes determine where a localized string ultimately
- * comes from: the shared dictionary below, or a view-specific
- * dictionary.
+/*
+ * ==============================================================
+ * HTML data attributes to indicate which localization dictionary
+ * a key should be looked up in (shared dictionary below, or a
+ * view-specific dictionary.)
+ * ==============================================================
  */
 
-// Attr set by the shell on a view's mount container when it's mounted.
-// Holds the view's ID. i18n string lookup will use this view's
-// strings if the attr is present and no other override exists.
-//
-// Note: not always present. Example: the page title is not inside
-// a mounted view, so it has no mount container. In that case,
-// the shared dictionary is always used.
+/*
+ * Attr used to indicate which view is currently mounted. Holds
+ * the ID of the view.
+ *
+ * - When shell mounts a new view, it sets this attribute on the
+ *   container the view is mounted into.
+ * - Attribute's value is the view's unique ID.
+ * - For elements in the container with i18n attributes, applyLanguage
+ *   will look up the key specified by the attribute in the view's
+ *   localization dictionary first (if no override exists), and only
+ *   if not found will look up key in shared dictionary.
+ *
+ * Example:
+ *   <div id="mount-container" data-i18n-view="noun-single">
+ *   	...
+ *   	<span data-i18n="title"></span>
+ *   ApplyLanguage will look up the "title" key in "noun-single"'s
+ *   localization dictionary first. If no result found there, will
+ *   fallback to shared dictionary below.
+ */
 export const I18N_VIEW_KEY = "data-i18n-view";
 
-// Attr that can be set on an element to force lookup in a specific
-// view's dictionary. Holds the ID of the view to use.
+/*
+ * Attr to force lookup in a specific view's dictionary. Holds the
+ * ID of the view to use.
+ *
+ * Example:
+ * 	 <span data-i18n="title" data-i18n-force-view="noun-batch">
+ *
+ * 	 ApplyLanguage will look up the "title" key in "noun-batch"'s
+ * 	 localization dictionary, regardless of which view the span
+ * 	 belongs to. If no result found there, will fallback to
+ * 	 shared dictionary below.
+ */
 export const I18N_VIEW_OVERRIDE_KEY = "data-i18n-force-view";
 
-// Attr that can be set on an element to force use of the shared
-// dictionary for that element. View-specific lookup is skipped.
+/*
+ * Attribute that can be set on an element to force use of the shared
+ * dictionary. View-specific lookup is skipped.
+ *
+ * Example:
+ * 	 <span data-i18n="title" data-i18n-force-shared></span>
+ *
+ * 	 ApplyLanguage will look up the "title" key in the shared
+ * 	 localization dictionary below, regardless of which view is
+ * 	 mounted, or which view this element is part of (if any).
+ */
 export const I18N_SHARE_OVERRIDE_KEY = "data-i18n-force-shared";
+
+/*
+ * ==============================================================
+ * SHARED LOCALIZATION DICTIONARY (values shared by all views)
+ * ==============================================================
+ */
 
 /**
  * Shared UI strings used across multiple views (case labels, gender
