@@ -22,6 +22,50 @@ import {
     getViewById
 } from './view-registry.js';
 
+/*
+ * ==============================================================
+ * HTML data attributes to indicate which key to look up in a
+ * localization dictionary, and how the key's value should be applied.
+ * ==============================================================
+ */
+
+/*
+ * Attr to indicate which key to look up in a locatlization dictionary.
+ * Key's value in dictionary (if found) will be set as element's
+ * textContent during applyLanguage
+ *
+ * Example:
+ *   <span data-i18n="language_label"></span>
+ *   applyLanguage look up "language_label" in localization dictionary
+ *   at specified language and set textContent to
+ */
+export const I18N_KEY = "data-i18n";
+
+/*
+ * Attr used to provide an argument for placeholder substitution in a
+ * localized string.
+ *
+ * Example:
+ *   <h2 data-i18n="plural_heading_numbered" data-i18n-arg="2">
+ *   Relevant entry in localzation dictionary:
+ *   	"plural_heading_numbered": "Plural {n}"
+ *   Resulting string after applyLanguage: "Plural 2"
+ */
+export const I18N_ARG_KEY = "data-i18n-arg";
+
+/*
+ * Attr to indicate which key to look up in a localization dictionary.
+ * Key's value in dictionary (if found) will be set as element's
+ * placeholder attribute (instead of its text content).
+ *
+ * Example:
+ *   <input data-i18n-placeholder="word_placeholder">
+ *   applyLanguage sets input.placeholder to the localized value.
+ */
+export const I18N_PLACEHOLDER_KEY = "data-i18n-placeholder";
+
+
+
 /**
  * data-* attributes used to resolve i18n keys.
  *
@@ -461,11 +505,11 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
  */
 export function applyLanguage(lang) {
     // Update elements with text content.
-    document.querySelectorAll('[data-i18n]').forEach((element) => {
-        let value = resolveElementI18nValue(element, "data-i18n", lang);
+    document.querySelectorAll(`[${I18N_KEY}]`).forEach((element) => {
+        let value = resolveElementI18nValue(element, I18N_KEY, lang);
         if (value !== undefined) {
             // Apply placeholder substitution if needed.
-            const arg = element.getAttribute('data-i18n-arg');
+            const arg = element.getAttribute(I18N_ARG_KEY);
             if (arg !== null && typeof value === 'string') {
                 value = value.replace('{n}', arg);
             }
@@ -474,8 +518,8 @@ export function applyLanguage(lang) {
     });
 
     // Update elements with placeholder attributes.
-    document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
-        const value = resolveElementI18nValue(element, "data-i18n-placeholder", lang);
+    document.querySelectorAll(`[${I18N_PLACEHOLDER_KEY}]`).forEach((element) => {
+        const value = resolveElementI18nValue(element, I18N_PLACEHOLDER_KEY, lang);
         if (value !== undefined) {
             element.setAttribute('placeholder', value);
         }
