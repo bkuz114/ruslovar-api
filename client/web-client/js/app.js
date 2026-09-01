@@ -39,6 +39,7 @@ import {
     setLanguage,
     applyLanguage,
     getString,
+    I18N_VIEW_KEY,
 } from './core/i18n.js';
 import {
     clearElement,
@@ -84,18 +85,6 @@ let elements = {};
  * @type {string}
  */
 let baseUrl = null;
-
-/**
- * Name of data-i18n attribute to set on the mount container
- * (where views get loaded) so that i18n language switching
- * can be view-aware and assign the appropriate view-specific
- * strings (when they exist)
- *
- * This attribute is used in i18n.js to resolve localization
- * values; if you update this value, you must update i18n.js
- * accordingly.
- */
-const I18N_VIEW_KEY = 'data-i18n-view';
 
 /**
  * Boot the application.

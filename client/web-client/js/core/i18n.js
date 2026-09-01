@@ -37,17 +37,15 @@ import {
 // Note: not always present. Example: the page title is not inside
 // a mounted view, so it has no mount container. In that case,
 // the shared dictionary is always used.
-//
-// IF YOU EDIT THIS VALUE YOU MUST UPDATE app.js ACCORDINGLY!
-const I18N_VIEW_KEY = "data-i18n-view";
+export const I18N_VIEW_KEY = "data-i18n-view";
 
 // Attr that can be set on an element to force lookup in a specific
 // view's dictionary. Holds the ID of the view to use.
-const I18N_VIEW_OVERRIDE_KEY = "data-i18n-force-view";
+export const I18N_VIEW_OVERRIDE_KEY = "data-i18n-force-view";
 
 // Attr that can be set on an element to force use of the shared
 // dictionary for that element. View-specific lookup is skipped.
-const I18N_SHARE_OVERRIDE_KEY = "data-i18n-force-shared";
+export const I18N_SHARE_OVERRIDE_KEY = "data-i18n-force-shared";
 
 /**
  * Shared UI strings used across multiple views (case labels, gender
