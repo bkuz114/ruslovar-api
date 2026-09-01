@@ -239,17 +239,29 @@ function buildDom(container) {
     clearElement(container);
 
     // --- Form ---------------------------------------------------------
-    const form = createElement('form', 'lookup-form');
-    form.setAttribute('novalidate', '');
+    const form = createElement('form', {
+        class: 'lookup-form',
+        attrs: {
+            novalidate: '',
+        },
+    });
 
     // Word input field.
-    const wordGroup = createElement('div', 'form-group');
+    const wordGroup = createElement('div', {
+        class: 'form-group',
+    });
 
-    const wordLabel = createElement('label', '', getString('word_label', {
-        viewId: VIEW_ID
-    }));
-    wordLabel.setAttribute('for', 'word-input');
-    wordLabel.setAttribute('data-i18n', 'word_label');
+    const wordLabel = createElement('label', {
+        text: getString('word_label', {
+            viewId: VIEW_ID
+        }),
+        i18n: {
+            key: 'word_label',
+        },
+        attrs: {
+            for: 'word-input',
+        },
+    });
 
     const wordInput = document.createElement('input');
     wordInput.type = 'text';
@@ -275,9 +287,13 @@ function buildDom(container) {
     container.appendChild(form);
 
     // --- Results area -------------------------------------------------
-    const resultsArea = createElement('section', 'results-area');
-    resultsArea.id = 'results-area';
-    resultsArea.setAttribute('aria-live', 'polite');
+    const resultsArea = createElement('section', {
+        class: 'results-area',
+        id: 'results-area',
+        attrs: {
+            'aria-live': 'polite',
+        },
+    });
 
     const placeholder = createResultsPlaceholder();
     resultsArea.appendChild(placeholder);
@@ -452,15 +468,16 @@ function renderResults(data) {
  * @returns {HTMLElement} The placeholder paragraph element.
  */
 function createResultsPlaceholder() {
-    const placeholder = createElement(
-        'p',
-        'results-placeholder',
-        getString('results_placeholder', {
+    const placeholder = createElement('p', {
+        class: 'results-placeholder',
+        id: 'results-placeholder',
+        text: getString('results_placeholder', {
             viewId: VIEW_ID
-        })
-    );
-    placeholder.id = 'results-placeholder';
-    placeholder.setAttribute('data-i18n', 'results_placeholder');
+        }),
+        i18n: {
+            key: 'results_placeholder',
+        },
+    });
     return placeholder;
 }
 
@@ -489,8 +506,13 @@ function showError(message) {
     clearElement(elements.resultsArea);
     lastResults = null;
 
-    const errorDiv = createElement('div', 'error-message', message);
-    errorDiv.setAttribute('role', 'alert');
+    const errorDiv = createElement('div', {
+        class: 'error-message',
+        text: message,
+        attrs: {
+            role: 'alert',
+        },
+    });
 
     elements.resultsArea.appendChild(errorDiv);
 }

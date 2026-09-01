@@ -43,28 +43,32 @@ import {
  * @returns {HTMLElement} A wrapper div containing the heading and table.
  */
 export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
-    const wrapper = createElement('div', 'declension-section');
+    const wrapper = createElement('div', {
+        class: 'declension-section',
+    });
 
-    const heading = createElement('h2', 'declension-heading');
-
-    // Set data-i18n so applyLanguage() updates this heading in place
-    // when the language changes. The data-i18n-arg attribute stores the
-    // heading index (if any) so {n} substitution survives the switch.
-    heading.setAttribute('data-i18n', i18nKey);
-    if (headingIndex !== null) {
-        heading.setAttribute('data-i18n-arg', headingIndex);
-    }
-
-    // Set initial text content.
+    // Set initial text content. The i18n system will overwrite this
+    // when the language changes, but the initial render needs it set
+    // before applyLanguage() runs.
     let headingText = getString(i18nKey);
     if (headingIndex !== null) {
         headingText = headingText.replace('{n}', headingIndex);
     }
-    heading.textContent = headingText;
+
+    const heading = createElement('h2', {
+        class: 'declension-heading',
+        text: headingText,
+        i18n: {
+            key: i18nKey,
+            arg: headingIndex,
+        },
+    });
 
     wrapper.appendChild(heading);
 
-    const table = createElement('table', 'declension-table');
+    const table = createElement('table', {
+        class: 'declension-table',
+    });
     const tbody = createElement('tbody');
 
     const caseLabels = getString('case_labels');
@@ -77,10 +81,16 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
         if (form) {
             const row = createElement('tr');
 
-            const caseCell = createElement('td', '', caseLabel);
-            caseCell.setAttribute('data-i18n', `case_labels.${caseKey}`);
+            const caseCell = createElement('td', {
+                text: caseLabel,
+                i18n: {
+                    key: `case_labels.${caseKey}`,
+                },
+            });
 
-            const wordCell = createElement('td', '', form);
+            const wordCell = createElement('td', {
+                text: form,
+            });
 
             row.appendChild(caseCell);
             row.appendChild(wordCell);
@@ -106,37 +116,51 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
  * @returns {HTMLElement} A div containing the metadata section.
  */
 export function createMetadataSection(match) {
-    const section = createElement('div', 'metadata-section');
+    const section = createElement('div', {
+        class: 'metadata-section',
+    });
 
     // Root word is displayed prominently. Not localized.
-    const rootHeading = createElement('h3', 'match-root', match.root);
+    const rootHeading = createElement('h3', {
+        class: 'match-root',
+        text: match.root,
+    });
     section.appendChild(rootHeading);
 
     if (match.invariant) {
-        const badge = createElement(
-            'span',
-            'invariant-badge',
-            getString('invariant_label')
-        );
-        badge.setAttribute('data-i18n', 'invariant_label');
+        const badge = createElement('span', {
+            class: 'invariant-badge',
+            text: getString('invariant_label'),
+            i18n: {
+                key: 'invariant_label',
+            },
+        });
         section.appendChild(badge);
     }
 
-    const metaList = createElement('div', 'metadata-list');
+    const metaList = createElement('div', {
+        class: 'metadata-list',
+    });
 
     // Gender is optional in the API response.
     if (match.gender) {
-        const item = createElement('span', 'metadata-item');
+        const item = createElement('span', {
+            class: 'metadata-item',
+        });
 
-        const label = createElement('span', '', getString('gender_label'));
-        label.setAttribute('data-i18n', 'gender_label');
+        const label = createElement('span', {
+            text: getString('gender_label'),
+            i18n: {
+                key: 'gender_label',
+            },
+        });
 
-        const value = createElement(
-            'span',
-            '',
-            getString(`gender_values.${match.gender}`) || match.gender
-        );
-        value.setAttribute('data-i18n', `gender_values.${match.gender}`);
+        const value = createElement('span', {
+            text: getString(`gender_values.${match.gender}`) || match.gender,
+            i18n: {
+                key: `gender_values.${match.gender}`,
+            },
+        });
 
         item.appendChild(label);
         item.appendChild(document.createTextNode(': '));
@@ -147,14 +171,24 @@ export function createMetadataSection(match) {
 
     // Animacy is optional in the API response.
     if (match.animacy !== null && match.animacy !== undefined) {
-        const item = createElement('span', 'metadata-item');
+        const item = createElement('span', {
+            class: 'metadata-item',
+        });
 
-        const label = createElement('span', '', getString('animacy_label'));
-        label.setAttribute('data-i18n', 'animacy_label');
+        const label = createElement('span', {
+            text: getString('animacy_label'),
+            i18n: {
+                key: 'animacy_label',
+            },
+        });
 
         const animacyKey = match.animacy ? 'animacy_animate' : 'animacy_inanimate';
-        const value = createElement('span', '', getString(animacyKey));
-        value.setAttribute('data-i18n', animacyKey);
+        const value = createElement('span', {
+            text: getString(animacyKey),
+            i18n: {
+                key: animacyKey,
+            },
+        });
 
         item.appendChild(label);
         item.appendChild(document.createTextNode(': '));
@@ -184,8 +218,12 @@ export function createMetadataSection(match) {
  * @returns {HTMLElement} The tab bar element.
  */
 export function createMatchTabs(matches, container) {
-    const tabBar = createElement('div', 'match-tabs');
-    tabBar.setAttribute('role', 'tablist');
+    const tabBar = createElement('div', {
+        class: 'match-tabs',
+        attrs: {
+            role: 'tablist',
+        },
+    });
 
     matches.forEach((match, index) => {
         const tab = document.createElement('button');
@@ -268,14 +306,18 @@ function getMatchLabel(match, index, matches) {
 export function createMatchesContainer(result, {
     layout = 'tabs',
 } = {}) {
-    const container = createElement('div', `matches-container matches-${layout}`);
+    const container = createElement('div', {
+        class: ['matches-container', `matches-${layout}`],
+    });
 
     if (layout === 'tabs' && result.matches.length > 1) {
         container.appendChild(createMatchTabs(result.matches, container));
     }
 
     result.matches.forEach((match, index) => {
-        const panel = createElement('div', 'match-container');
+        const panel = createElement('div', {
+            class: 'match-container',
+        });
         panel.dataset.matchIndex = index;
 
         // In tab layout, hide all but the first panel initially.
@@ -288,11 +330,16 @@ export function createMatchesContainer(result, {
 
         // In stacked layout, add a label when multiple matches exist.
         if (layout === 'stacked' && result.matches.length > 1) {
-            const label = createElement('h3', 'match-label');
             const labelText = getString('match_label');
-            label.setAttribute('data-i18n', 'match_label');
-            label.setAttribute('data-i18n-arg', index + 1);
-            label.textContent = labelText.replace('{n}', index + 1);
+
+            const label = createElement('h3', {
+                class: 'match-label',
+                text: labelText.replace('{n}', index + 1),
+                i18n: {
+                    key: 'match_label',
+                    arg: index + 1,
+                },
+            });
             panel.appendChild(label);
         }
 
@@ -326,14 +373,19 @@ export function createMatchesContainer(result, {
  * @returns {HTMLElement} The submit button element.
  */
 function createSubmitButton(type = 'submit', disable = false) {
-    const button = createElement(
-        'button',
-        'submit-button',
-        getString('submit_button')
-    );
-    button.type = type;
-    button.disabled = disable;
-    button.setAttribute('data-i18n', 'submit_button');
+    const button = createElement('button', {
+        class: 'submit-button',
+        text: getString('submit_button'),
+        i18n: {
+            key: 'submit_button',
+        },
+        attrs: {
+            type: type,
+        },
+        props: {
+            disabled: disable,
+        },
+    });
     return button;
 }
 
@@ -353,20 +405,24 @@ function createSubmitButton(type = 'submit', disable = false) {
  *     whether strict mode is checked.
  */
 function createStrictModeGroup() {
-    const group = createElement('div', 'strict-mode-group');
+    const group = createElement('div', {
+        class: 'strict-mode-group',
+    });
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = 'strict-mode';
     checkbox.name = 'strict';
 
-    const label = createElement(
-        'label',
-        '',
-        getString('strict_label')
-    );
-    label.setAttribute('for', 'strict-mode');
-    label.setAttribute('data-i18n', 'strict_label');
+    const label = createElement('label', {
+        text: getString('strict_label'),
+        i18n: {
+            key: 'strict_label',
+        },
+        attrs: {
+            for: 'strict-mode',
+        },
+    });
 
     group.appendChild(checkbox);
     group.appendChild(label);
@@ -409,7 +465,9 @@ export function createSubmitControls({
     const strictModeGroup = createStrictModeGroup();
     const submitButton = createSubmitButton(submitType, disable);
 
-    const wrapper = createElement('div', 'submit-controls');
+    const wrapper = createElement('div', {
+        class: 'submit-controls',
+    });
     wrapper.appendChild(strictModeGroup.element);
     wrapper.appendChild(submitButton);
 
@@ -429,14 +487,22 @@ export function createSubmitControls({
  * @returns {HTMLElement} A <details> element containing formatted JSON.
  */
 export function createRawJsonToggle(data) {
-    const details = createElement('details', 'raw-json');
+    const details = createElement('details', {
+        class: 'raw-json',
+    });
 
-    const summary = createElement('summary', '', getString('raw_json_heading'));
-    summary.setAttribute('data-i18n', 'raw_json_heading');
+    const summary = createElement('summary', {
+        text: getString('raw_json_heading'),
+        i18n: {
+            key: 'raw_json_heading',
+        },
+    });
 
     details.appendChild(summary);
 
-    const pre = createElement('pre', '', JSON.stringify(data, null, 2));
+    const pre = createElement('pre', {
+        text: JSON.stringify(data, null, 2),
+    });
     details.appendChild(pre);
 
     return details;

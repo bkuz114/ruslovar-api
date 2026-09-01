@@ -299,33 +299,46 @@ function buildDom(container) {
     clearElement(container);
 
     // --- Batch controls ------------------------------------------------
-    const controls = createElement('section', 'batch-controls');
-    controls.setAttribute('aria-label', getString('file_label', {
-        viewId: VIEW_ID
-    }));
+    const controls = createElement('section', {
+        class: 'batch-controls',
+        attrs: {
+            'aria-label': getString('file_label', {
+                viewId: VIEW_ID
+            }),
+        },
+    });
 
     // File input group.
-    const fileGroup = createElement('div', 'file-input-group');
+    const fileGroup = createElement('div', {
+        class: 'file-input-group',
+    });
 
-    const fileLabel = createElement('label', '', getString('file_label', {
-        viewId: VIEW_ID
-    }));
-    fileLabel.setAttribute('for', 'file-input');
-    fileLabel.setAttribute('data-i18n', 'file_label');
+    const fileLabel = createElement('label', {
+        text: getString('file_label', {
+            viewId: VIEW_ID
+        }),
+        i18n: {
+            key: 'file_label',
+        },
+        attrs: {
+            for: 'file-input',
+        },
+    });
 
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.id = 'file-input';
     fileInput.accept = '.txt,text/plain';
 
-    const formatHint = createElement(
-        'p',
-        'file-format-hint',
-        getString('file_format_hint', {
+    const formatHint = createElement('p', {
+        class: 'file-format-hint',
+        text: getString('file_format_hint', {
             viewId: VIEW_ID
-        })
-    );
-    formatHint.setAttribute('data-i18n', 'file_format_hint');
+        }),
+        i18n: {
+            key: 'file_format_hint',
+        },
+    });
 
     fileGroup.appendChild(fileLabel);
     fileGroup.appendChild(fileInput);
@@ -342,19 +355,24 @@ function buildDom(container) {
     container.appendChild(controls);
 
     // --- Results area -------------------------------------------------
-    const resultsArea = createElement('section', 'results-area');
-    resultsArea.id = 'results-area';
-    resultsArea.setAttribute('aria-live', 'polite');
+    const resultsArea = createElement('section', {
+        class: 'results-area',
+        id: 'results-area',
+        attrs: {
+            'aria-live': 'polite',
+        },
+    });
 
-    const placeholder = createElement(
-        'p',
-        'results-placeholder',
-        getString('results_placeholder', {
+    const placeholder = createElement('p', {
+        class: 'results-placeholder',
+        id: 'results-placeholder',
+        text: getString('results_placeholder', {
             viewId: VIEW_ID
-        })
-    );
-    placeholder.id = 'results-placeholder';
-    placeholder.setAttribute('data-i18n', 'results_placeholder');
+        }),
+        i18n: {
+            key: 'results_placeholder',
+        },
+    });
     resultsArea.appendChild(placeholder);
 
     container.appendChild(resultsArea);
@@ -451,14 +469,15 @@ function showFileSummary(categories, totalWords) {
     clearElement(elements.resultsArea);
 
     if (totalWords === 0) {
-        const errorDiv = createElement(
-            'div',
-            'error-message',
-            getString('error_empty_file', {
+        const errorDiv = createElement('div', {
+            class: 'error-message',
+            text: getString('error_empty_file', {
                 viewId: VIEW_ID
-            })
-        );
-        errorDiv.setAttribute('role', 'alert');
+            }),
+            attrs: {
+                role: 'alert',
+            },
+        });
         elements.resultsArea.appendChild(errorDiv);
         return;
     }
@@ -469,7 +488,10 @@ function showFileSummary(categories, totalWords) {
         .replace('{categories}', categories.length)
         .replace('{words}', totalWords);
 
-    const summary = createElement('p', 'file-summary', summaryText);
+    const summary = createElement('p', {
+        class: 'file-summary',
+        text: summaryText,
+    });
     elements.resultsArea.appendChild(summary);
 }
 
@@ -687,13 +709,23 @@ function renderBatchResults(categories, metadata, results, openIds) {
  * @returns {HTMLElement} The metadata display container.
  */
 function createMetadataDisplay(metadata) {
-    const container = createElement('div', 'metadata-display');
+    const container = createElement('div', {
+        class: 'metadata-display',
+    });
 
     for (const [key, value] of Object.entries(metadata)) {
-        const item = createElement('div', 'metadata-item');
+        const item = createElement('div', {
+            class: 'metadata-item',
+        });
 
-        const keyEl = createElement('span', 'metadata-key', key);
-        const valueEl = createElement('span', 'metadata-value', value);
+        const keyEl = createElement('span', {
+            class: 'metadata-key',
+            text: key,
+        });
+        const valueEl = createElement('span', {
+            class: 'metadata-value',
+            text: value,
+        });
 
         item.appendChild(keyEl);
         item.appendChild(valueEl);
@@ -785,14 +817,18 @@ function createCategorySection(category, resultMap, openIds) {
         throw new TypeError('createCategorySection: openIds must be a Set');
     }
 
-    const details = createElement('details', 'category-section');
-
     // Set initial open state before attaching the toggle listener.
-    if (openIds.has(category.id)) {
-        details.open = true;
-    }
+    const startOpen = openIds.has(category.id);
 
-    // Attach toggle listener after setting initial open state.
+    const details = createElement('details', {
+        class: 'category-section',
+        props: {
+            open: startOpen,
+        },
+    });
+
+    // Attach toggle listener after setting initial open state. The open
+    // property is set above; the listener only fires on user interaction.
     details.addEventListener('toggle', () => {
         if (details.open) {
             openNodeIds.add(category.id);
@@ -801,7 +837,10 @@ function createCategorySection(category, resultMap, openIds) {
         }
     });
 
-    const summary = createElement('summary', 'category-heading', category.name);
+    const summary = createElement('summary', {
+        class: 'category-heading',
+        text: category.name,
+    });
     details.appendChild(summary);
 
     appendWordDetails(details, category, resultMap, openIds);
@@ -844,7 +883,9 @@ function createUncategorizedSection(category, resultMap, openIds) {
         throw new TypeError('createUncategorizedSection: openIds must be a Set');
     }
 
-    const container = createElement('div', 'uncategorized-section');
+    const container = createElement('div', {
+        class: 'uncategorized-section',
+    });
     appendWordDetails(container, category, resultMap, openIds);
     return container;
 }
@@ -875,9 +916,14 @@ function createEmptyCategory(category) {
         throw new TypeError('createEmptyCategory: category.words must be an array');
     }
 
-    const container = createElement('div', 'category-empty');
+    const container = createElement('div', {
+        class: 'category-empty',
+    });
 
-    const heading = createElement('h2', 'category-empty-heading', category.name);
+    const heading = createElement('h2', {
+        class: 'category-empty-heading',
+        text: category.name,
+    });
     container.appendChild(heading);
 
     return container;
@@ -900,14 +946,18 @@ function createWordDetails(wordObj, item, openIds) {
     // wordObj is a WordNode created by the parser; get word
     const word = wordObj.word;
 
-    const details = createElement('details', 'word-details');
-
     // Set initial open state before attaching the toggle listener.
-    if (openIds.has(wordObj.id)) {
-        details.open = true;
-    }
+    const startOpen = openIds.has(wordObj.id);
 
-    // Attach toggle listener after setting initial open state.
+    const details = createElement('details', {
+        class: 'word-details',
+        props: {
+            open: startOpen,
+        },
+    });
+
+    // Attach toggle listener after setting initial open state. The open
+    // property is set above; the listener only fires on user interaction.
     details.addEventListener('toggle', () => {
         if (details.open) {
             openNodeIds.add(wordObj.id);
@@ -923,32 +973,33 @@ function createWordDetails(wordObj, item, openIds) {
     const error = item && item.status === 'error';
 
     // Group word and optional match count in a single flex item.
-    const wordGroup = createElement('span', 'word-group', word);
+    const wordGroup = createElement('span', {
+        class: 'word-group',
+        text: word,
+    });
 
     // If the word resolves to multiple dictionary roots, show a count
     // so the user knows before expanding the panel.
     if (success && item.result.matches.length > 1) {
-        const matchCount = createElement(
-            'span',
-            'match-count',
-            `(${item.result.matches.length})`
-        );
+        const matchCount = createElement('span', {
+            class: 'match-count',
+            text: `(${item.result.matches.length})`,
+        });
         wordGroup.appendChild(matchCount);
     }
     summary.appendChild(wordGroup);
 
     // Badge to display success of this sub-request
-    const status = createElement('span', 'status-badge');
+    const statusKey = success ? 'status_success' : 'status_error';
+    const statusClass = success ? 'status-success' : 'status-error';
 
-    if (success) {
-        status.setAttribute('data-i18n', 'status_success');
-        status.textContent = getString('status_success');
-        status.classList.add('status-success');
-    } else {
-        status.setAttribute('data-i18n', 'status_error');
-        status.textContent = getString('status_error');
-        status.classList.add('status-error');
-    }
+    const status = createElement('span', {
+        class: ['status-badge', statusClass],
+        text: getString(statusKey),
+        i18n: {
+            key: statusKey,
+        },
+    });
 
     summary.appendChild(status);
     details.appendChild(summary);
@@ -961,20 +1012,18 @@ function createWordDetails(wordObj, item, openIds) {
             })
         );
     } else if (error) {
-        const errorDiv = createElement(
-            'div',
-            'word-error',
-            item.error || getString('error_unknown')
-        );
+        const errorDiv = createElement('div', {
+            class: 'word-error',
+            text: item.error || getString('error_unknown'),
+        });
         details.appendChild(errorDiv);
     } else {
         // No result item found for this word. This can happen if the
         // API response is missing an entry for a requested word.
-        const errorDiv = createElement(
-            'div',
-            'word-error',
-            getString('error_unknown')
-        );
+        const errorDiv = createElement('div', {
+            class: 'word-error',
+            text: getString('error_unknown'),
+        });
         details.appendChild(errorDiv);
     }
 
@@ -989,8 +1038,13 @@ function createWordDetails(wordObj, item, openIds) {
 function showError(message) {
     clearElement(elements.resultsArea);
 
-    const errorDiv = createElement('div', 'error-message', message);
-    errorDiv.setAttribute('role', 'alert');
+    const errorDiv = createElement('div', {
+        class: 'error-message',
+        text: message,
+        attrs: {
+            role: 'alert',
+        },
+    });
 
     elements.resultsArea.appendChild(errorDiv);
 }

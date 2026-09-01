@@ -421,12 +421,25 @@ function unmountActiveView() {
 function renderErrorFallback(container, error) {
     clearElement(container);
 
-    const errorDiv = createElement('div', 'view-error-fallback');
-    errorDiv.setAttribute('role', 'alert');
+    const errorDiv = createElement('div', {
+        class: 'view-error-fallback',
+        attrs: {
+            role: 'alert',
+        },
+    });
 
-    const heading = createElement('h2', 'view-error-heading', getString('view_error_title'));
-    const message = createElement('p', 'view-error-message', error.message || getString('view_error_unknown'));
-    const hint = createElement('p', 'view-error-hint', getString('view_error_hint'));
+    const heading = createElement('h2', {
+        class: 'view-error-heading',
+        text: getString('view_error_title'),
+    });
+    const message = createElement('p', {
+        class: 'view-error-message',
+        text: error.message || getString('view_error_unknown'),
+    });
+    const hint = createElement('p', {
+        class: 'view-error-hint',
+        text: getString('view_error_hint'),
+    });
 
     errorDiv.appendChild(heading);
     errorDiv.appendChild(message);
