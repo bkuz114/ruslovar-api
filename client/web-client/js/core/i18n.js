@@ -530,7 +530,7 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
 
 /**
  * Apply the given language to all [data-i18n] and
- * [data-i18n-placeholder] elements in the document.
+ * [data-i18n-placeholder] elements within the specified root.
  *
  * For elements with [data-i18n-view], the string is resolved against
  * that view's strings. If not found there, a warning is logged and the
@@ -538,8 +538,11 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
  * [data-i18n-view] resolve against shared strings only.
  *
  * @param {string} lang - Language code to apply.
+ * @param {Object} [root=document] - Any queryable DOM node (e.g.,
+ *     HTMLElement, Document, DocumentFragment). Defaults to the
+ *     entire document.
  */
-export function applyLanguage(lang) {
+export function applyLanguage(lang, root = document) {
     // Validate lang is one of the supported language codes.
     if (!SUPPORTED_LANGUAGES.includes(lang)) {
         console.error(
@@ -549,8 +552,19 @@ export function applyLanguage(lang) {
         return;
     }
 
+    // Validate root is queryable. Rather than checking specific types
+    // (HTMLElement, DocumentFragment, etc.), we check for querySelectorAll.
+    // This accepts any valid DOM root.
+    if (!root || typeof root.querySelectorAll !== 'function') {
+        console.error(
+            `i18n.applyLanguage: Invalid root argument. Expected an element or document with querySelectorAll, received:`,
+            root
+        );
+        return;
+    }
+
     // Update elements with text content.
-    document.querySelectorAll(`[${I18N_KEY}]`).forEach((element) => {
+    root.querySelectorAll(`[${I18N_KEY}]`).forEach((element) => {
         let value = resolveElementI18nValue(element, I18N_KEY, lang);
         if (value !== undefined) {
             // Apply placeholder substitution if needed.
@@ -563,7 +577,7 @@ export function applyLanguage(lang) {
     });
 
     // Update elements with placeholder attributes.
-    document.querySelectorAll(`[${I18N_PLACEHOLDER_KEY}]`).forEach((element) => {
+    root.querySelectorAll(`[${I18N_PLACEHOLDER_KEY}]`).forEach((element) => {
         const value = resolveElementI18nValue(element, I18N_PLACEHOLDER_KEY, lang);
         if (value !== undefined) {
             element.setAttribute('placeholder', value);
@@ -571,5 +585,8 @@ export function applyLanguage(lang) {
     });
 
     // Update the document language attribute for screen readers.
-    document.documentElement.lang = lang;
+    // Only do this when applying to the full document, not a subtree.
+    if (root === document) {
+        document.documentElement.lang = lang;
+    }
 }
