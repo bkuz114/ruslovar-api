@@ -325,10 +325,13 @@ function buildDom(container) {
         },
     });
 
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.id = 'file-input';
-    fileInput.accept = '.txt,text/plain';
+    const fileInput = createElement('input', {
+        id: 'file-input',
+        attrs: {
+            type: 'file',
+            accept: '.txt,text/plain',
+        },
+    });
 
     const formatHint = createElement('p', {
         class: 'file-format-hint',

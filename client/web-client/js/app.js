@@ -193,16 +193,22 @@ function updateLanguageSwitcherState() {
 function renderNavigation() {
     const views = getViews();
 
-    const select = document.createElement('select');
-    select.id = 'view-select';
-    select.className = 'view-select';
-    select.setAttribute('aria-label', 'Select demo');
+    const select = createElement('select', {
+        id: 'view-select',
+        class: 'view-select',
+        attrs: {
+            'aria-label': 'Select demo',
+        },
+    });
 
     views.forEach((view) => {
-        const option = document.createElement('option');
-        option.value = view.id;
-        option.textContent = getString(view.labelKey, {
-            viewId: view.id
+        const option = createElement('option', {
+            text: getString(view.labelKey, {
+                viewId: view.id
+            }),
+            attrs: {
+                value: view.id,
+            },
         });
         select.appendChild(option);
     });

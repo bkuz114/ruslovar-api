@@ -263,16 +263,23 @@ function buildDom(container) {
         },
     });
 
-    const wordInput = document.createElement('input');
-    wordInput.type = 'text';
-    wordInput.id = 'word-input';
-    wordInput.name = 'word';
-    wordInput.placeholder = getString('word_placeholder', {
-        viewId: VIEW_ID
+    const wordInput = createElement('input', {
+        id: 'word-input',
+        attrs: {
+            type: 'text',
+            name: 'word',
+            placeholder: getString('word_placeholder', {
+                viewId: VIEW_ID
+            }),
+            autocomplete: 'off',
+        },
+        i18n: {
+            'data-i18n-placeholder': 'word_placeholder',
+        },
+        props: {
+            required: true,
+        },
     });
-    wordInput.setAttribute('data-i18n-placeholder', 'word_placeholder');
-    wordInput.autocomplete = 'off';
-    wordInput.required = true;
 
     wordGroup.appendChild(wordLabel);
     wordGroup.appendChild(wordInput);

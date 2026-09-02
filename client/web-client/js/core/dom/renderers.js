@@ -233,11 +233,14 @@ export function createMatchTabs(matches, container) {
     });
 
     matches.forEach((match, index) => {
-        const tab = document.createElement('button');
-        tab.className = 'match-tab';
-        tab.setAttribute('role', 'tab');
-        tab.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-        tab.textContent = getMatchLabel(match, index, matches);
+        const tab = createElement('button', {
+            class: 'match-tab',
+            text: getMatchLabel(match, index, matches),
+            attrs: {
+                role: 'tab',
+                'aria-selected': index === 0 ? 'true' : 'false',
+            },
+        });
 
         // Clicking a tab updates active states and shows only the
         // corresponding match container within the scoped container.
@@ -420,10 +423,13 @@ function createStrictModeGroup() {
         class: 'strict-mode-group',
     });
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = 'strict-mode';
-    checkbox.name = 'strict';
+    const checkbox = createElement('input', {
+        id: 'strict-mode',
+        attrs: {
+            type: 'checkbox',
+            name: 'strict',
+        },
+    });
 
     const label = createElement('label', {
         text: getString('strict_label'),
