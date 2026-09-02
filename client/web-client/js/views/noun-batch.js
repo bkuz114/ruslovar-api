@@ -496,9 +496,12 @@ function showFileSummary(categories, totalWords) {
         text: summaryText,
         i18n: {
             "data-i18n": 'file_summary',
-            // Note: file_summary uses {categories} and {words} placeholders.
-            // The current i18n system only supports a single {n} arg.
-            // This will need i18n system support for multiple named args.
+            substitutions: {
+                "data-i18n": {
+                    categories: categories.length,
+                    words: totalWords,
+                }
+            },
         },
     });
     elements.resultsArea.appendChild(summary);
