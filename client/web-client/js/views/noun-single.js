@@ -256,7 +256,7 @@ function buildDom(container) {
             viewId: VIEW_ID
         }),
         i18n: {
-            key: 'word_label',
+            "data-i18n": 'word_label',
         },
         attrs: {
             for: 'word-input',
@@ -475,7 +475,7 @@ function createResultsPlaceholder() {
             viewId: VIEW_ID
         }),
         i18n: {
-            key: 'results_placeholder',
+            "data-i18n": 'results_placeholder',
         },
     });
     return placeholder;

@@ -59,8 +59,8 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
         class: 'declension-heading',
         text: headingText,
         i18n: {
-            key: i18nKey,
-            arg: headingIndex,
+            "data-i18n": i18nKey,
+            substitution: headingIndex,
         },
     });
 
@@ -84,7 +84,7 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
             const caseCell = createElement('td', {
                 text: caseLabel,
                 i18n: {
-                    key: `case_labels.${caseKey}`,
+                    "data-i18n": `case_labels.${caseKey}`,
                 },
             });
 
@@ -132,7 +132,7 @@ export function createMetadataSection(match) {
             class: 'invariant-badge',
             text: getString('invariant_label'),
             i18n: {
-                key: 'invariant_label',
+                "data-i18n": 'invariant_label',
             },
         });
         section.appendChild(badge);
@@ -151,14 +151,14 @@ export function createMetadataSection(match) {
         const label = createElement('span', {
             text: getString('gender_label'),
             i18n: {
-                key: 'gender_label',
+                "data-i18n": 'gender_label',
             },
         });
 
         const value = createElement('span', {
             text: getString(`gender_values.${match.gender}`) || match.gender,
             i18n: {
-                key: `gender_values.${match.gender}`,
+                "data-i18n": `gender_values.${match.gender}`,
             },
         });
 
@@ -178,7 +178,7 @@ export function createMetadataSection(match) {
         const label = createElement('span', {
             text: getString('animacy_label'),
             i18n: {
-                key: 'animacy_label',
+                "data-i18n": 'animacy_label',
             },
         });
 
@@ -186,7 +186,7 @@ export function createMetadataSection(match) {
         const value = createElement('span', {
             text: getString(animacyKey),
             i18n: {
-                key: animacyKey,
+                "data-i18n": animacyKey,
             },
         });
 
@@ -336,8 +336,8 @@ export function createMatchesContainer(result, {
                 class: 'match-label',
                 text: labelText.replace('{n}', index + 1),
                 i18n: {
-                    key: 'match_label',
-                    arg: index + 1,
+                    "data-i18n": 'match_label',
+                    substitution: index + 1,
                 },
             });
             panel.appendChild(label);
@@ -377,7 +377,7 @@ function createSubmitButton(type = 'submit', disable = false) {
         class: 'submit-button',
         text: getString('submit_button'),
         i18n: {
-            key: 'submit_button',
+            "data-i18n": 'submit_button',
         },
         attrs: {
             type: type,
@@ -417,7 +417,7 @@ function createStrictModeGroup() {
     const label = createElement('label', {
         text: getString('strict_label'),
         i18n: {
-            key: 'strict_label',
+            "data-i18n": 'strict_label',
         },
         attrs: {
             for: 'strict-mode',
@@ -494,7 +494,7 @@ export function createRawJsonToggle(data) {
     const summary = createElement('summary', {
         text: getString('raw_json_heading'),
         i18n: {
-            key: 'raw_json_heading',
+            "data-i18n": 'raw_json_heading',
         },
     });
 

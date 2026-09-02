@@ -432,7 +432,7 @@ function renderErrorFallback(container, error) {
         class: 'view-error-heading',
         text: getString('error_view_failed'),
         i18n: {
-            key: 'error_view_failed',
+            "data-i18n": 'error_view_failed',
         },
     });
 
@@ -440,7 +440,7 @@ function renderErrorFallback(container, error) {
         class: 'view-error-message',
         text: error.message || getString('error_unknown'),
         i18n: {
-            key: error.message ? null : 'error_unknown',
+            "data-i18n": error.message ? null : 'error_unknown',
         },
     });
 
@@ -448,7 +448,7 @@ function renderErrorFallback(container, error) {
         class: 'view-error-hint',
         text: getString('error_view_failed_hint'),
         i18n: {
-            key: 'error_view_failed_hint',
+            "data-i18n": 'error_view_failed_hint',
         },
     });
 

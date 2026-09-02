@@ -318,7 +318,7 @@ function buildDom(container) {
             viewId: VIEW_ID
         }),
         i18n: {
-            key: 'file_label',
+            "data-i18n": 'file_label',
         },
         attrs: {
             for: 'file-input',
@@ -336,7 +336,7 @@ function buildDom(container) {
             viewId: VIEW_ID
         }),
         i18n: {
-            key: 'file_format_hint',
+            "data-i18n": 'file_format_hint',
         },
     });
 
@@ -370,7 +370,7 @@ function buildDom(container) {
             viewId: VIEW_ID
         }),
         i18n: {
-            key: 'results_placeholder',
+            "data-i18n": 'results_placeholder',
         },
     });
     resultsArea.appendChild(placeholder);
@@ -475,7 +475,7 @@ function showFileSummary(categories, totalWords) {
                 viewId: VIEW_ID
             }),
             i18n: {
-                key: 'error_empty_file',
+                "data-i18n": 'error_empty_file',
             },
             attrs: {
                 role: 'alert',
@@ -495,7 +495,7 @@ function showFileSummary(categories, totalWords) {
         class: 'file-summary',
         text: summaryText,
         i18n: {
-            key: 'file_summary',
+            "data-i18n": 'file_summary',
             // Note: file_summary uses {categories} and {words} placeholders.
             // The current i18n system only supports a single {n} arg.
             // This will need i18n system support for multiple named args.
@@ -1006,7 +1006,7 @@ function createWordDetails(wordObj, item, openIds) {
         class: ['status-badge', statusClass],
         text: getString(statusKey),
         i18n: {
-            key: statusKey,
+            "data-i18n": statusKey,
         },
     });
 
@@ -1025,7 +1025,7 @@ function createWordDetails(wordObj, item, openIds) {
             class: 'word-error',
             text: item.error || getString('error_unknown'),
             i18n: {
-                key: item.error ? null : 'error_unknown',
+                "data-i18n": item.error ? null : 'error_unknown',
             },
         });
         details.appendChild(errorDiv);
@@ -1036,7 +1036,7 @@ function createWordDetails(wordObj, item, openIds) {
             class: 'word-error',
             text: getString('error_unknown'),
             i18n: {
-                key: 'error_unknown',
+                "data-i18n": 'error_unknown',
             },
         });
         details.appendChild(errorDiv);

@@ -89,13 +89,12 @@ function setClassAttribute(element, value, source) {
  *   If attrs.class is also provided, attrs.class takes precedence.
  * @param {string|null} [options.id=null] - Element ID. Sets the id
  *   attribute. If attrs.id is also provided, attrs.id takes precedence.
- * @param {Object} [options.i18n={}] - i18n configuration. Sets data
- *   attributes used by the i18n system for language switching.
- * @param {string} [options.i18n.key] - String key. Sets data-i18n.
- * @param {string} [options.i18n.placeholder] - String key for the element's
- *   placeholder attribute. Sets data-i18n-placeholder.
- * @param {string|number|null} [options.i18n.arg=null] - Placeholder
- *   substitution value. Sets data-i18n-arg.
+ * @param {Object} [options.i18n={}] - i18n configuration. Keys should be
+ *   data-i18n attribute names (e.g., "data-i18n",
+ *   "data-i18n-placeholder"). There are also three special keys: substitution,
+ *   forceShared, and forceView. Special keys are described below.
+ * @param {string|number|null} [options.i18n.substitution=null] -
+ *   Placeholder substitution value. Sets data-i18n-arg.
  * @param {boolean} [options.i18n.forceShared=false] - If true, forces shared
  *   dictionary lookup. Sets data-i18n-force-shared.
  * @param {string|null} [options.i18n.forceView=null] - If set, forces lookup
@@ -131,7 +130,7 @@ function setClassAttribute(element, value, source) {
  * const heading = createElement('h2', {
  *     text: getString('singular_heading'),
  *     i18n: {
- *         key: 'singular_heading',
+ *         'data-i18n': 'singular_heading',
  *     },
  *     class: 'declension-heading',
  * });
@@ -140,8 +139,8 @@ function setClassAttribute(element, value, source) {
  * // Element with i18n key and placeholder substitution
  * const pluralHeading = createElement('h2', {
  *     i18n: {
- *         key: 'plural_heading_numbered',
- *         arg: 2,
+ *         'data-i18n': 'plural_heading_numbered',
+ *         substitution: 2,
  *     },
  * });
  *
@@ -149,7 +148,7 @@ function setClassAttribute(element, value, source) {
  * // Input with localized placeholder text
  * const input = createElement('input', {
  *     i18n: {
- *         placeholder: 'word_placeholder',
+ *         'data-i18n-placeholder': 'word_placeholder',
  *     },
  *     attrs: {
  *         type: 'text',
@@ -160,7 +159,7 @@ function setClassAttribute(element, value, source) {
  * // Element forcing shared dictionary lookup (skips view-specific lookup)
  * const sharedOnly = createElement('span', {
  *     i18n: {
- *         key: 'app_title',
+ *         'data-i18n': 'app_title',
  *         forceShared: true,
  *     },
  * });
@@ -169,7 +168,7 @@ function setClassAttribute(element, value, source) {
  * // Element forcing a specific view's dictionary (cross-view string)
  * const crossViewLabel = createElement('span', {
  *     i18n: {
- *         key: 'title',
+ *         'data-i18n': 'title',
  *         forceView: 'noun-batch',
  *     },
  * });
@@ -192,7 +191,7 @@ function setClassAttribute(element, value, source) {
  * const wordLabel = createElement('label', {
  *     text: getString('word_label', { viewId: VIEW_ID }),
  *     i18n: {
- *         key: 'word_label',
+ *         'data-i18n': 'word_label',
  *     },
  *     attrs: {
  *         for: 'word-input',
@@ -277,24 +276,39 @@ export function createElement(tagName, options = {}) {
 
     // --- Apply i18n configuration --------------------------------------
     if (Object.keys(i18n).length > 0) {
+        /**
+         * Get attributes user passed to i18n option.
+         * Set options on the three special keys
+         * (substitution, forceShared, forceView).
+         * Remaining keys should be any arbitrary
+         * data-i18n* attribute that the user wants
+         * set (e.g. "data-i18n", "data-i18n-placeholder", etc)
+         */
         const {
-            key = null,
-                placeholder = null,
-                arg = null,
+            substitution = null,
                 forceShared = false,
                 forceView = null,
         } = i18n;
 
-        if (key) {
-            element.setAttribute(I18N_KEY, key);
-        }
+        // Iterate all keys in i18n config. Anything that isn't a special
+        // case (substitution, forceShared, forceView) is treated as a
+        // data-i18n attribute name and set directly.
+        const specialCases = new Set(['substitution', 'forceShared', 'forceView']);
+        Object.entries(i18n)
+            .filter(([attr]) => !specialCases.has(attr))
+            .forEach(([attr, value]) => {
+                if (!attr.startsWith('data-i18n')) {
+                    console.error(
+                        `createElement: i18n config contains invalid attribute "${attr}". ` +
+                        `Only data-i18n attributes are allowed.`
+                    );
+                    return;
+                }
+                element.setAttribute(attr, value);
+            });
 
-        if (placeholder) {
-            element.setAttribute(I18N_PLACEHOLDER_KEY, placeholder);
-        }
-
-        if (arg !== null) {
-            element.setAttribute(I18N_ARG_KEY, arg);
+        if (substitution !== null) {
+            element.setAttribute(I18N_ARG_KEY, substitution);
         }
 
         if (forceShared) {
