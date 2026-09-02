@@ -1,5 +1,7 @@
 {
   "type": "module",
+  "private": true,
+  "description": "Web client for FastAPI backend. Package.json exists only for Node-based development tooling (testing, future build scripts). No runtime dependencies.",
   "scripts": {
     "test": "node tests/helpers/run-all.js"
   }
