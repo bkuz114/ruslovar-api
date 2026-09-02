@@ -51,8 +51,15 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
     // when the language changes, but the initial render needs it set
     // before applyLanguage() runs.
     let headingText = getString(i18nKey);
+    let substitutions = {};
+    // heading index indicates this is a heading with substitutions
     if (headingIndex !== null) {
         headingText = headingText.replace('{n}', headingIndex);
+        substitutions = {
+            "data-i18n": {
+                n: headingIndex,
+            },
+        };
     }
 
     const heading = createElement('h2', {
@@ -60,7 +67,7 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
         text: headingText,
         i18n: {
             "data-i18n": i18nKey,
-            substitution: headingIndex,
+            substitutions: substitutions,
         },
     });
 
@@ -337,7 +344,11 @@ export function createMatchesContainer(result, {
                 text: labelText.replace('{n}', index + 1),
                 i18n: {
                     "data-i18n": 'match_label',
-                    substitution: index + 1,
+                    substitutions: {
+                        "data-i18n": {
+                            n: index + 1,
+                        },
+                    },
                 },
             });
             panel.appendChild(label);

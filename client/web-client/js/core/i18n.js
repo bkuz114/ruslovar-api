@@ -16,11 +16,26 @@
  *
  * Dependencies:
  *   - core/view-registry.js (getViewById)
+ *   - core/utils/template-engine.js (TemplateEngine)
  */
 
 import {
     getViewById
 } from './view-registry.js';
+
+import {
+    TemplateEngine
+} from './utils/template-engine.js';
+
+/*
+ * Delimiters for template placeholders in localized strings.
+ * Placeholders in string templates are wrapped with these
+ * delimiters (e.g., "Found {count} words"). These constants are
+ * passed to the TemplateEngine so that both the engine and the
+ * i18n module agree on the placeholder syntax.
+ */
+export const I18N_TEMPLATE_OPEN_DELIM = "{";
+export const I18N_TEMPLATE_CLOSE_DELIM = "}";
 
 /*
  * ==============================================================
@@ -42,14 +57,25 @@ import {
 export const I18N_KEY = "data-i18n";
 
 /*
- * Attr used to provide an argument for placeholder substitution in a
- * localized string.
+ * Attr used to provide values for {placeholders} in localized strings.
+ *
+ * The value is a JSON object. Each key is an i18n attribute name
+ * (e.g., "data-i18n"). Each value is an object of {placeholder}
+ * substitutions for the localized string the attribute's value
+ * resolves to.
  *
  * Example:
- *   <h2 data-i18n="plural_heading_numbered" data-i18n-arg="2">
- *   Relevant entry in localzation dictionary:
- *   	"plural_heading_numbered": "Plural {n}"
- *   Resulting string after applyLanguage: "Plural 2"
+ *   <h2 data-i18n="plural_heading_numbered"
+ *       data-i18n-placeholder="word_placeholder"
+ *       data-i18n-arg='{"data-i18n": {"n": 2}, "data-i18n-placeholder": {"word": "слово"}}'>
+ *
+ *   Relevant entries in localization dictionary:
+ *     "plural_heading_numbered": "Plural {n}"
+ *     "word_placeholder": "Enter {word}"
+ *
+ *   Resulting strings after applyLanguage:
+ *     textContent: "Plural 2"
+ *     placeholder: "Enter слово"
  */
 export const I18N_ARG_KEY = "data-i18n-arg";
 
@@ -399,6 +425,108 @@ export function getString(key, {
 }
 
 /**
+ * Apply template substitutions to a resolved i18n string.
+ *
+ * Checks for the data-i18n-arg attribute on the element. If absent,
+ * returns the template unchanged. If present, parses the JSON,
+ * extracts the substitution values for the target attribute, and
+ * delegates to the TemplateEngine.
+ *
+ * @param {string} template - The resolved i18n string, possibly
+ *     containing placeholders.
+ * @param {HTMLElement} element - The element carrying data-i18n-arg.
+ * @param {string} targetAttribute - The i18n attribute being processed
+ *     (e.g., "data-i18n" or "data-i18n-placeholder"). Used to extract
+ *     the correct substitution values from the JSON wrapper.
+ * @returns {string} The final string with substitutions applied. If
+ *     no data-i18n-arg is present, or errors occur, returns the
+ *     original template unchanged.
+ */
+function applyI18nTemplateValues(template, element, targetAttribute) {
+    const rawJsonString = element.getAttribute(I18N_ARG_KEY);
+
+    // No substitutions requested.
+    if (rawJsonString === null) {
+        return template;
+    }
+
+    // Common context for all error messages below.
+    const errorContext =
+        `  Element: ${element.outerHTML}\n` +
+        `  Attribute: ${targetAttribute}\n` +
+        `  Template: "${template}"\n` +
+        `  ${I18N_ARG_KEY}: ${rawJsonString}`;
+
+    // Parse the JSON wrapper.
+    let templateValues;
+    try {
+        templateValues = JSON.parse(rawJsonString);
+    } catch (e) {
+        console.error(
+            `i18n.applyI18nTemplateValues: Invalid JSON in ${I18N_ARG_KEY}.\n` +
+            `  ${errorContext}\n` +
+            `  Error: ${e.message}`
+        );
+        return template;
+    }
+
+    // Wrapper must be a plain object.
+    if (typeof templateValues !== 'object' || templateValues === null || Array.isArray(templateValues)) {
+        console.error(
+            `i18n.applyI18nTemplateValues: ${I18N_ARG_KEY} must parse to a JSON object.\n` +
+            `  ${errorContext}`
+        );
+        return template;
+    }
+
+    // Extract the substitution values for this attribute.
+    const values = templateValues[targetAttribute];
+
+    // No values for this attribute — nothing to substitute.
+    if (values === undefined) {
+        return template;
+    }
+
+    // Values must be a plain object.
+    if (typeof values !== 'object' || values === null || Array.isArray(values)) {
+        console.error(
+            `i18n.applyI18nTemplateValues: Values for "${targetAttribute}" must be a JSON object.\n` +
+            `  ${errorContext}`
+        );
+        return template;
+    }
+
+    // Delegate to the template engine.
+    const engine = new TemplateEngine({
+        openDelim: I18N_TEMPLATE_OPEN_DELIM,
+        closeDelim: I18N_TEMPLATE_CLOSE_DELIM
+    });
+    const result = engine.apply(template, values);
+
+    // Log any errors.
+    if (result.errors.length > 0) {
+        console.error(
+            `i18n.applyI18nTemplateValues: Template substitution failed.\n` +
+            `  ${errorContext}\n` +
+            `  Errors:\n` +
+            result.errors.map(e => `    - ${e}`).join('\n')
+        );
+    }
+
+    // Log any warnings.
+    if (result.warnings.length > 0) {
+        console.warn(
+            `i18n.applyI18nTemplateValues: Template substitution warnings.\n` +
+            `  ${errorContext}\n` +
+            `  Warnings:\n` +
+            result.warnings.map(w => `    - ${w}`).join('\n')
+        );
+    }
+
+    return result.value;
+}
+
+/**
  * Resolve a localized string for an element, attempting view-specific
  * lookup first and falling back to shared strings when necessary.
  *
@@ -529,6 +657,9 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
         return;
     }
 
+    // Perform placeholder substitutions if data-i18n-arg is present.
+    value = applyI18nTemplateValues(value, element, i18n_attr);
+
     return value;
 }
 
@@ -571,11 +702,6 @@ export function applyLanguage(lang, root = document) {
     root.querySelectorAll(`[${I18N_KEY}]`).forEach((element) => {
         let value = resolveElementI18nValue(element, I18N_KEY, lang);
         if (value !== undefined) {
-            // Apply placeholder substitution if needed.
-            const arg = element.getAttribute(I18N_ARG_KEY);
-            if (arg !== null && typeof value === 'string') {
-                value = value.replace('{n}', arg);
-            }
             element.textContent = value;
         }
     });

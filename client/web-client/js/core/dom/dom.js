@@ -91,10 +91,11 @@ function setClassAttribute(element, value, source) {
  *   attribute. If attrs.id is also provided, attrs.id takes precedence.
  * @param {Object} [options.i18n={}] - i18n configuration. Keys should be
  *   data-i18n attribute names (e.g., "data-i18n",
- *   "data-i18n-placeholder"). There are also three special keys: substitution,
+ *   "data-i18n-placeholder"). There are also three special keys: substitutions,
  *   forceShared, and forceView. Special keys are described below.
- * @param {string|number|null} [options.i18n.substitution=null] -
- *   Placeholder substitution value. Sets data-i18n-arg.
+ * @param {Object|null} [options.i18n.substitutions=null] - Placeholder
+ *   substitution data. Keyed by data-i18n attribute name. Serialized to
+ *   JSON and set as data-i18n-arg.
  * @param {boolean} [options.i18n.forceShared=false] - If true, forces shared
  *   dictionary lookup. Sets data-i18n-force-shared.
  * @param {string|null} [options.i18n.forceView=null] - If set, forces lookup
@@ -140,7 +141,11 @@ function setClassAttribute(element, value, source) {
  * const pluralHeading = createElement('h2', {
  *     i18n: {
  *         'data-i18n': 'plural_heading_numbered',
- *         substitution: 2,
+ *         substitutions: {
+ *             'data-i18n': {
+ *                 n: 2,
+ *             },
+ *         },
  *     },
  * });
  *
@@ -279,21 +284,21 @@ export function createElement(tagName, options = {}) {
         /**
          * Get attributes user passed to i18n option.
          * Set options on the three special keys
-         * (substitution, forceShared, forceView).
+         * (substitutions, forceShared, forceView).
          * Remaining keys should be any arbitrary
          * data-i18n* attribute that the user wants
          * set (e.g. "data-i18n", "data-i18n-placeholder", etc)
          */
         const {
-            substitution = null,
+            substitutions = null,
                 forceShared = false,
                 forceView = null,
         } = i18n;
 
         // Iterate all keys in i18n config. Anything that isn't a special
-        // case (substitution, forceShared, forceView) is treated as a
+        // case (substitutions, forceShared, forceView) is treated as a
         // data-i18n attribute name and set directly.
-        const specialCases = new Set(['substitution', 'forceShared', 'forceView']);
+        const specialCases = new Set(['substitutions', 'forceShared', 'forceView']);
         Object.entries(i18n)
             .filter(([attr]) => !specialCases.has(attr))
             .forEach(([attr, value]) => {
@@ -307,8 +312,41 @@ export function createElement(tagName, options = {}) {
                 element.setAttribute(attr, value);
             });
 
-        if (substitution !== null) {
-            element.setAttribute(I18N_ARG_KEY, substitution);
+        /**
+         * 'substitutions' provides values for {placeholders} used in
+         * localized strings. It is keyed by the data-i18n attribute
+         * whose string should receive the substitutions. It gets
+         * serialized to JSON and set as data-i18n-arg on the element.
+         * Example. This is what's passed to createElement:
+         *
+         * i18n: {
+         *       'data-i18n': 'file_summary',
+         *       substitutions: {
+         *             'data-i18n': {
+         *                 categories: 2,
+         *                 words: 3,
+         *             },
+         *       },
+         * },
+         *
+         * The object at 'substitutions' will be serialized to JSON and
+         * set on the created element as a data-i18n-arg attribute.
+         *
+         * For this element, the i18n system will take the localized string
+         * requested by its data-i18n attribute and substitute placeholder
+         * values in the string. e.g.:
+         *
+         * 1. HTML element:
+         *         <span data-i18n="file_summary"
+         *            data-i18n-arg='{"data-i18n": {"categories":2, "words":3}}'>
+         *        </span>
+         * 2. Corresponding localization dictionary entry:
+         *        "file_summary": "{categories} categories and {words} words"
+         * 3. Final textContent in element after i18n applyLanguage:
+         *         <span ...>"2 categories and 3 words"</span>
+         */
+        if (substitutions !== null) {
+            element.setAttribute(I18N_ARG_KEY, JSON.stringify(substitutions));
         }
 
         if (forceShared) {
