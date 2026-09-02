@@ -4,18 +4,10 @@ import {
     WordNode,
 } from '../js/core/parsers/wordlist-parser.js';
 
-/**
- * Minimal assertion helper.
- *
- * @param {boolean} condition - Condition that must be true.
- * @param {string} message - Description of the assertion.
- * @throws {Error} If the condition is false.
- */
-function assert(condition, message) {
-    if (!condition) {
-        throw new Error(`Assertion failed: ${message}`);
-    }
-}
+import {
+    assert,
+    runAllTests,
+} from './helpers/test-harness.js';
 
 /**
  * Helper to parse input text into a WordListDocument.
@@ -813,59 +805,39 @@ function testFromJSONFreezeValidation() {
     assert(threw, 'should throw on invalid freeze in WordNode.fromJSON');
 }
 
-/**
- * Run a single named test.
- *
- * @param {string} name - Test name.
- * @param {Function} testFn - Test function.
- */
-function runTest(name, testFn) {
-    console.log(`▶ ${name}`);
-    try {
-        testFn();
-        console.log(`✓ ${name} passed`);
-    } catch (e) {
-        console.error(`✗ ${name} failed`);
-        console.error(`  ${e.message}`);
-        process.exitCode = 1;
-    }
-}
-
 // Run all tests
-runTest('testValidInput', testValidInput);
-runTest('testNoFrontmatter', testNoFrontmatter);
-runTest('testEmptyFile', testEmptyFile);
-runTest('testWhitespaceOnlyFile', testWhitespaceOnlyFile);
-runTest('testLeadingBlankLinesBeforeFrontmatter', testLeadingBlankLinesBeforeFrontmatter);
-runTest('testMissingClosingFrontmatterDelimiter', testMissingClosingFrontmatterDelimiter);
-runTest('testNestedHeadingWithoutParent', testNestedHeadingWithoutParent);
-runTest('testMalformedFrontmatterEntry', testMalformedFrontmatterEntry);
-runTest('testImplicitCategoryOnly', testImplicitCategoryOnly);
-runTest('testImplicitCategoryWithExplicitCategories', testImplicitCategoryWithExplicitCategories);
-runTest('testExplicitCategoriesOnly', testExplicitCategoriesOnly);
-runTest('testCountWords', testCountWords);
-runTest('testAllWords', testAllWords);
-runTest('testGetNodeById', testGetNodeById);
-runTest('testAllNodes', testAllNodes);
-runTest('testToJSON', testToJSON);
-runTest('testReparse', testReparse);
-runTest('testFreezeOption', testFreezeOption);
-runTest('testAccessBeforeParseThrows', testAccessBeforeParseThrows);
-runTest('testConstructorValidation', testConstructorValidation);
-runTest('testNodeTypesAndIds', testNodeTypesAndIds);
-runTest('testWordNodeLineNumber', testWordNodeLineNumber);
-runTest('testCategoryNodeLineNumber', testCategoryNodeLineNumber);
-runTest('testWordNodeRoundTrip', testWordNodeRoundTrip);
-runTest('testWordNodeRoundTripUnfrozen', testWordNodeRoundTripUnfrozen);
-runTest('testWordNodeFromJSONValidation', testWordNodeFromJSONValidation);
-runTest('testCategoryNodeRoundTrip', testCategoryNodeRoundTrip);
-runTest('testCategoryNodeFromJSONValidation', testCategoryNodeFromJSONValidation);
-runTest('testWordListDocumentRoundTrip', testWordListDocumentRoundTrip);
-runTest('testWordListDocumentFromJSONString', testWordListDocumentFromJSONString);
-runTest('testWordListDocumentFromJSONValidation', testWordListDocumentFromJSONValidation);
-runTest('testWordListDocumentFromJSONUnparsed', testWordListDocumentFromJSONUnparsed);
-runTest('testFromJSONFreezeValidation', testFromJSONFreezeValidation);
-
-if (!process.exitCode) {
-    console.log('All tests passed');
-}
+runAllTests([
+    ['testValidInput', testValidInput],
+    ['testNoFrontmatter', testNoFrontmatter],
+    ['testEmptyFile', testEmptyFile],
+    ['testWhitespaceOnlyFile', testWhitespaceOnlyFile],
+    ['testLeadingBlankLinesBeforeFrontmatter', testLeadingBlankLinesBeforeFrontmatter],
+    ['testMissingClosingFrontmatterDelimiter', testMissingClosingFrontmatterDelimiter],
+    ['testNestedHeadingWithoutParent', testNestedHeadingWithoutParent],
+    ['testMalformedFrontmatterEntry', testMalformedFrontmatterEntry],
+    ['testImplicitCategoryOnly', testImplicitCategoryOnly],
+    ['testImplicitCategoryWithExplicitCategories', testImplicitCategoryWithExplicitCategories],
+    ['testExplicitCategoriesOnly', testExplicitCategoriesOnly],
+    ['testCountWords', testCountWords],
+    ['testAllWords', testAllWords],
+    ['testGetNodeById', testGetNodeById],
+    ['testAllNodes', testAllNodes],
+    ['testToJSON', testToJSON],
+    ['testReparse', testReparse],
+    ['testFreezeOption', testFreezeOption],
+    ['testAccessBeforeParseThrows', testAccessBeforeParseThrows],
+    ['testConstructorValidation', testConstructorValidation],
+    ['testNodeTypesAndIds', testNodeTypesAndIds],
+    ['testWordNodeLineNumber', testWordNodeLineNumber],
+    ['testCategoryNodeLineNumber', testCategoryNodeLineNumber],
+    ['testWordNodeRoundTrip', testWordNodeRoundTrip],
+    ['testWordNodeRoundTripUnfrozen', testWordNodeRoundTripUnfrozen],
+    ['testWordNodeFromJSONValidation', testWordNodeFromJSONValidation],
+    ['testCategoryNodeRoundTrip', testCategoryNodeRoundTrip],
+    ['testCategoryNodeFromJSONValidation', testCategoryNodeFromJSONValidation],
+    ['testWordListDocumentRoundTrip', testWordListDocumentRoundTrip],
+    ['testWordListDocumentFromJSONString', testWordListDocumentFromJSONString],
+    ['testWordListDocumentFromJSONValidation', testWordListDocumentFromJSONValidation],
+    ['testWordListDocumentFromJSONUnparsed', testWordListDocumentFromJSONUnparsed],
+    ['testFromJSONFreezeValidation', testFromJSONFreezeValidation],
+]);
