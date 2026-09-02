@@ -2,7 +2,7 @@ import {
     WordListDocument,
     CategoryNode,
     WordNode,
-} from '../js/core/wordlist-parser.js';
+} from '../js/core/parsers/wordlist-parser.js';
 
 /**
  * Minimal assertion helper.
