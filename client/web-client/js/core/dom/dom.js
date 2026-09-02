@@ -80,8 +80,7 @@ function setClassAttribute(element, value, source) {
  * @param {string} tagName - HTML tag name (e.g., "div", "h2", "table").
  * @param {Object} [options] - Configuration options.
  * @param {string} [options.text=''] - Text content for the element. Sets
- *   textContent. Mutually exclusive with html; if both are provided, text
- *   takes precedence and a warning is logged.
+ *   textContent.
  * @param {string} [options.html=''] - HTML content for the element. Sets
  *   innerHTML. Mutually exclusive with text; if both are provided, text
  *   takes precedence and a warning is logged.
@@ -93,8 +92,6 @@ function setClassAttribute(element, value, source) {
  * @param {Object} [options.i18n={}] - i18n configuration. Sets data
  *   attributes used by the i18n system for language switching.
  * @param {string} [options.i18n.key] - String key. Sets data-i18n.
- *   Mutually exclusive with placeholder; if both are provided, key takes
- *   precedence and a warning is logged.
  * @param {string} [options.i18n.placeholder] - String key for the element's
  *   placeholder attribute. Sets data-i18n-placeholder.
  * @param {string|number|null} [options.i18n.arg=null] - Placeholder
@@ -260,17 +257,6 @@ export function createElement(tagName, options = {}) {
         );
     }
 
-    // --- i18n sanity check ---------------------------------------------
-    // key and placeholder both control how applyLanguage() applies the
-    // localized value (textContent vs. placeholder attribute). They cannot
-    // both be used on the same element. Warn and let key win.
-    if (i18n.key && i18n.placeholder) {
-        console.warn(
-            'createElement: i18n.key and i18n.placeholder were both provided. ' +
-            'i18n.key takes precedence; i18n.placeholder will be ignored.'
-        );
-    }
-
     // --- Create the element --------------------------------------------
     const element = document.createElement(tagName);
 
@@ -299,10 +285,11 @@ export function createElement(tagName, options = {}) {
                 forceView = null,
         } = i18n;
 
-        // key and placeholder are mutually exclusive; key wins if both present.
         if (key) {
             element.setAttribute(I18N_KEY, key);
-        } else if (placeholder) {
+        }
+
+        if (placeholder) {
             element.setAttribute(I18N_PLACEHOLDER_KEY, placeholder);
         }
 
