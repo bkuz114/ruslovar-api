@@ -430,15 +430,15 @@ function renderErrorFallback(container, error) {
 
     const heading = createElement('h2', {
         class: 'view-error-heading',
-        text: getString('view_error_title'),
+        text: getString('error_view_failed'),
     });
     const message = createElement('p', {
         class: 'view-error-message',
-        text: error.message || getString('view_error_unknown'),
+        text: error.message || getString('error_unknown'),
     });
     const hint = createElement('p', {
         class: 'view-error-hint',
-        text: getString('view_error_hint'),
+        text: getString('error_view_failed_hint'),
     });
 
     errorDiv.appendChild(heading);

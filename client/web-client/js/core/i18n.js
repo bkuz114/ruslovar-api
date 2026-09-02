@@ -170,6 +170,8 @@ const SHARED_STRINGS = {
         status_error: 'Ошибка',
         error_network: 'Ошибка соединения с API.',
         error_unknown: 'Произошла неизвестная ошибка.',
+        error_view_failed: 'Ошибка загрузки представления',
+        error_view_failed_hint: 'Попробуйте выбрать другое представление.',
     },
     en: {
         page_title: 'Declension Demo',
@@ -204,6 +206,8 @@ const SHARED_STRINGS = {
         status_error: 'Error',
         error_network: 'Could not connect to the API.',
         error_unknown: 'An unknown error occurred.',
+        error_view_failed: 'View failed to load',
+        error_view_failed_hint: 'Try selecting a different view.',
     },
 };
 
