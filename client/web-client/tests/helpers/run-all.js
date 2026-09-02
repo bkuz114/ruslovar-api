@@ -9,3 +9,4 @@
  *   node tests/run-all.js
  */
 import './../wordlist-parser.test.js';
+import './../template-engine.test.js';
