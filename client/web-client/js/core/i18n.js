@@ -540,6 +540,15 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
  * @param {string} lang - Language code to apply.
  */
 export function applyLanguage(lang) {
+    // Validate lang is one of the supported language codes.
+    if (!SUPPORTED_LANGUAGES.includes(lang)) {
+        console.error(
+            `i18n.applyLanguage: Unsupported language. Expected one of ${SUPPORTED_LANGUAGES.join(', ')}, received:`,
+            lang
+        );
+        return;
+    }
+
     // Update elements with text content.
     document.querySelectorAll(`[${I18N_KEY}]`).forEach((element) => {
         let value = resolveElementI18nValue(element, I18N_KEY, lang);
