@@ -806,7 +806,7 @@ function testFromJSONFreezeValidation() {
 }
 
 // Run all tests
-runAllTests([
+runAllTests('wordlist-parser', [
     ['testValidInput', testValidInput],
     ['testNoFrontmatter', testNoFrontmatter],
     ['testEmptyFile', testEmptyFile],

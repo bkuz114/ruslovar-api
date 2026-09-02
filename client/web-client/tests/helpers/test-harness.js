@@ -15,7 +15,7 @@
  *       assert(value === 42, 'value should be 42');
  *   }
  *
- *   runAllTests([
+ *   runAllTests('example-suite', [
  *       ['testExample', testExample],
  *   ]);
  *
@@ -28,6 +28,7 @@
  *
  * Conventions:
  *
+ * - Suite names should be concise and descriptive (e.g., 'wordlist-parser').
  * - Test names should be unique within a single runAllTests call.
  * - Assertion messages should be concise, present-tense, and omit
  *   trailing punctuation.
@@ -77,12 +78,19 @@ export function runTest(name, testFn) {
 }
 
 /**
- * Run an ordered collection of named tests.
+ * Run an ordered collection of named tests under a named suite.
  *
- * @param {Array<[string, Function]>} tests - Pairs of test name and function.
+ * @param {string} suiteName - Name of the test suite, used for the
+ *   header. Should be concise and descriptive.
+ * @param {Array<[string, Function]>} tests - Pairs of test name and
+ *   test function, in execution order.
  * @throws {Error} If duplicate test names are found.
  */
-export function runAllTests(tests) {
+export function runAllTests(suiteName, tests) {
+    console.log(`\n========================================`);
+    console.log(`Test Suite: ${suiteName}`);
+    console.log(`========================================\n`);
+
     // Validate uniqueness before running anything.
     const seen = new Set();
     for (const [name] of tests) {
