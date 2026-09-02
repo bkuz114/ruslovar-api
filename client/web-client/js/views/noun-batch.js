@@ -474,6 +474,9 @@ function showFileSummary(categories, totalWords) {
             text: getString('error_empty_file', {
                 viewId: VIEW_ID
             }),
+            i18n: {
+                key: 'error_empty_file',
+            },
             attrs: {
                 role: 'alert',
             },
@@ -491,6 +494,12 @@ function showFileSummary(categories, totalWords) {
     const summary = createElement('p', {
         class: 'file-summary',
         text: summaryText,
+        i18n: {
+            key: 'file_summary',
+            // Note: file_summary uses {categories} and {words} placeholders.
+            // The current i18n system only supports a single {n} arg.
+            // This will need i18n system support for multiple named args.
+        },
     });
     elements.resultsArea.appendChild(summary);
 }
@@ -1015,6 +1024,9 @@ function createWordDetails(wordObj, item, openIds) {
         const errorDiv = createElement('div', {
             class: 'word-error',
             text: item.error || getString('error_unknown'),
+            i18n: {
+                key: item.error ? null : 'error_unknown',
+            },
         });
         details.appendChild(errorDiv);
     } else {
@@ -1023,6 +1035,9 @@ function createWordDetails(wordObj, item, openIds) {
         const errorDiv = createElement('div', {
             class: 'word-error',
             text: getString('error_unknown'),
+            i18n: {
+                key: 'error_unknown',
+            },
         });
         details.appendChild(errorDiv);
     }
