@@ -214,9 +214,9 @@ export function createElement(tagName, options = {}) {
     const {
         text = '',
             html = '',
-			// "class" is a reserved word in JavaScript, so it must be aliased
-			// when destructured. classList holds the value of the "class" option.
-			class: classList = null,
+            // "class" is a reserved word in JavaScript, so it must be aliased
+            // when destructured. classList holds the value of the "class" option.
+            class: classList = null,
             id = null,
             i18n = {},
             attrs = {},
