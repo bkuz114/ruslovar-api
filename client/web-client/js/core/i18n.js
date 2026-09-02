@@ -11,7 +11,7 @@
  *   - Resolve dot-notation keys (e.g., "case_labels.nominative").
  *   - Resolve view-specific strings by referencing the view registry.
  *   - Apply the active language to [data-i18n] elements in place.
- *   - Handle placeholder substitution via [data-i18n-arg].
+ *   - Handle placeholder substitution via [data-i18n-substitutions].
  *   - Surface lookup failures loudly to aid debugging.
  *
  * Dependencies:
@@ -67,7 +67,7 @@ export const I18N_KEY = "data-i18n";
  * Example:
  *   <h2 data-i18n="plural_heading_numbered"
  *       data-i18n-placeholder="word_placeholder"
- *       data-i18n-arg='{"data-i18n": {"n": 2}, "data-i18n-placeholder": {"word": "слово"}}'>
+ *       data-i18n-substitutions='{"data-i18n": {"n": 2}, "data-i18n-placeholder": {"word": "слово"}}'>
  *
  *   Relevant entries in localization dictionary:
  *     "plural_heading_numbered": "Plural {n}"
@@ -77,7 +77,7 @@ export const I18N_KEY = "data-i18n";
  *     textContent: "Plural 2"
  *     placeholder: "Enter слово"
  */
-export const I18N_ARG_KEY = "data-i18n-arg";
+export const I18N_SUBSTITUTIONS_KEY = "data-i18n-substitutions";
 
 /*
  * Attr to indicate which key to look up in a localization dictionary.
@@ -427,23 +427,23 @@ export function getString(key, {
 /**
  * Apply template substitutions to a resolved i18n string.
  *
- * Checks for the data-i18n-arg attribute on the element. If absent,
+ * Checks for the data-i18n-substitutions attribute on the element. If absent,
  * returns the template unchanged. If present, parses the JSON,
  * extracts the substitution values for the target attribute, and
  * delegates to the TemplateEngine.
  *
  * @param {string} template - The resolved i18n string, possibly
  *     containing placeholders.
- * @param {HTMLElement} element - The element carrying data-i18n-arg.
+ * @param {HTMLElement} element - The element carrying data-i18n-substitutions.
  * @param {string} targetAttribute - The i18n attribute being processed
  *     (e.g., "data-i18n" or "data-i18n-placeholder"). Used to extract
  *     the correct substitution values from the JSON wrapper.
  * @returns {string} The final string with substitutions applied. If
- *     no data-i18n-arg is present, or errors occur, returns the
+ *     no data-i18n-substitutions is present, or errors occur, returns the
  *     original template unchanged.
  */
 function applyI18nTemplateValues(template, element, targetAttribute) {
-    const rawJsonString = element.getAttribute(I18N_ARG_KEY);
+    const rawJsonString = element.getAttribute(I18N_SUBSTITUTIONS_KEY);
 
     // No substitutions requested.
     if (rawJsonString === null) {
@@ -455,7 +455,7 @@ function applyI18nTemplateValues(template, element, targetAttribute) {
         `  Element: ${element.outerHTML}\n` +
         `  Attribute: ${targetAttribute}\n` +
         `  Template: "${template}"\n` +
-        `  ${I18N_ARG_KEY}: ${rawJsonString}`;
+        `  ${I18N_SUBSTITUTIONS_KEY}: ${rawJsonString}`;
 
     // Parse the JSON wrapper.
     let templateValues;
@@ -463,7 +463,7 @@ function applyI18nTemplateValues(template, element, targetAttribute) {
         templateValues = JSON.parse(rawJsonString);
     } catch (e) {
         console.error(
-            `i18n.applyI18nTemplateValues: Invalid JSON in ${I18N_ARG_KEY}.\n` +
+            `i18n.applyI18nTemplateValues: Invalid JSON in ${I18N_SUBSTITUTIONS_KEY}.\n` +
             `  ${errorContext}\n` +
             `  Error: ${e.message}`
         );
@@ -473,7 +473,7 @@ function applyI18nTemplateValues(template, element, targetAttribute) {
     // Wrapper must be a plain object.
     if (typeof templateValues !== 'object' || templateValues === null || Array.isArray(templateValues)) {
         console.error(
-            `i18n.applyI18nTemplateValues: ${I18N_ARG_KEY} must parse to a JSON object.\n` +
+            `i18n.applyI18nTemplateValues: ${I18N_SUBSTITUTIONS_KEY} must parse to a JSON object.\n` +
             `  ${errorContext}`
         );
         return template;
@@ -657,7 +657,7 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
         return;
     }
 
-    // Perform placeholder substitutions if data-i18n-arg is present.
+    // Perform placeholder substitutions if data-i18n-substitutions is present.
     value = applyI18nTemplateValues(value, element, i18n_attr);
 
     return value;

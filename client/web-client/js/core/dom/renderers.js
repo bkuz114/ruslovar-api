@@ -33,7 +33,7 @@ import {
  *
  * Only rows with non-null forms are rendered. The heading carries a
  * data-i18n attribute so it updates on language switch. If a
- * headingIndex is provided, it is stored in data-i18n-arg so the {n}
+ * headingIndex is provided, it is stored in data-i18n-substitutions so the {n}
  * placeholder can be re-substituted after language switching.
  *
  * @param {string} i18nKey - Shared i18n key for the heading text.

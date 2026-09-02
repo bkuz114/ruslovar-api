@@ -10,7 +10,7 @@
 
 import {
     I18N_KEY,
-    I18N_ARG_KEY,
+    I18N_SUBSTITUTIONS_KEY,
     I18N_PLACEHOLDER_KEY,
     I18N_VIEW_OVERRIDE_KEY,
     I18N_SHARE_OVERRIDE_KEY,
@@ -95,7 +95,7 @@ function setClassAttribute(element, value, source) {
  *   forceShared, and forceView. Special keys are described below.
  * @param {Object|null} [options.i18n.substitutions=null] - Placeholder
  *   substitution data. Keyed by data-i18n attribute name. Serialized to
- *   JSON and set as data-i18n-arg.
+ *   JSON and set as data-i18n-substitutions.
  * @param {boolean} [options.i18n.forceShared=false] - If true, forces shared
  *   dictionary lookup. Sets data-i18n-force-shared.
  * @param {string|null} [options.i18n.forceView=null] - If set, forces lookup
@@ -316,7 +316,7 @@ export function createElement(tagName, options = {}) {
          * 'substitutions' provides values for {placeholders} used in
          * localized strings. It is keyed by the data-i18n attribute
          * whose string should receive the substitutions. It gets
-         * serialized to JSON and set as data-i18n-arg on the element.
+         * serialized to JSON and set as data-i18n-substitutions on the element.
          * Example. This is what's passed to createElement:
          *
          * i18n: {
@@ -330,7 +330,7 @@ export function createElement(tagName, options = {}) {
          * },
          *
          * The object at 'substitutions' will be serialized to JSON and
-         * set on the created element as a data-i18n-arg attribute.
+         * set on the created element as a data-i18n-substitutions attribute.
          *
          * For this element, the i18n system will take the localized string
          * requested by its data-i18n attribute and substitute placeholder
@@ -338,7 +338,7 @@ export function createElement(tagName, options = {}) {
          *
          * 1. HTML element:
          *         <span data-i18n="file_summary"
-         *            data-i18n-arg='{"data-i18n": {"categories":2, "words":3}}'>
+         *            data-i18n-substitutions='{"data-i18n": {"categories":2, "words":3}}'>
          *        </span>
          * 2. Corresponding localization dictionary entry:
          *        "file_summary": "{categories} categories and {words} words"
@@ -346,7 +346,7 @@ export function createElement(tagName, options = {}) {
          *         <span ...>"2 categories and 3 words"</span>
          */
         if (substitutions !== null) {
-            element.setAttribute(I18N_ARG_KEY, JSON.stringify(substitutions));
+            element.setAttribute(I18N_SUBSTITUTIONS_KEY, JSON.stringify(substitutions));
         }
 
         if (forceShared) {
