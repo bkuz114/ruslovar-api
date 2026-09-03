@@ -52,6 +52,7 @@
  * Dependencies:
  *   - core/i18n.js (getString)
  *   - core/dom/dom.js (createElement, clearElement, loadStylesheet)
+ *   - core/dom/components/errors.js (createErrorDiv)
  *   - core/dom/renderers.js (declension tables, metadata)
  *   - core/errors.js (ApiError)
  *   - core/parsers/wordlist-parser.js (WordListDocument for parsing word lists file)
@@ -67,6 +68,9 @@ import {
     clearElement,
     loadStylesheet
 } from '../core/dom/dom.js';
+import {
+    createErrorDiv,
+} from '../core/dom/components/errors.js';
 import {
     WordListDocument,
 } from '../core/parsers/wordlist-parser.js';
@@ -519,9 +523,7 @@ function showFileSummary(categories, totalWords) {
  */
 async function handleBatchSubmit() {
     if (!parsedDocument) {
-        showError(getString('error_no_file', {
-            viewId: VIEW_ID
-        }));
+        showError('error_no_file');
         return;
     }
 
@@ -531,9 +533,7 @@ async function handleBatchSubmit() {
     const uniqueWords = [...new Set(allWords)];
 
     if (allWords.length === 0) {
-        showError(getString('error_empty_file', {
-            viewId: VIEW_ID
-        }));
+        showError('error_empty_file');
         return;
     }
 
@@ -551,24 +551,25 @@ async function handleBatchSubmit() {
         renderBatchResults(parsedDocument.categories, parsedDocument.metadata, data.results, openNodeIds);
     } catch (error) {
         console.error('Batch request failed:', error);
-        showError(getErrorMessage(error));
+        showError(getErrorI18nKey(error));
     } finally {
         elements.submitControls.submitButton.disabled = false;
     }
 }
 
 /**
- * Map an error to a user-facing message.
+ * Map an error to an i18n key for a localized
+ * user-facing message.
  *
  * @param {Error} error - The thrown error.
- * @returns {string} Localized error message.
+ * @returns {string} i18n key for localized error message.
  */
-function getErrorMessage(error) {
+function getErrorI18nKey(error) {
     if (error instanceof ApiError) {
-        return getString('error_unknown');
+        return 'error_unknown';
     }
 
-    return getString('error_network');
+    return 'error_network';
 }
 
 /**
@@ -1054,18 +1055,18 @@ function createWordDetails(wordObj, item, openIds) {
 /**
  * Display an error message in the results area.
  *
- * @param {string} message - The error message to display.
+ * @param {string} errorI18nKey - The i18n key for
+ *  the localized error message to display.
  */
-function showError(message) {
+function showError(errorI18nKey) {
     clearElement(elements.resultsArea);
-
-    const errorDiv = createElement('div', {
-        class: 'error-message',
-        text: message,
-        attrs: {
-            role: 'alert',
-        },
+    // get localized string from i18n key
+    const message = getString(errorI18nKey, {
+        viewId: VIEW_ID
     });
-
+    // create error message div
+    const errorDiv = createErrorDiv({
+        'message': message,
+    });
     elements.resultsArea.appendChild(errorDiv);
 }

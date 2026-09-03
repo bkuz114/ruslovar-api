@@ -32,6 +32,7 @@
  * Dependencies:
  *   - core/i18n.js (getString)
  *   - core/dom/dom.js (createElement, clearElement, loadStylesheet)
+ *   - core/dom/components/errors.js (createErrorDiv)
  *   - core/dom/renderers.js (declension tables, metadata, tabs, raw JSON)
  *   - core/errors.js (ApiError)
  *   - core/view-registry.js (registerView)
@@ -46,6 +47,9 @@ import {
     clearElement,
     loadStylesheet
 } from '../core/dom/dom.js';
+import {
+    createErrorDiv,
+} from '../core/dom/components/errors.js';
 import {
     createMatchesContainer,
     createRawJsonToggle,
@@ -355,37 +359,34 @@ async function handleFormSubmit(event) {
         renderResults(data);
     } catch (error) {
         console.error('Error during noun lookup:', error);
-        showError(getErrorMessage(error));
+        showError(getErrorI18nKey(error));
     }
 }
 
 /**
- * Map an error to a user-facing message.
+ * Map an error to an i18n key for a localized
+ * user-facing message.
  *
  * The API returns 404 for both "not found" and "not in dictionary form"
  * (strict mode). We inspect the detail message to distinguish them.
  *
  * @param {Error} error - The thrown error.
- * @returns {string} Localized error message.
+ * @returns {string} i18n key for localized error message.
  */
-function getErrorMessage(error) {
+function getErrorI18nKey(error) {
     if (error instanceof ApiError) {
         if (error.status === 404 && error.message.includes('dictionary form')) {
-            return getString('error_strict', {
-                viewId: VIEW_ID
-            });
+            return 'error_strict';
         }
 
         if (error.status === 404) {
-            return getString('error_not_found', {
-                viewId: VIEW_ID
-            });
+            return 'error_not_found';
         }
 
-        return getString('error_unknown');
+        return 'error_unknown';
     }
 
-    return getString('error_network');
+    return 'error_network';
 }
 
 /**
@@ -507,19 +508,19 @@ function clearResults() {
  * Also clears lastResults so getState() does not return stale results
  * after an error.
  *
- * @param {string} message - The error message to display.
+ * @param {string} errorI18nKey - The i18n key for
+ *  the localized error message to display.
  */
-function showError(message) {
+function showError(errorI18nKey) {
     clearElement(elements.resultsArea);
     lastResults = null;
-
-    const errorDiv = createElement('div', {
-        class: 'error-message',
-        text: message,
-        attrs: {
-            role: 'alert',
-        },
+    // get localized string from i18n key
+    const message = getString(errorI18nKey, {
+        viewId: VIEW_ID
     });
-
+    // create error message div
+    const errorDiv = createErrorDiv({
+        'message': message,
+    });
     elements.resultsArea.appendChild(errorDiv);
 }
