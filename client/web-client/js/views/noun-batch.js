@@ -1067,6 +1067,7 @@ function showError(errorI18nKey) {
     // create error message div
     const errorDiv = createErrorDiv({
         'message': message,
+        'i18nKey': errorI18nKey,
     });
     elements.resultsArea.appendChild(errorDiv);
 }
