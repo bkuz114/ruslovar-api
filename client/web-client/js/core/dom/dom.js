@@ -84,21 +84,21 @@ function setClassAttribute(element, value, source) {
  * @param {string} [options.html=''] - HTML content for the element. Sets
  *   innerHTML. Mutually exclusive with text; if both are provided, text
  *   takes precedence and a warning is logged.
- * @param {string|string[]|null} [options.class=null] - CSS class(es) to
+ * @param {string|string[]|null} [options.class=''] - CSS class(es) to
  *   apply. Accepts a string or array of strings. Sets the class attribute.
  *   If attrs.class is also provided, attrs.class takes precedence.
- * @param {string|null} [options.id=null] - Element ID. Sets the id
+ * @param {string|null} [options.id=''] - Element ID. Sets the id
  *   attribute. If attrs.id is also provided, attrs.id takes precedence.
  * @param {Object} [options.i18n={}] - i18n configuration. Keys should be
  *   data-i18n attribute names (e.g., "data-i18n",
  *   "data-i18n-placeholder"). There are also three special keys: substitutions,
  *   forceShared, and forceView. Special keys are described below.
- * @param {Object|null} [options.i18n.substitutions=null] - Placeholder
+ * @param {Object|null} [options.i18n.substitutions={}] - Placeholder
  *   substitution data. Keyed by data-i18n attribute name. Serialized to
  *   JSON and set as data-i18n-substitutions.
  * @param {boolean} [options.i18n.forceShared=false] - If true, forces shared
  *   dictionary lookup. Sets data-i18n-force-shared.
- * @param {string|null} [options.i18n.forceView=null] - If set, forces lookup
+ * @param {string|null} [options.i18n.forceView=''] - If set, forces lookup
  *   in a specific view's dictionary. Sets data-i18n-force-view.
  * @param {Object} [options.attrs={}] - HTML attributes to set via
  *   setAttribute. The class attribute accepts either a string or an array
@@ -109,8 +109,12 @@ function setClassAttribute(element, value, source) {
  *   assignment wins. For example, props.className overrides attrs.class.
  * @returns {HTMLElement} The created element.
  * @throws {TypeError} If tagName is not a non-empty string.
- * @throws {TypeError} If text or html is not a string.
+ * @throws {TypeError} If text, html, id, or class is not the expected
+ *   type.
  * @throws {TypeError} If i18n, attrs, or props is not a plain object.
+ * @throws {TypeError} If i18n.substitutions is not a plain object.
+ * @throws {TypeError} If i18n.forceShared is not a boolean.
+ * @throws {TypeError} If i18n.forceView is not a string.
  *
  * @example
  * // Basic element with id, class, and text
