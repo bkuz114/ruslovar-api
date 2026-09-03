@@ -330,6 +330,9 @@ export function createElement(tagName, options = {}) {
                     );
                     return;
                 }
+                // skip null or undefined value (e.g. user accidentally
+                // set 'data-i18n': null
+                if (value == null) return;
 
                 element.setAttribute(attr, value);
             });
@@ -382,6 +385,9 @@ export function createElement(tagName, options = {}) {
 
     // --- Apply arbitrary HTML attributes -------------------------------
     for (const [attr, value] of Object.entries(resolvedAttrs)) {
+        // skip null and undefined values
+        if (value == null) continue;
+
         if (attr === 'class') {
             // class needs special handling because it can be a string or
             // an array of strings. All other attributes are set directly.
@@ -393,6 +399,9 @@ export function createElement(tagName, options = {}) {
 
     // --- Apply direct DOM properties -----------------------------------
     for (const [prop, value] of Object.entries(resolvedProps)) {
+        // skip null and undefined values
+        if (value == null) continue;
+
         element[prop] = value;
     }
 
