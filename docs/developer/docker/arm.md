@@ -17,11 +17,35 @@ docker run --privileged --rm tonistiigi/binfmt --install all
 
 This registers the ARM64 emulation handlers so your x86_64 machine can build ARM64 images.
 
-## 3. Build and push both architectures directly to Docker Hub
+## 3. Clone fresh build repos (to avoid building local artifacts)
+
+To avoid baking local artifacts into the built images, start by cloning fresh repos to build from.
+
+1. Clone the `ruslovar-api` repo
+
+```
+git clone https://github.com/bkuz114/ruslovar-api.git build-ruslovar-api
+```
+
+2. Clone the `ruslovar-db` repo
+
+```
+git clone https://github.com/bkuz114/ruslovar-db.git build-ruslovar-db
+```
+
+## 4. Log in to docker
+
+(from dir where your `token.txt` is)
+
+```
+cat token.txt | docker login -u ikzv --password-stdin
+```
+
+## 5. Build and push both architectures directly to Docker Hub
 
 database image:
 
-**Go to `ruslovar-db` repo**
+**Go to `ruslovar-db` build repo**
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile -t ikzv/runouns-db:0.2.0 -t ikzv/runouns-db:latest --push .
@@ -29,7 +53,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile -t ikzv/run
 
 API image:
 
-**Go to `ruslovar-api` repo**
+**Go to `ruslovar-api` build repo**
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -f docker/api.Dockerfile -t ikzv/ruslovar-api:0.2.0 -t ikzv/ruslovar-api:latest --push .
@@ -37,7 +61,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -f docker/api.Dockerfile 
 
 Web Client image:
 
-**Go to `ruslovar-api` repo**
+**Go to `ruslovar-api` build repo**
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -f docker/webclient.Dockerfile -t ikzv/ruslovar-client:0.1.0 -t ikzv/ruslovar-client:latest --push .
@@ -45,7 +69,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -f docker/webclient.Docke
 
 The `--push` flag pushes directly to Docker Hub as part of the build. No separate push step needed.
 
-## 4. Verify the manifest list
+## 6. Verify the manifest list
 
 ```bash
 docker buildx imagetools inspect ikzv/runouns-db:latest
