@@ -131,7 +131,6 @@ function setClassAttribute(element, value, source) {
  * @example
  * // Element with i18n key (textContent applied by applyLanguage later)
  * const heading = createElement('h2', {
- *     text: getString('singular_heading'),
  *     i18n: {
  *         'data-i18n': 'singular_heading',
  *     },
@@ -190,18 +189,6 @@ function setClassAttribute(element, value, source) {
  *     props: {
  *         checked: true,
  *         disabled: false,
- *     },
- * });
- *
- * @example
- * // Element with text, attributes, and i18n combined
- * const wordLabel = createElement('label', {
- *     text: getString('word_label', { viewId: VIEW_ID }),
- *     i18n: {
- *         'data-i18n': 'word_label',
- *     },
- *     attrs: {
- *         for: 'word-input',
  *     },
  * });
  */

@@ -30,7 +30,6 @@
  * are not lost when the language changes.
  *
  * Dependencies:
- *   - core/i18n.js (getString)
  *   - core/dom/dom.js (createElement, clearElement, loadStylesheet)
  *   - core/dom/components/errors.js (createErrorDiv)
  *   - core/dom/renderers.js (declension tables, metadata, tabs, raw JSON)
@@ -39,9 +38,6 @@
  *   - css/views/noun-single.css (lazy-loaded on first mount)
  */
 
-import {
-    getString,
-} from '../core/i18n.js';
 import {
     createElement,
     clearElement,
@@ -256,9 +252,6 @@ function buildDom(container) {
     });
 
     const wordLabel = createElement('label', {
-        text: getString('word_label', {
-            viewId: VIEW_ID
-        }),
         i18n: {
             "data-i18n": 'word_label',
         },
@@ -272,9 +265,6 @@ function buildDom(container) {
         attrs: {
             type: 'text',
             name: 'word',
-            placeholder: getString('word_placeholder', {
-                viewId: VIEW_ID
-            }),
             autocomplete: 'off',
         },
         i18n: {
@@ -479,9 +469,6 @@ function createResultsPlaceholder() {
     const placeholder = createElement('p', {
         class: 'results-placeholder',
         id: 'results-placeholder',
-        text: getString('results_placeholder', {
-            viewId: VIEW_ID
-        }),
         i18n: {
             "data-i18n": 'results_placeholder',
         },
@@ -514,13 +501,8 @@ function clearResults() {
 function showError(errorI18nKey) {
     clearElement(elements.resultsArea);
     lastResults = null;
-    // get localized string from i18n key
-    const message = getString(errorI18nKey, {
-        viewId: VIEW_ID
-    });
     // create error message div
     const errorDiv = createErrorDiv({
-        'message': message,
         'i18nKey': errorI18nKey,
     });
     elements.resultsArea.appendChild(errorDiv);

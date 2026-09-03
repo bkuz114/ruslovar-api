@@ -40,7 +40,6 @@ import {
     setLanguage,
     applyLanguage,
     applyLanguageToElement,
-    getString,
     I18N_VIEW_KEY,
 } from './core/i18n.js';
 import {
@@ -220,9 +219,6 @@ function renderNavigation() {
     // to facilitate localizing the text content.)
     views.forEach((view) => {
         const option = createElement('option', {
-            text: getString(view.labelKey, {
-                viewId: view.id
-            }),
             i18n: {
                 "data-i18n": view.labelKey,
                 forceView: view.id,
@@ -469,7 +465,6 @@ function renderErrorFallback(container, error) {
 
     const heading = createElement('h2', {
         class: 'view-error-heading',
-        text: getString('error_view_failed'),
         i18n: {
             "data-i18n": 'error_view_failed',
         },
@@ -477,7 +472,6 @@ function renderErrorFallback(container, error) {
 
     const message = createElement('p', {
         class: 'view-error-message',
-        text: error.message || getString('error_unknown'),
         i18n: {
             "data-i18n": error.message ? null : 'error_unknown',
         },
@@ -485,7 +479,6 @@ function renderErrorFallback(container, error) {
 
     const hint = createElement('p', {
         class: 'view-error-hint',
-        text: getString('error_view_failed_hint'),
         i18n: {
             "data-i18n": 'error_view_failed_hint',
         },

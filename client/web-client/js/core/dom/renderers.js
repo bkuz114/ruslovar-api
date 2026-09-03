@@ -47,15 +47,14 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
         class: 'declension-section',
     });
 
-    // Set initial text content. The i18n system will overwrite this
-    // when the language changes, but the initial render needs it set
-    // before applyLanguage() runs.
-    let headingText = getString(i18nKey);
-    let substitutions = {};
+    // i18n options to send to createElement API
+    const i18nOptions = {
+        "data-i18n": i18nKey,
+    }
+
     // heading index indicates this is a heading with substitutions
     if (headingIndex !== null) {
-        headingText = headingText.replace('{n}', headingIndex);
-        substitutions = {
+        i18nOptions.substitutions = {
             "data-i18n": {
                 n: headingIndex,
             },
@@ -64,11 +63,7 @@ export function createDeclensionTable(i18nKey, forms, headingIndex = null) {
 
     const heading = createElement('h2', {
         class: 'declension-heading',
-        text: headingText,
-        i18n: {
-            "data-i18n": i18nKey,
-            substitutions: substitutions,
-        },
+        i18n: i18nOptions,
     });
 
     wrapper.appendChild(heading);
@@ -137,7 +132,6 @@ export function createMetadataSection(match) {
     if (match.invariant) {
         const badge = createElement('span', {
             class: 'invariant-badge',
-            text: getString('invariant_label'),
             i18n: {
                 "data-i18n": 'invariant_label',
             },
@@ -156,14 +150,12 @@ export function createMetadataSection(match) {
         });
 
         const label = createElement('span', {
-            text: getString('gender_label'),
             i18n: {
                 "data-i18n": 'gender_label',
             },
         });
 
         const value = createElement('span', {
-            text: getString(`gender_values.${match.gender}`) || match.gender,
             i18n: {
                 "data-i18n": `gender_values.${match.gender}`,
             },
@@ -183,7 +175,6 @@ export function createMetadataSection(match) {
         });
 
         const label = createElement('span', {
-            text: getString('animacy_label'),
             i18n: {
                 "data-i18n": 'animacy_label',
             },
@@ -191,7 +182,6 @@ export function createMetadataSection(match) {
 
         const animacyKey = match.animacy ? 'animacy_animate' : 'animacy_inanimate';
         const value = createElement('span', {
-            text: getString(animacyKey),
             i18n: {
                 "data-i18n": animacyKey,
             },
@@ -340,11 +330,8 @@ export function createMatchesContainer(result, {
 
         // In stacked layout, add a label when multiple matches exist.
         if (layout === 'stacked' && result.matches.length > 1) {
-            const labelText = getString('match_label');
-
             const label = createElement('h3', {
                 class: 'match-label',
-                text: labelText.replace('{n}', index + 1),
                 i18n: {
                     "data-i18n": 'match_label',
                     substitutions: {
@@ -389,7 +376,6 @@ export function createMatchesContainer(result, {
 function createSubmitButton(type = 'submit', disable = false) {
     const button = createElement('button', {
         class: 'submit-button',
-        text: getString('submit_button'),
         i18n: {
             "data-i18n": 'submit_button',
         },
@@ -432,7 +418,6 @@ function createStrictModeGroup() {
     });
 
     const label = createElement('label', {
-        text: getString('strict_label'),
         i18n: {
             "data-i18n": 'strict_label',
         },
@@ -509,7 +494,6 @@ export function createRawJsonToggle(data) {
     });
 
     const summary = createElement('summary', {
-        text: getString('raw_json_heading'),
         i18n: {
             "data-i18n": 'raw_json_heading',
         },

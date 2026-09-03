@@ -50,7 +50,6 @@
  * restructuring the view.
  *
  * Dependencies:
- *   - core/i18n.js (getString)
  *   - core/dom/dom.js (createElement, clearElement, loadStylesheet)
  *   - core/dom/components/errors.js (createErrorDiv)
  *   - core/dom/renderers.js (declension tables, metadata)
@@ -60,9 +59,6 @@
  *   - css/views/noun-batch.css (lazy-loaded on first mount)
  */
 
-import {
-    getString,
-} from '../core/i18n.js';
 import {
     createElement,
     clearElement,
@@ -316,9 +312,6 @@ function buildDom(container) {
     });
 
     const fileLabel = createElement('label', {
-        text: getString('file_label', {
-            viewId: VIEW_ID
-        }),
         i18n: {
             "data-i18n": 'file_label',
         },
@@ -337,9 +330,6 @@ function buildDom(container) {
 
     const formatHint = createElement('p', {
         class: 'file-format-hint',
-        text: getString('file_format_hint', {
-            viewId: VIEW_ID
-        }),
         i18n: {
             "data-i18n": 'file_format_hint',
         },
@@ -371,9 +361,6 @@ function buildDom(container) {
     const placeholder = createElement('p', {
         class: 'results-placeholder',
         id: 'results-placeholder',
-        text: getString('results_placeholder', {
-            viewId: VIEW_ID
-        }),
         i18n: {
             "data-i18n": 'results_placeholder',
         },
@@ -476,9 +463,6 @@ function showFileSummary(categories, totalWords) {
     if (totalWords === 0) {
         const errorDiv = createElement('div', {
             class: 'error-message',
-            text: getString('error_empty_file', {
-                viewId: VIEW_ID
-            }),
             i18n: {
                 "data-i18n": 'error_empty_file',
             },
@@ -490,15 +474,8 @@ function showFileSummary(categories, totalWords) {
         return;
     }
 
-    const summaryText = getString('file_summary', {
-            viewId: VIEW_ID
-        })
-        .replace('{categories}', categories.length)
-        .replace('{words}', totalWords);
-
     const summary = createElement('p', {
         class: 'file-summary',
-        text: summaryText,
         i18n: {
             "data-i18n": 'file_summary',
             substitutions: {
@@ -1009,7 +986,6 @@ function createWordDetails(wordObj, item, openIds) {
 
     const status = createElement('span', {
         class: ['status-badge', statusClass],
-        text: getString(statusKey),
         i18n: {
             "data-i18n": statusKey,
         },
@@ -1028,7 +1004,6 @@ function createWordDetails(wordObj, item, openIds) {
     } else if (error) {
         const errorDiv = createElement('div', {
             class: 'word-error',
-            text: item.error || getString('error_unknown'),
             i18n: {
                 "data-i18n": item.error ? null : 'error_unknown',
             },
@@ -1039,7 +1014,6 @@ function createWordDetails(wordObj, item, openIds) {
         // API response is missing an entry for a requested word.
         const errorDiv = createElement('div', {
             class: 'word-error',
-            text: getString('error_unknown'),
             i18n: {
                 "data-i18n": 'error_unknown',
             },
@@ -1058,13 +1032,8 @@ function createWordDetails(wordObj, item, openIds) {
  */
 function showError(errorI18nKey) {
     clearElement(elements.resultsArea);
-    // get localized string from i18n key
-    const message = getString(errorI18nKey, {
-        viewId: VIEW_ID
-    });
     // create error message div
     const errorDiv = createErrorDiv({
-        'message': message,
         'i18nKey': errorI18nKey,
     });
     elements.resultsArea.appendChild(errorDiv);
