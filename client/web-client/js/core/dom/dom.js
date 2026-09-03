@@ -248,6 +248,17 @@ export function createElement(tagName, options = {}) {
             `createElement: html must be a string. Received: ${typeof resolvedHtml}`
         );
     }
+    if (typeof resolvedId !== 'string' && resolvedId !== null) {
+        throw new TypeError(
+            `createElement: id must be a string. Received: ${typeof resolvedId}`
+        );
+    }
+    if (typeof resolvedClassList !== 'string' && !Array.isArray(resolvedClassList) && resolvedClassList !== null) {
+        throw new TypeError(
+            `createElement: class must be a string or an Array. Received: ${typeof resolvedClassList}`
+        );
+    }
+
     if (typeof resolvedI18n !== 'object' || Array.isArray(resolvedI18n)) {
         throw new TypeError(
             `createElement: i18n must be a plain object. Received: ${Array.isArray(resolvedI18n) ? 'array' : typeof resolvedI18n}`
@@ -315,6 +326,24 @@ export function createElement(tagName, options = {}) {
         const resolvedSubstitutions = substitutions ?? null;
         const resolvedForceShared = forceShared ?? false;
         const resolvedForceView = forceView ?? null;
+
+        // --- Validate option types -----------------------------------------
+
+        if (typeof resolvedForceShared !== 'boolean') {
+            throw new TypeError(
+                `createElement: options.i18n.forceShared must be a boolean. Received: ${typeof resolvedForceShared}`
+            );
+        }
+        if (typeof resolvedForceView !== 'string' && resolvedForceView !== null) {
+            throw new TypeError(
+                `createElement: options.i18n.forceView must be a string. Received: ${typeof resolvedForceView}`
+            );
+        }
+        if ((typeof resolvedSubstitutions !== 'object' && resolvedSubstitutions !== null) || Array.isArray(resolvedSubstitutions)) {
+            throw new TypeError(
+                `createElement: options.i18n.substitutions must be a plain object. Received: ${Array.isArray(resolvedSubstitutions) ? 'array' : typeof resolvedSubstitutions}`
+            );
+        }
 
         // Iterate all keys in i18n config. Anything that isn't a special
         // case (substitutions, forceShared, forceView) is treated as a
