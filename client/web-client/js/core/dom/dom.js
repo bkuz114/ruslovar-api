@@ -9,9 +9,7 @@
  */
 
 import {
-    I18N_KEY,
     I18N_SUBSTITUTIONS_KEY,
-    I18N_PLACEHOLDER_KEY,
     I18N_VIEW_OVERRIDE_KEY,
     I18N_SHARE_OVERRIDE_KEY,
 } from '../i18n.js';
