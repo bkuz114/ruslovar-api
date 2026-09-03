@@ -166,9 +166,9 @@ const I18N_ATTRIBUTE_HANDLERS = {
  */
 const SHARED_STRINGS = {
     ru: {
-        page_title: 'Демонстрация склонений',
+        page_title: 'Веб-клиент Ruslovar',
         language_label: 'Выбор языка',
-        select_demo: "Выбрать демо",
+        select_demo: "Выбрать представление",
         case_labels: {
             nominative: 'Именительный',
             genitive: 'Родительный',
@@ -203,9 +203,9 @@ const SHARED_STRINGS = {
         error_view_failed_hint: 'Попробуйте выбрать другое представление.',
     },
     en: {
-        page_title: 'Declension Demo',
+        page_title: 'Ruslovar Web Client',
         language_label: 'Language selection',
-        select_demo: "Select Demo",
+        select_demo: "Select View",
         case_labels: {
             nominative: 'Nominative',
             genitive: 'Genitive',
