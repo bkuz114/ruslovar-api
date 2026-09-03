@@ -167,7 +167,7 @@ const I18N_ATTRIBUTE_HANDLERS = {
 const SHARED_STRINGS = {
     ru: {
         page_title: 'Веб-клиент Ruslovar',
-        language_label: 'Выбор языка',
+        select_language: 'Выбор языка',
         select_demo: "Выбрать представление",
         case_labels: {
             nominative: 'Именительный',
@@ -204,7 +204,7 @@ const SHARED_STRINGS = {
     },
     en: {
         page_title: 'Ruslovar Web Client',
-        language_label: 'Language selection',
+        select_language: 'Language selection',
         select_demo: "Select View",
         case_labels: {
             nominative: 'Nominative',
