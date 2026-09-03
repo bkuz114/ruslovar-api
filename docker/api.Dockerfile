@@ -6,7 +6,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ app/
-COPY client/declensions.py client/declensions.py
+COPY client/cli/declensions.py client/cli/declensions.py
 
 EXPOSE 8000
 

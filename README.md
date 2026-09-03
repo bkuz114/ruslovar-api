@@ -105,13 +105,13 @@ The detailed setup process is documented here: [Quickstart guide](docs/quickstar
 The repository includes a thin CLI client for testing the API from the terminal:
 
 ```bash
-python client/declensions.py --word кролик
+python client/cli/declensions.py --word кролик
 ```
 
 By default, the client prints the API response as formatted JSON. For a human-readable table, use `--table`:
 
 ```bash
-python client/declensions.py --word кролик --table
+python client/cli/declensions.py --word кролик --table
 ```
 
 Output:
@@ -142,7 +142,7 @@ The table output supports language selection (`--lang ru` or `--lang en`), color
 
 The client assumes the FastAPI server is running at `http://127.0.0.1:8000`. Use `--url` to point to a different base URL.
 
-Run `python client/declensions.py --help` for all options.
+Run `python client/cli/declensions.py --help` for all options.
 
 ### Color support (Git Bash on Windows)
 
@@ -151,7 +151,7 @@ Git Bash does not always report itself as an interactive terminal. As a result, 
 Example:
 
 ```bash
-python client/declensions.py --word кролик --table --color always
+python client/cli/declensions.py --word кролик --table --color always
 ```
 
 ## Demo Page

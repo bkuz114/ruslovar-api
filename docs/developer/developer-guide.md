@@ -144,7 +144,7 @@ The `app.main:app` string tells uvicorn to import the `app` object from the `app
 While the server is running, you can:
 
 - Open the Swagger UI at `http://127.0.0.1:8000/docs`
-- Use the CLI client: `python client/declensions.py --word кролик`
+- Use the CLI client: `python client/cli/declensions.py --word кролик`
 - Make requests with curl or a browser
 
 The server should stay running while you explore the code. If you make changes, auto-reload will restart it.
@@ -300,7 +300,7 @@ A new route module `app/api/adjectives.py` would define the adjective endpoints,
 
 ### 5. Update the client and docs
 
-`client/declensions.py` could gain a `--grammar` flag, or a separate client script could be added. The API docs and database docs would be extended.
+`client/cli/declensions.py` could gain a `--grammar` flag, or a separate client script could be added. The API docs and database docs would be extended.
 
 No existing code needs to be rewritten. Each layer grows without breaking what is already there.
 

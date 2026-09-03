@@ -140,7 +140,7 @@ You should see a `200` response with JSON containing the declension table for `�
 Open a second terminal, activate the virtual environment again if needed, and run:
 
 ```bash
-python client/declensions.py --word кролик
+python client/cli/declensions.py --word кролик
 ```
 
 You should see the declension table printed as formatted JSON.
@@ -148,7 +148,7 @@ You should see the declension table printed as formatted JSON.
 Try a declined form to see automatic root resolution:
 
 ```bash
-python client/declensions.py --word кролика
+python client/cli/declensions.py --word кролика
 ```
 
 ### Option C: curl
