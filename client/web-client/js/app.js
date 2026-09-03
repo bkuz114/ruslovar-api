@@ -209,8 +209,8 @@ function renderNavigation() {
     const select = createElement('select', {
         id: 'view-select',
         class: 'view-select',
-        attrs: {
-            'aria-label': 'Select demo',
+        i18n: {
+            "data-i18n-aria-label": 'select_demo',
         },
     });
 

@@ -305,10 +305,8 @@ function buildDom(container) {
     // --- Batch controls ------------------------------------------------
     const controls = createElement('section', {
         class: 'batch-controls',
-        attrs: {
-            'aria-label': getString('file_label', {
-                viewId: VIEW_ID
-            }),
+        i18n: {
+            "data-i18n-aria-label": 'file_label',
         },
     });
 

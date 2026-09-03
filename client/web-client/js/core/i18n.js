@@ -168,6 +168,7 @@ const SHARED_STRINGS = {
     ru: {
         page_title: 'Демонстрация склонений',
         language_label: 'Выбор языка',
+        select_demo: "Выбрать демо",
         case_labels: {
             nominative: 'Именительный',
             genitive: 'Родительный',
@@ -204,6 +205,7 @@ const SHARED_STRINGS = {
     en: {
         page_title: 'Declension Demo',
         language_label: 'Language selection',
+        select_demo: "Select Demo",
         case_labels: {
             nominative: 'Nominative',
             genitive: 'Genitive',
