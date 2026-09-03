@@ -346,7 +346,7 @@ docker system prune -af
 Nuke everything
 
 ```
-docker stop $(docker ps -aq); docker rm $(docker ps -aq); docker rmi $(docker images -q); docker system prune -af --volumes
+docker stop $(docker ps -aq); docker rm -f $(docker ps -aq); docker rmi -f $(docker images -q); docker system prune -af --volumes
 ```
 
 ### Stop all containers without nuking
