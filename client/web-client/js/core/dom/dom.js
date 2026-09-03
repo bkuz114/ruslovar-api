@@ -211,50 +211,63 @@ export function createElement(tagName, options = {}) {
         );
     }
 
-    // --- Destructure options with defaults -----------------------------
+    // --- Destructure options ------------------------------------------
     const {
-        text = '',
-            html = '',
-            // "class" is a reserved word in JavaScript, so it must be aliased
-            // when destructured. classList holds the value of the "class" option.
-            class: classList = null,
-            id = null,
-            i18n = {},
-            attrs = {},
-            props = {},
+        text,
+        html,
+        // "class" is a reserved word in JavaScript, so it must be aliased
+        // when destructured. classList holds the value of the "class" option.
+        class: classList,
+        id,
+        i18n,
+        attrs,
+        props,
     } = options;
 
+    // Normalize null and undefined options to default values.
+    // (destructuring defaults only apply to undefined, not null;
+    // ?? handles both null and undefined, both of which we're
+    // treating as user doesn't want/needs default, so rely on that.)
+    const resolvedText = text ?? '';
+    const resolvedHtml = html ?? '';
+    const resolvedClassList = classList ?? null;
+    const resolvedId = id ?? null;
+    const resolvedI18n = i18n ?? {};
+    const resolvedAttrs = attrs ?? {};
+    const resolvedProps = props ?? {};
+
     // --- Validate option types -----------------------------------------
-    if (typeof text !== 'string') {
+
+    if (typeof resolvedText !== 'string') {
         throw new TypeError(
-            `createElement: text must be a string. Received: ${typeof text}`
+            `createElement: text must be a string. Received: ${typeof resolvedText}`
         );
     }
-    if (typeof html !== 'string') {
+    if (typeof resolvedHtml !== 'string') {
         throw new TypeError(
-            `createElement: html must be a string. Received: ${typeof html}`
+            `createElement: html must be a string. Received: ${typeof resolvedHtml}`
         );
     }
-    if (typeof i18n !== 'object' || i18n === null || Array.isArray(i18n)) {
+    if (typeof resolvedI18n !== 'object' || Array.isArray(resolvedI18n)) {
         throw new TypeError(
-            `createElement: i18n must be a plain object. Received: ${Array.isArray(i18n) ? 'array' : typeof i18n}`
+            `createElement: i18n must be a plain object. Received: ${Array.isArray(resolvedI18n) ? 'array' : typeof resolvedI18n}`
         );
     }
-    if (typeof attrs !== 'object' || attrs === null || Array.isArray(attrs)) {
+    if (typeof resolvedAttrs !== 'object' || Array.isArray(resolvedAttrs)) {
         throw new TypeError(
-            `createElement: attrs must be a plain object. Received: ${Array.isArray(attrs) ? 'array' : typeof attrs}`
+            `createElement: attrs must be a plain object. Received: ${Array.isArray(resolvedAttrs) ? 'array' : typeof resolvedAttrs}`
         );
     }
-    if (typeof props !== 'object' || props === null || Array.isArray(props)) {
+    if (typeof resolvedProps !== 'object' || Array.isArray(resolvedProps)) {
         throw new TypeError(
-            `createElement: props must be a plain object. Received: ${Array.isArray(props) ? 'array' : typeof props}`
+            `createElement: props must be a plain object. Received: ${Array.isArray(resolvedProps) ? 'array' : typeof resolvedProps}`
         );
     }
 
     // --- Content sanity check ------------------------------------------
     // text and html both set the element's content. They cannot both be
     // used. Warn and let text win.
-    if (text && html) {
+    if (resolvedText && resolvedHtml) {
         console.warn(
             'createElement: text and html were both provided. ' +
             'text takes precedence; html will be ignored.'
@@ -265,22 +278,22 @@ export function createElement(tagName, options = {}) {
     const element = document.createElement(tagName);
 
     // --- Apply content -------------------------------------------------
-    if (text) {
-        element.textContent = text;
-    } else if (html) {
-        element.innerHTML = html;
+    if (resolvedText) {
+        element.textContent = resolvedText;
+    } else if (resolvedHtml) {
+        element.innerHTML = resolvedHtml;
     }
 
     // --- Apply top-level class and id ----------------------------------
-    if (classList) {
-        setClassAttribute(element, classList, 'class');
+    if (resolvedClassList) {
+        setClassAttribute(element, resolvedClassList, 'class');
     }
-    if (id) {
-        element.setAttribute('id', id);
+    if (resolvedId) {
+        element.setAttribute('id', resolvedId);
     }
 
     // --- Apply i18n configuration --------------------------------------
-    if (Object.keys(i18n).length > 0) {
+    if (Object.keys(resolvedI18n).length > 0) {
         /**
          * Get attributes user passed to i18n option.
          * Set options on the three special keys
@@ -290,16 +303,24 @@ export function createElement(tagName, options = {}) {
          * set (e.g. "data-i18n", "data-i18n-placeholder", etc)
          */
         const {
-            substitutions = null,
-                forceShared = false,
-                forceView = null,
-        } = i18n;
+            substitutions,
+            forceShared,
+            forceView,
+        } = resolvedI18n;
+
+        // Normalize null and undefined options to default values.
+        // (destructuring defaults only apply to undefined, not null;
+        // ?? handles both null and undefined, both of which we're
+        // treating as user doesn't want/needs default, so rely on that.)
+        const resolvedSubstitutions = substitutions ?? null;
+        const resolvedForceShared = forceShared ?? false;
+        const resolvedForceView = forceView ?? null;
 
         // Iterate all keys in i18n config. Anything that isn't a special
         // case (substitutions, forceShared, forceView) is treated as a
         // data-i18n attribute name and set directly.
         const specialCases = new Set(['substitutions', 'forceShared', 'forceView']);
-        Object.entries(i18n)
+        Object.entries(resolvedI18n)
             .filter(([attr]) => !specialCases.has(attr))
             .forEach(([attr, value]) => {
                 if (!attr.startsWith('data-i18n')) {
@@ -309,6 +330,7 @@ export function createElement(tagName, options = {}) {
                     );
                     return;
                 }
+
                 element.setAttribute(attr, value);
             });
 
@@ -345,21 +367,21 @@ export function createElement(tagName, options = {}) {
          * 3. Final textContent in element after i18n applyLanguage:
          *         <span ...>"2 categories and 3 words"</span>
          */
-        if (substitutions !== null) {
-            element.setAttribute(I18N_SUBSTITUTIONS_KEY, JSON.stringify(substitutions));
+        if (resolvedSubstitutions !== null) {
+            element.setAttribute(I18N_SUBSTITUTIONS_KEY, JSON.stringify(resolvedSubstitutions));
         }
 
-        if (forceShared) {
+        if (resolvedForceShared) {
             element.setAttribute(I18N_SHARE_OVERRIDE_KEY, '');
         }
 
-        if (forceView) {
-            element.setAttribute(I18N_VIEW_OVERRIDE_KEY, forceView);
+        if (resolvedForceView) {
+            element.setAttribute(I18N_VIEW_OVERRIDE_KEY, resolvedForceView);
         }
     }
 
     // --- Apply arbitrary HTML attributes -------------------------------
-    for (const [attr, value] of Object.entries(attrs)) {
+    for (const [attr, value] of Object.entries(resolvedAttrs)) {
         if (attr === 'class') {
             // class needs special handling because it can be a string or
             // an array of strings. All other attributes are set directly.
@@ -370,7 +392,7 @@ export function createElement(tagName, options = {}) {
     }
 
     // --- Apply direct DOM properties -----------------------------------
-    for (const [prop, value] of Object.entries(props)) {
+    for (const [prop, value] of Object.entries(resolvedProps)) {
         element[prop] = value;
     }
 
