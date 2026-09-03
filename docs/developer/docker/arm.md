@@ -43,31 +43,51 @@ cat token.txt | docker login -u ikzv --password-stdin
 
 ## 5. Build and push both architectures directly to Docker Hub
 
-database image:
+### database image
 
-**Go to `ruslovar-db` build repo**
+cd to **`ruslovar-db`** build repo
+
+```bash
+cd build-ruslovar-db
+```
+
+Build and push image
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile -t ikzv/runouns-db:0.2.0 -t ikzv/runouns-db:latest --push .
 ```
 
-API image:
+### API image
 
-**Go to `ruslovar-api` build repo**
+cd to **`ruslovar-api`** build repo
+
+```bash
+cd build-ruslovar-api
+```
+
+Build and push image
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -f docker/api.Dockerfile -t ikzv/ruslovar-api:0.2.0 -t ikzv/ruslovar-api:latest --push .
 ```
 
-Web Client image:
+### Web Client image
 
-**Go to `ruslovar-api` build repo**
+cd to **`ruslovar-api`** build repo
+
+```bash
+cd build-ruslovar-api
+```
+
+Build and push image
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -f docker/webclient.Dockerfile -t ikzv/ruslovar-client:0.1.0 -t ikzv/ruslovar-client:latest --push .
 ```
 
-The `--push` flag pushes directly to Docker Hub as part of the build. No separate push step needed.
+#### Notes
+
+- The `--push` flag pushes directly to Docker Hub as part of the build. No separate push step needed.
 
 ## 6. Verify the manifest list
 
