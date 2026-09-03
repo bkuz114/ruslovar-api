@@ -1002,13 +1002,23 @@ function createWordDetails(wordObj, item, openIds) {
             })
         );
     } else if (error) {
-        const errorDiv = createElement('div', {
+        // common error div options to send to createElement
+        const errorOptions = {
             class: 'word-error',
-            text: item.error, // add actual server text if exists 
-            i18n: {
-                "data-i18n": item.error ? null : 'error_unknown',
-            },
-        });
+        };
+
+        if (item.error) {
+            // Server provided a specific error message. Use it directly.
+            // (this will NOT localize with language switch - it's just
+            // what server passed back. However, it's more specific.)
+            errorOptions.text = item.error;
+        } else {
+            // No server error text. Fall back to a localized generic error.
+            errorOptions.i18n = {
+                'data-i18n': 'error_unknown'
+            };
+        }
+        const errorDiv = createElement('div', errorOptions);
         details.appendChild(errorDiv);
     } else {
         // No result item found for this word. This can happen if the
