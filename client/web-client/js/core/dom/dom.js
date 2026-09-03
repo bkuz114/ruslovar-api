@@ -230,8 +230,8 @@ export function createElement(tagName, options = {}) {
     // treating as user doesn't want/needs default, so rely on that.)
     const resolvedText = text ?? '';
     const resolvedHtml = html ?? '';
-    const resolvedClassList = classList ?? null;
-    const resolvedId = id ?? null;
+    const resolvedClassList = classList ?? '';
+    const resolvedId = id ?? '';
     const resolvedI18n = i18n ?? {};
     const resolvedAttrs = attrs ?? {};
     const resolvedProps = props ?? {};
@@ -248,17 +248,16 @@ export function createElement(tagName, options = {}) {
             `createElement: html must be a string. Received: ${typeof resolvedHtml}`
         );
     }
-    if (typeof resolvedId !== 'string' && resolvedId !== null) {
+    if (typeof resolvedId !== 'string') {
         throw new TypeError(
             `createElement: id must be a string. Received: ${typeof resolvedId}`
         );
     }
-    if (typeof resolvedClassList !== 'string' && !Array.isArray(resolvedClassList) && resolvedClassList !== null) {
+    if (typeof resolvedClassList !== 'string' && !Array.isArray(resolvedClassList)) {
         throw new TypeError(
             `createElement: class must be a string or an Array. Received: ${typeof resolvedClassList}`
         );
     }
-
     if (typeof resolvedI18n !== 'object' || Array.isArray(resolvedI18n)) {
         throw new TypeError(
             `createElement: i18n must be a plain object. Received: ${Array.isArray(resolvedI18n) ? 'array' : typeof resolvedI18n}`
@@ -323,9 +322,9 @@ export function createElement(tagName, options = {}) {
         // (destructuring defaults only apply to undefined, not null;
         // ?? handles both null and undefined, both of which we're
         // treating as user doesn't want/needs default, so rely on that.)
-        const resolvedSubstitutions = substitutions ?? null;
+        const resolvedSubstitutions = substitutions ?? {};
         const resolvedForceShared = forceShared ?? false;
-        const resolvedForceView = forceView ?? null;
+        const resolvedForceView = forceView ?? '';
 
         // --- Validate option types -----------------------------------------
 
@@ -334,12 +333,12 @@ export function createElement(tagName, options = {}) {
                 `createElement: options.i18n.forceShared must be a boolean. Received: ${typeof resolvedForceShared}`
             );
         }
-        if (typeof resolvedForceView !== 'string' && resolvedForceView !== null) {
+        if (typeof resolvedForceView !== 'string') {
             throw new TypeError(
                 `createElement: options.i18n.forceView must be a string. Received: ${typeof resolvedForceView}`
             );
         }
-        if ((typeof resolvedSubstitutions !== 'object' && resolvedSubstitutions !== null) || Array.isArray(resolvedSubstitutions)) {
+        if (typeof resolvedSubstitutions !== 'object' || Array.isArray(resolvedSubstitutions)) {
             throw new TypeError(
                 `createElement: options.i18n.substitutions must be a plain object. Received: ${Array.isArray(resolvedSubstitutions) ? 'array' : typeof resolvedSubstitutions}`
             );
@@ -399,7 +398,7 @@ export function createElement(tagName, options = {}) {
          * 3. Final textContent in element after i18n applyLanguage:
          *         <span ...>"2 categories and 3 words"</span>
          */
-        if (resolvedSubstitutions !== null) {
+        if (resolvedSubstitutions && Object.keys(resolvedSubstitutions).length > 0) {
             element.setAttribute(I18N_SUBSTITUTIONS_KEY, JSON.stringify(resolvedSubstitutions));
         }
 
