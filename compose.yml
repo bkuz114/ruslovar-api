@@ -20,10 +20,10 @@ services:
     depends_on:
       - db
 
-  demo:
-    image: ikzv/ruslovar-demo:latest
+  web-client:
+    image: ikzv/ruslovar-client:latest
     restart: unless-stopped
-    container_name: ruslovar-demo
+    container_name: ruslovar-client
     ports:
       - "8080:80"
     depends_on:

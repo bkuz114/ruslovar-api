@@ -35,12 +35,12 @@ API image:
 docker buildx build --platform linux/amd64,linux/arm64 -f docker/api.Dockerfile -t ikzv/ruslovar-api:0.2.0 -t ikzv/ruslovar-api:latest --push .
 ```
 
-Demo image:
+Web Client image:
 
 **Go to `ruslovar-api` repo**
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -f docker/demo.Dockerfile -t ikzv/ruslovar-demo:0.2.0 -t ikzv/ruslovar-demo:latest --push .
+docker buildx build --platform linux/amd64,linux/arm64 -f docker/webclient.Dockerfile -t ikzv/ruslovar-client:0.1.0 -t ikzv/ruslovar-client:latest --push .
 ```
 
 The `--push` flag pushes directly to Docker Hub as part of the build. No separate push step needed.
@@ -50,7 +50,7 @@ The `--push` flag pushes directly to Docker Hub as part of the build. No separat
 ```bash
 docker buildx imagetools inspect ikzv/runouns-db:latest
 docker buildx imagetools inspect ikzv/ruslovar-api:latest
-docker buildx imagetools inspect ikzv/ruslovar-demo:latest
+docker buildx imagetools inspect ikzv/ruslovar-client:latest
 ```
 
 You should see both `linux/amd64` and `linux/arm64` listed under `Platforms`.

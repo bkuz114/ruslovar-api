@@ -2,19 +2,19 @@
 
 This is a guide for any development related to the Docker container portion of the project.
 
-`ruslovar-api` consists of three components: a MySQL database, a FastAPI server, and a static demo page.
+`ruslovar-api` consists of three components: a MySQL database, a FastAPI server, and a Web Client.
 
 All three can run together in a containerized environment (one container for each component), and can be set up easily via `docker compose up` using the `compose.yml` file in the repo's root.
 
 The Docker images for each container are on Docker Hub, and `compose.yml` pulls them from there (via `:latest` tag on each).
 
-In order for users to get the latest code changes in the FastAPI server, the demo page, or updates to the database dump, will need to generate new images and upload them to Docker hub with a new :latest tag. This guide shows how to do that.
+In order for users to get the latest code changes in the FastAPI server, the web client, or updates to the database dump, will need to generate new images and upload them to Docker hub with a new :latest tag. This guide shows how to do that.
 
 ## Building new Images
 
-As mentioned, ruslovar-api consists of three components: a MySQL database, a FastAPI server, and a static demo page, and each exist as Docker images available on Docker hub, which users pull from in `compose.yml`.
+As mentioned, ruslovar-api consists of three components: a MySQL database, a FastAPI server, and a web client, and each exist as Docker images available on Docker hub, which users pull from in `compose.yml`.
 
-If relevant changes (e.g. a bugfix in FastAPI server or demo page), the image for that component will need to be re-generated and uploaded to Docker Hub with a new tag + latest tag.
+If relevant changes (e.g. a bugfix in FastAPI server or web client), the image for that component will need to be re-generated and uploaded to Docker Hub with a new tag + latest tag.
 
 Below are instructions on how to build and validate any of these three images.
 
@@ -169,7 +169,7 @@ $ curl http://127.0.0.1:8000/health
  
 **Note**: Will NOT be able to query db yet (as nothing is hooked up). Just basic sanity test.
 
-### `ruslovar-demo` image (Demo page using nginx)
+### `ruslovar-client` image (Web Client using nginx)
 
 #### Build image locally
 
@@ -178,7 +178,7 @@ $ curl http://127.0.0.1:8000/health
 2. Build the image from **repo root**
 
 ```bash
-docker build -f docker/demo.Dockerfile -t ikzv/ruslovar-demo:0.1.0 .
+docker build -f docker/webclient.Dockerfile -t ikzv/ruslovar-client:0.1.0 .
 ```
 
 2. Create a test container using the image, on port 8080
@@ -186,10 +186,10 @@ docker build -f docker/demo.Dockerfile -t ikzv/ruslovar-demo:0.1.0 .
 **note**: port mapping in Docker is `<`local port`>`:`<`docker network port`>`, so this will bind to your port 8080. If you're using 8080 for something else change to e.g. 9080:80
 
 ```bash
-docker run -d --rm --name ruslovar-demo-test -p 8080:80 ikzv/ruslovar-demo:0.1.0
+docker run -d --rm --name ruslovar-client-test -p 8080:80 ikzv/ruslovar-client:0.1.0
 ```
 
-3. Visit demo page in browser
+3. Visit Web Client in the browser
 
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080)
 
@@ -312,25 +312,25 @@ docker push ikzv/ruslovar-api:0.1.0
 docker push ikzv/ruslovar-api:latest
 ```
 
-### Demo image
+### Web Client image
 
 Confirm the local image you built exists
 
 ```
-docker images ikzv/ruslovar-demo
+docker images ikzv/ruslovar-client
 ```
 
 **Tag the release as latest**
 
 ```
-docker tag ikzv/ruslovar-demo:0.1.0 ikzv/ruslovar-demo:latest
+docker tag ikzv/ruslovar-client:0.1.0 ikzv/ruslovar-client:latest
 ```
 
 **Push to Dockerhub**
 
 ```
-docker push ikzv/ruslovar-demo:0.1.0
-docker push ikzv/ruslovar-demo:latest
+docker push ikzv/ruslovar-client:0.1.0
+docker push ikzv/ruslovar-client:latest
 ```
 
 ## Docker useful
