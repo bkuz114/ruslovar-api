@@ -149,6 +149,32 @@ export const I18N_SHARE_OVERRIDE_KEY = "data-i18n-force-shared";
 
 /*
  * ==============================================================
+ * HANDLER REGISTRY FOR I18N ATTRIBUTES
+ * ==============================================================
+ */
+
+/*
+ * Maps specific i18n attributes to functions that apply a resolved
+ * value to an element.
+ *
+ * The handler receives the element and the resolved string. It is
+ * responsible for writing that string to the DOM in whatever way is
+ * appropriate for that attribute.
+ *
+ *   data-i18n-title="some_key"  →  element.setAttribute('title', value)
+ *   data-i18n-aria-label="x"    →  element.setAttribute('aria-label', value)
+ */
+const I18N_ATTRIBUTE_HANDLERS = {
+    [I18N_KEY]: (element, value) => {
+        element.textContent = value;
+    },
+    [I18N_PLACEHOLDER_KEY]: (element, value) => {
+        element.setAttribute('placeholder', value);
+    },
+};
+
+/*
+ * ==============================================================
  * SHARED LOCALIZATION DICTIONARY (values shared by all views)
  * ==============================================================
  */
@@ -755,19 +781,24 @@ export function applyLanguageToElement(element, lang) {
         return;
     }
 
-    // Update element with text content.
-    if (element.hasAttribute(I18N_KEY)) {
-        const value = resolveElementI18nValue(element, I18N_KEY, lang);
-        if (value !== undefined) {
-            element.textContent = value;
-        }
-    }
+    /**
+     * Loop through each of the supported
+     * data-i18n attributes. If this element
+     * has that attribute, get the resolved
+     * value and execute the callback for that
+     * attribute (which indicates how to apply
+     * the resolved value onto the element)
+     */
+    for (const [attribute, handler] of Object.entries(I18N_ATTRIBUTE_HANDLERS)) {
+        if (!element.hasAttribute(attribute)) continue;
 
-    // Update element with placeholder attributes.
-    if (element.hasAttribute(I18N_PLACEHOLDER_KEY)) {
-        const value = resolveElementI18nValue(element, I18N_PLACEHOLDER_KEY, lang);
+        const value = resolveElementI18nValue(element, attribute, lang);
         if (value !== undefined) {
-            element.setAttribute('placeholder', value);
+            // callback function defined for this attribute
+            // which shows how to apply the value to the
+            // element (e.g. set a specific attribute, set
+            // textContent, и т.д.)
+            handler(element, value);
         }
     }
 
