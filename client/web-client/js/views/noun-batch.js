@@ -1004,6 +1004,7 @@ function createWordDetails(wordObj, item, openIds) {
     } else if (error) {
         const errorDiv = createElement('div', {
             class: 'word-error',
+            text: item.error, // add actual server text if exists 
             i18n: {
                 "data-i18n": item.error ? null : 'error_unknown',
             },
