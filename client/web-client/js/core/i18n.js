@@ -782,3 +782,53 @@ export function applyLanguage(lang, root = document) {
         document.documentElement.lang = lang;
     }
 }
+
+/**
+ * Start automatic localization of dynamically added DOM elements.
+ *
+ * Watches the document for newly added elements. When a new subtree
+ * is inserted, calls applyLanguage the current language to any elements within it
+ * that carry data-i18n attributes by calling apply.
+ *
+ * The observer watches childList changes on document.body and its
+ * descendants. Views and renderers that build detached DOM trees and
+ * append them once will trigger a single observation for the new
+ * container.
+ *
+ * @returns {MutationObserver} The active observer instance.
+ */
+export function startAutoLocalization() {
+    // create MutationObserver to watch for DOM changes
+    const observer = new MutationObserver((mutations) => {
+        /**
+         * callback that fires on DOM change of watched element
+         *
+         * mutations: Array of MuationRecord objects for each change
+         * (addedNodes, etc.). The browser can lump multiple changes
+         * together
+         */
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                // Only process element nodes (e.g. <h2>, <span>)
+                // (.addedNodes can also include text nodes, comments,
+                // etc., which don't have data-i18n attributes.)
+                if (node.nodeType !== Node.ELEMENT_NODE) {
+                    continue;
+                }
+
+                // Localize the added element and all its descendants.
+                applyLanguage(getCurrentLanguage(), node);
+            }
+        }
+    });
+
+    // monitor entire document body, as there's
+    // elements outside of view which still need
+    // to be localized.
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+
+    return observer;
+}

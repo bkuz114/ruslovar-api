@@ -34,6 +34,7 @@ import {
     getConfig,
 } from './core/config.js';
 import {
+    startAutoLocalization,
     restoreLanguagePreference,
     getCurrentLanguage,
     setLanguage,
@@ -131,10 +132,21 @@ async function init() {
         mountView(views[0].id);
     }
 
-    // Apply the current language to all [data-i18n] elements after the
-    // initial view mount. Does NOT touch localStorage; we only want to
-    // display the restored language, not overwrite the saved preference.
+    // Apply the current language to all [data-i18n] elements.
+    // Does NOT touch localStorage; only want to display the
+    // restored language, not overwrite the saved preference.
+    // Note: even with MutationObserver, an initial applyLanguage
+    // must be called to render static elements to initial language
+    // (MutationObserver will only watch for dynamic element changes)
     applyLanguage(getCurrentLanguage());
+
+    // start MutationObserver on document. It will
+    // watch the entire DOM for any changes.
+    // When new content is inserted, applyLanguage is called
+    // on the added subtree so localized strings resolve
+    // immediately without having to call applyLanguage
+    // programmatically or wair for user language switch.
+    startAutoLocalization();
 }
 
 /**
