@@ -144,6 +144,9 @@ const I18N_ATTRIBUTE_HANDLERS = {
     "data-i18n-placeholder": (element, value) => {
         element.setAttribute('placeholder', value);
     },
+    "data-i18n-aria-label": (element, value) => {
+        element.setAttribute('aria-label', value);
+    },
 };
 
 /*
