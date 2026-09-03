@@ -144,6 +144,16 @@ The client assumes the FastAPI server is running at `http://127.0.0.1:8000`. Use
 
 Run `python client/declensions.py --help` for all options.
 
+### Color support (Git Bash on Windows)
+
+Git Bash does not always report itself as an interactive terminal. As a result, `--color auto` may not enable colored output even when the terminal supports it. If you are using Git Bash and want colored table output, pass `--color always`.
+
+Example:
+
+```bash
+python client/declensions.py --word кролик --table --color always
+```
+
 ## Demo Page
 
 A browser-based demo page is included in `client/demo/`. It provides a simple form for entering a noun and displays the declension table.
