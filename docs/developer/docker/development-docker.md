@@ -183,10 +183,10 @@ docker build -f docker/demo.Dockerfile -t ikzv/ruslovar-demo:0.1.0 .
 
 2. Create a test container using the image, on port 8080
 
-**note**: port mapping in Docker is `<`local port`>`:`<`docker network port`>`, so this will bind to your port 8080. If you're using 8000 for something else change to e.g. 9080:8080
+**note**: port mapping in Docker is `<`local port`>`:`<`docker network port`>`, so this will bind to your port 8080. If you're using 8080 for something else change to e.g. 9080:80
 
 ```bash
-docker run -d --rm --name ruslovar-demo-test -p 8080:8080 ikzv/ruslovar-demo:0.1.0
+docker run -d --rm --name ruslovar-demo-test -p 8080:80 ikzv/ruslovar-demo:0.1.0
 ```
 
 3. Visit demo page in browser
