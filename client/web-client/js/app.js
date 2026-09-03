@@ -213,6 +213,10 @@ function renderNavigation() {
         },
     });
 
+    // create an <option> for each view
+    // set value attribute to the view's ID
+    // (updateNavigationLabels() relies on this
+    // to facilitate localizing the text content.)
     views.forEach((view) => {
         const option = createElement('option', {
             text: getString(view.labelKey, {
@@ -238,19 +242,33 @@ function renderNavigation() {
 /**
  * Update dropdown option labels when the language changes.
  *
+ * Each option's value attribute holds a view ID. This function looks
+ * up the view by that ID and sets the option's label to the view's
+ * localized display name for the current language.
+ *
+ * This relies on renderNavigation setting option.value to the view ID.
+ * If that changes, this function must be updated as well.
+ *
  * <option> elements are not reliably targeted by document.querySelectorAll
  * with [data-i18n] across browsers, so we update them directly.
  */
 function updateNavigationLabels() {
+    // Do nothing if the dropdown has not been created yet.
     if (!elements.viewSelect) return;
 
-    const views = getViews();
+    // Select all option elements in the dropdown. These were created
+    // by renderNavigation with their value set to the view ID.
     const options = elements.viewSelect.querySelectorAll('option');
 
-    options.forEach((option, index) => {
-        if (views[index]) {
-            option.textContent = getString(views[index].labelKey, {
-                viewId: views[index].id
+    options.forEach((option) => {
+        // Use the option's value (view ID) to find the matching view.
+        const view = getViewById(option.value);
+
+        // If the view exists, update the option's label to the
+        // localized string for the current language.
+        if (view) {
+            option.textContent = getString(view.labelKey, {
+                viewId: view.id,
             });
         }
     });
