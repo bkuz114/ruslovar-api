@@ -39,6 +39,7 @@ import {
     getCurrentLanguage,
     setLanguage,
     applyLanguage,
+    applyLanguageToElement,
     getString,
     I18N_VIEW_KEY,
 } from './core/i18n.js';
@@ -222,6 +223,10 @@ function renderNavigation() {
             text: getString(view.labelKey, {
                 viewId: view.id
             }),
+            i18n: {
+                "data-i18n": view.labelKey,
+                forceView: view.id,
+            },
             attrs: {
                 value: view.id,
             },
@@ -267,9 +272,7 @@ function updateNavigationLabels() {
         // If the view exists, update the option's label to the
         // localized string for the current language.
         if (view) {
-            option.textContent = getString(view.labelKey, {
-                viewId: view.id,
-            });
+            applyLanguageToElement(option, getCurrentLanguage());
         }
     });
 }
