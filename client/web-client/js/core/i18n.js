@@ -664,8 +664,69 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
 }
 
 /**
+ * Collect all elements matching the given CSS selector, among
+ * a root and its descendants.
+ *
+ * querySelectorAll only searches descendants of the root, not the
+ * root itself. This helper also checks whether the root matches the
+ * selector and includes it in the returned list if so.
+ *
+ * @param {Element|Document|DocumentFragment} root - The element or document to search.
+ * @param {string} selector - Any valid CSS selector.
+ * @returns {Element[]} Matching elements, including the root if it matches.
+ */
+function querySelectorAllIncludingRoot(root, selector) {
+    // Validate root is queryable.
+    if (!root || typeof root.querySelectorAll !== 'function') {
+        console.error(
+            `querySelectorAllIncludingRoot: Invalid root argument. ` +
+            `Expected an element, document, or document fragment with querySelectorAll, received:`,
+            root
+        );
+        return [];
+    }
+
+    // Validate selector is a string.
+    if (typeof selector !== 'string') {
+        console.error(
+            `querySelectorAllIncludingRoot: Invalid selector argument. ` +
+            `Expected a non-empty CSS selector string, received:`,
+            selector
+        );
+        return [];
+    }
+
+    // Reject selectors that are empty or contain only whitespace.
+    // (matches will throw an error on empty strings)
+    selector = selector.trim();
+    if (selector === '') {
+        console.error(
+            `querySelectorAllIncludingRoot: Invalid selector argument. ` +
+            `Expected a non-empty CSS selector string, received an empty or whitespace-only string.`
+        );
+        return [];
+    }
+
+    const matches = [];
+
+    // Does the root itself match? If so, include it.
+    // (Guard against root = document which has no matches method.)
+    if (root.matches && root.matches(selector)) {
+        matches.push(root);
+    }
+
+    // Include all matching descendants.
+    matches.push(...root.querySelectorAll(selector));
+
+    return matches;
+}
+
+/**
  * Apply the given language to all [data-i18n] and
  * [data-i18n-placeholder] elements within the specified root.
+ *
+ * The root element itself is included in the search if it matches,
+ * not just its descendants.
  *
  * For elements with [data-i18n-view], the string is resolved against
  * that view's strings. If not found there, a warning is logged and the
@@ -675,7 +736,8 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
  * @param {string} lang - Language code to apply.
  * @param {Object} [root=document] - Any queryable DOM node (e.g.,
  *     HTMLElement, Document, DocumentFragment). Defaults to the
- *     entire document.
+ *     entire document. The root is checked for matches in addition
+ *     to its descendants.
  */
 export function applyLanguage(lang, root = document) {
     // Validate lang is one of the supported language codes.
@@ -699,7 +761,7 @@ export function applyLanguage(lang, root = document) {
     }
 
     // Update elements with text content.
-    root.querySelectorAll(`[${I18N_KEY}]`).forEach((element) => {
+    querySelectorAllIncludingRoot(root, `[${I18N_KEY}]`).forEach((element) => {
         let value = resolveElementI18nValue(element, I18N_KEY, lang);
         if (value !== undefined) {
             element.textContent = value;
@@ -707,7 +769,7 @@ export function applyLanguage(lang, root = document) {
     });
 
     // Update elements with placeholder attributes.
-    root.querySelectorAll(`[${I18N_PLACEHOLDER_KEY}]`).forEach((element) => {
+    querySelectorAllIncludingRoot(root, `[${I18N_PLACEHOLDER_KEY}]`).forEach((element) => {
         const value = resolveElementI18nValue(element, I18N_PLACEHOLDER_KEY, lang);
         if (value !== undefined) {
             element.setAttribute('placeholder', value);
