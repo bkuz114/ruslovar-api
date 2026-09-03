@@ -39,22 +39,14 @@ export const I18N_TEMPLATE_CLOSE_DELIM = "}";
 
 /*
  * ==============================================================
- * HTML data attributes to indicate which key to look up in a
- * localization dictionary, and how the key's value should be applied.
+ * "Special" HTML attributes used by i18n module (and others)
+ * to induce specific behaviors. e.g.,
+ * - which localization dictionary standard i18n attributes (such
+ *   as data-i18n, data-i18n-placeholder) should resolve their
+ *   values against (shared or view-specific)
+ * - placeholder data
  * ==============================================================
  */
-
-/*
- * Attr to indicate which key to look up in a locatlization dictionary.
- * Key's value in dictionary (if found) will be set as element's
- * textContent during applyLanguage
- *
- * Example:
- *   <span data-i18n="language_label"></span>
- *   applyLanguage look up "language_label" in localization dictionary
- *   at specified language and set textContent to
- */
-export const I18N_KEY = "data-i18n";
 
 /*
  * Attr used to provide values for {placeholders} in localized strings.
@@ -78,25 +70,6 @@ export const I18N_KEY = "data-i18n";
  *     placeholder: "Enter слово"
  */
 export const I18N_SUBSTITUTIONS_KEY = "data-i18n-substitutions";
-
-/*
- * Attr to indicate which key to look up in a localization dictionary.
- * Key's value in dictionary (if found) will be set as element's
- * placeholder attribute (instead of its text content).
- *
- * Example:
- *   <input data-i18n-placeholder="word_placeholder">
- *   applyLanguage sets input.placeholder to the localized value.
- */
-export const I18N_PLACEHOLDER_KEY = "data-i18n-placeholder";
-
-/*
- * ==============================================================
- * HTML data attributes to indicate which localization dictionary
- * a key should be looked up in (shared dictionary below, or a
- * view-specific dictionary.)
- * ==============================================================
- */
 
 /*
  * Attr used to indicate which view is currently mounted. Holds
@@ -165,10 +138,10 @@ export const I18N_SHARE_OVERRIDE_KEY = "data-i18n-force-shared";
  *   data-i18n-aria-label="x"    →  element.setAttribute('aria-label', value)
  */
 const I18N_ATTRIBUTE_HANDLERS = {
-    [I18N_KEY]: (element, value) => {
+    "data-i18n": (element, value) => {
         element.textContent = value;
     },
-    [I18N_PLACEHOLDER_KEY]: (element, value) => {
+    "data-i18n-placeholder": (element, value) => {
         element.setAttribute('placeholder', value);
     },
 };
