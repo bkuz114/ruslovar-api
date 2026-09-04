@@ -211,21 +211,6 @@ Each word is processed independently. Lookup failures (word not found, strict mo
 | `plural` | list | List of plural paradigms. Each item is an object keyed by English case name. Empty list if the noun has no plural forms. |
 | `additional_forms` | object | Rare or archaic case forms. Always present. |
 
-### Case name mapping
-
-| English key | Russian full name | Russian abbreviation | `wcase` value in DB |
-|---|---|---|---|
-| `nominative` | именительный | И | `им` |
-| `genitive` | родительный | Р | `род` |
-| `dative` | дательный | Д | `дат` |
-| `accusative` | винительный | В | `вин` |
-| `instrumental` | творительный | Т | `тв` |
-| `prepositional` | предложный | П | `пр` |
-| `partitive` | разделительный | — | `парт` |
-| `locative` | местный | — | `мест` |
-| `vocative` | звательный | — | `зват` |
-| `counting` | счётная форма | — | `счет` |
-
 ### Example
 
 ```json
@@ -290,6 +275,57 @@ Thus, the `matches` and `plural` lists reflect the reality of the Sshra morpholo
 #### Duplicates that aren't duplicates
 
 In some cases, multiple matches may appear identical because the database does not store stress marks. For example, `замок` (and its declensions) returns two matches that look the same, but are distinct entries (corresponding to `за́мок` (castle) and `замо́к` (lock)).
+
+---
+
+## Grammar Translations
+
+This section provides translations for the grammatical terms and values used in the API.
+
+### Case names
+
+| Russian | English |
+|---|---|
+| именительный | `nominative` |
+| родительный | `genitive` |
+| дательный | `dative` |
+| винительный | `accusative` |
+| творительный | `instrumental` |
+| предложный | `prepositional` |
+| разделительный | `partitive` |
+| местный | `locative` |
+| звательный | `vocative` |
+| счётная форма | `counting` |
+
+### Gender values
+
+| Value in API | Russian | English |
+|---|---|---|
+| `муж` | мужской | masculine |
+| `жен` | женский | feminine |
+| `ср` | средний | neuter |
+| `общ` | общий | common |
+
+### Number
+
+| Russian | English |
+|---|---|
+| единственное число | singular |
+| множественное число | plural |
+
+### Animacy
+
+| Value in API | Russian | English |
+|---|---|---|
+| `true` | одушевлённое | animate |
+| `false` | неодушевлённое | inanimate |
+
+### Invariant
+
+| Value in API | Russian | English |
+|---|---|---|
+| `true` | неизменяемое | invariant / indeclinable |
+| `false` | изменяемое | declinable |
 
 ---
 
