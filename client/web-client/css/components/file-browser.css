@@ -1,0 +1,474 @@
+/* ==========================================================================
+   File Browser Modal Component Styles
+   ==========================================================================
+   A drill-in file browser modal with light/dark theme support.
+   Uses CSS custom properties scoped to the component for theming.
+   Theme selection is done via the data-theme attribute on the overlay.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Theme tokens
+   -------------------------------------------------------------------------- */
+
+.file-browser-overlay[data-theme='light'] {
+    --fb-bg: var(--color-surface, #ffffff);
+    --fb-bg-hover: var(--color-metadata-bg, #f0f5fa);
+    --fb-bg-selected: #d6e4f5;
+    --fb-bg-active: #c0d4ec;
+    --fb-text: var(--color-text, #1a1a1a);
+    --fb-text-muted: var(--color-text-muted, #666666);
+    --fb-highlight-bg: #ffe58f;
+    --fb-border: var(--color-border, #cccccc);
+    --fb-accent: var(--color-primary, #2c5aa0);
+    --fb-error-bg: var(--color-error-bg, #fdf0f0);
+    --fb-error-text: var(--color-error, #b22222);
+    --fb-overlay: rgba(0, 0, 0, 0.4);
+    --fb-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.file-browser-overlay[data-theme='dark'] {
+    --fb-bg: #1e1e1e;
+    --fb-bg-hover: #2a2a2a;
+    --fb-bg-selected: #264f78;
+    --fb-bg-active: #1e3f61;
+    --fb-text: #e0e0e0;
+    --fb-text-muted: #9e9e9e;
+    --fb-highlight-bg: #5a4a1a;
+    --fb-border: #404040;
+    --fb-accent: #5c9ce6;
+    --fb-error-bg: #3a1a1a;
+    --fb-error-text: #ef9a9a;
+    --fb-overlay: rgba(0, 0, 0, 0.6);
+    --fb-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   Overlay
+   -------------------------------------------------------------------------- */
+
+.file-browser-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--fb-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.file-browser-overlay[hidden] {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Modal dialog
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal {
+    width: 90%;
+    max-width: 600px;
+    height: 80vh;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+    background: var(--fb-bg);
+    color: var(--fb-text);
+    border-radius: 8px;
+    box-shadow: var(--fb-shadow);
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md, 1rem);
+    border-bottom: 1px solid var(--fb-border);
+    flex-shrink: 0;
+}
+
+.file-browser-modal__title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.file-browser-modal__close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--fb-text-muted);
+    padding: 0;
+    line-height: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.file-browser-modal__close:hover {
+    background: var(--fb-bg-hover);
+    color: var(--fb-text);
+}
+
+/* --------------------------------------------------------------------------
+   Toolbar
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm, 0.5rem);
+    padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+    border-bottom: 1px solid var(--fb-border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.file-browser-modal__back {
+    background: none;
+    border: 1px solid var(--fb-border);
+    cursor: pointer;
+    padding: 4px 12px;
+    font-size: 1rem;
+    color: var(--fb-text);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.file-browser-modal__back:hover:not(:disabled) {
+    background: var(--fb-bg-hover);
+}
+
+.file-browser-modal__back:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.file-browser-modal__breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    font-size: 0.875rem;
+}
+
+.file-browser-modal__breadcrumb-item {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--fb-accent);
+    padding: 2px 4px;
+    font-size: 0.875rem;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.file-browser-modal__breadcrumb-item:hover {
+    background: var(--fb-bg-hover);
+    text-decoration: underline;
+}
+
+.file-browser-modal__breadcrumb-item--current {
+    color: var(--fb-text);
+    font-weight: 600;
+    cursor: default;
+}
+
+.file-browser-modal__breadcrumb-item--current:hover {
+    background: none;
+    text-decoration: none;
+}
+
+.file-browser-modal__breadcrumb-sep {
+    color: var(--fb-text-muted);
+    flex-shrink: 0;
+}
+
+.file-browser-modal__search {
+    flex: 0 0 auto;
+    width: 180px;
+    padding: 6px 10px;
+    border: 1px solid var(--fb-border);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background: var(--fb-bg);
+    color: var(--fb-text);
+    font-family: inherit;
+}
+
+.file-browser-modal__search:focus {
+    outline: 2px solid var(--fb-accent);
+    outline-offset: 0;
+}
+
+.file-browser-modal__search:disabled {
+    opacity: 0.4;
+}
+
+/* --------------------------------------------------------------------------
+   Error container
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__error {
+    padding: var(--space-lg, 1.5rem);
+    margin: var(--space-md, 1rem);
+    background: var(--fb-error-bg);
+    color: var(--fb-error-text);
+    border: 1px solid var(--fb-error-text);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.file-browser-modal__error[hidden] {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Tree container
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-sm, 0.5rem) 0;
+    min-height: 0;
+}
+
+.file-browser-modal__tree[hidden] {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Rows (files and folders)
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm, 0.5rem);
+    padding: 6px var(--space-md, 1rem);
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+    transition: background-color 0.1s ease;
+}
+
+.file-browser-modal__row:hover {
+    background: var(--fb-bg-hover);
+}
+
+/* For files that have checkbox selected */
+.file-browser-modal__row--selected,
+.file-browser-modal__row--selected:hover {
+    background: var(--fb-bg-selected);
+}
+
+/* For any row that is highlighted from a single click */
+.file-browser-modal__row--highlighted,
+.file-browser-modal__row--highlighted:hover {
+    background: var(--fb-bg-active);
+}
+
+/* Selected takes precedence over highlighted */
+.file-browser-modal__row--selected.file-browser-modal__row--highlighted {
+    background: var(--fb-bg-selected);
+}
+
+/* --------------------------------------------------------------------------
+   Checkbox
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__checkbox {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--fb-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Icon
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__icon {
+    flex-shrink: 0;
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Name
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Path (shown only in recursive search results)
+   Appears below the filename to show which directory the result came from.
+   Muted color and smaller font distinguish it from the filename.
+   -------------------------------------------------------------------------- */
+.file-browser-modal__path {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    color: var(--fb-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Search match highlight
+   Wraps the matched portion of a filename in search results.
+   -------------------------------------------------------------------------- */
+.file-browser-modal__highlight {
+    background: var(--fb-highlight-bg);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+/* --------------------------------------------------------------------------
+   Name and path container
+   Stacks the filename and its path vertically in search results.
+   -------------------------------------------------------------------------- */
+.file-browser-modal__name-and-path {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+}
+
+.file-browser-modal__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-browser-modal__path {
+    font-size: 0.8rem;
+    color: var(--fb-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Rows with a path (search results) get top alignment so the
+   checkbox and icon line up with the filename, not the center
+   of the two-line name/path block. */
+.file-browser-modal__row--search-result {
+    align-items: flex-start;
+}
+
+.file-browser-modal__row--search-result .file-browser-modal__checkbox {
+    margin-top: 5px;
+    /* adjust to visually align with name */
+}
+
+/* --------------------------------------------------------------------------
+   Empty state
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__empty {
+    padding: var(--space-lg, 1.5rem);
+    text-align: center;
+    color: var(--fb-text-muted);
+    font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.file-browser-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md, 1rem);
+    border-top: 1px solid var(--fb-border);
+    flex-shrink: 0;
+}
+
+.file-browser-modal__selected-count {
+    font-size: 0.875rem;
+    color: var(--fb-text-muted);
+}
+
+.file-browser-modal__buttons {
+    display: flex;
+    gap: var(--space-sm, 0.5rem);
+}
+
+.file-browser-modal__cancel-btn,
+.file-browser-modal__confirm-btn {
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.file-browser-modal__cancel-btn {
+    background: none;
+    border: 1px solid var(--fb-border);
+    color: var(--fb-text);
+}
+
+.file-browser-modal__cancel-btn:hover {
+    background: var(--fb-bg-hover);
+}
+
+.file-browser-modal__confirm-btn {
+    background: var(--fb-accent);
+    border: 1px solid var(--fb-accent);
+    color: #ffffff;
+}
+
+.file-browser-modal__confirm-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.file-browser-modal__confirm-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive adjustments
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+    .file-browser-modal {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+    }
+
+    .file-browser-modal__search {
+        width: 100%;
+        flex: 1 0 auto;
+    }
+}
