@@ -9,6 +9,7 @@
  */
 
 import {
+    I18N_EXCLUDE_KEY,
     I18N_SUBSTITUTIONS_KEY,
     I18N_VIEW_OVERRIDE_KEY,
     I18N_SHARE_OVERRIDE_KEY,
@@ -91,6 +92,8 @@ function setClassAttribute(element, value, source) {
  *   data-i18n attribute names (e.g., "data-i18n",
  *   "data-i18n-placeholder"). There are also three special keys: substitutions,
  *   forceShared, and forceView. Special keys are described below.
+ * @param {Array|null} [options.i18n.exclusions=[]] - List of data-i18n attributes
+ *   that the i18n system should ignore.
  * @param {Object|null} [options.i18n.substitutions={}] - Placeholder
  *   substitution data. Keyed by data-i18n attribute name. Serialized to
  *   JSON and set as data-i18n-substitutions.
@@ -147,6 +150,27 @@ function setClassAttribute(element, value, source) {
  *                 n: 2,
  *             },
  *         },
+ *     },
+ * });
+ *
+ * @example
+ * // Element with no i18n attributes, but preemptively excluding
+ * // data-i18n. If data-i18n is set later (by another part of the
+ * // system), it will not be localized.
+ * const pluralHeading = createElement('h2', {
+ *     i18n: {
+ *         exclusions: ['data-i18n'],
+ *     },
+ * });
+ *
+ * @example
+ * // Element with data-i18n localized normally, but excluding all
+ * // suffixed attributes (e.g., data-i18n-placeholder) from
+ * // localization.
+ * const pluralHeading = createElement('h2', {
+ *     i18n: {
+ *         'data-i18n': 'plural_heading_numbered',
+ *         exclusions: ['data-i18n-.*'],
  *     },
  * });
  *
@@ -295,13 +319,14 @@ export function createElement(tagName, options = {}) {
     if (Object.keys(resolvedI18n).length > 0) {
         /**
          * Get attributes user passed to i18n option.
-         * Set options on the three special keys
-         * (substitutions, forceShared, forceView).
+         * Set options on the special keys
+         * (exclusions, substitutions, forceShared, forceView).
          * Remaining keys should be any arbitrary
          * data-i18n* attribute that the user wants
          * set (e.g. "data-i18n", "data-i18n-placeholder", etc)
          */
         const {
+            exclusions,
             substitutions,
             forceShared,
             forceView,
@@ -311,12 +336,18 @@ export function createElement(tagName, options = {}) {
         // (destructuring defaults only apply to undefined, not null;
         // ?? handles both null and undefined, both of which we're
         // treating as user doesn't want/needs default, so rely on that.)
+        const resolvedExclusions = exclusions ?? [];
         const resolvedSubstitutions = substitutions ?? {};
         const resolvedForceShared = forceShared ?? false;
         const resolvedForceView = forceView ?? '';
 
         // --- Validate option types -----------------------------------------
 
+        if (!Array.isArray(resolvedExclusions)) {
+            throw new TypeError(
+                `createElement: options.i18n.exclusions must be an Array. Received: ${typeof resolvedExclusions}`
+            );
+        }
         if (typeof resolvedForceShared !== 'boolean') {
             throw new TypeError(
                 `createElement: options.i18n.forceShared must be a boolean. Received: ${typeof resolvedForceShared}`
@@ -334,9 +365,9 @@ export function createElement(tagName, options = {}) {
         }
 
         // Iterate all keys in i18n config. Anything that isn't a special
-        // case (substitutions, forceShared, forceView) is treated as a
+        // case (exclusions, substitutions, forceShared, forceView) is treated as a
         // data-i18n attribute name and set directly.
-        const specialCases = new Set(['substitutions', 'forceShared', 'forceView']);
+        const specialCases = new Set(['exclusions', 'substitutions', 'forceShared', 'forceView']);
         Object.entries(resolvedI18n)
             .filter(([attr]) => !specialCases.has(attr))
             .forEach(([attr, value]) => {
@@ -353,6 +384,28 @@ export function createElement(tagName, options = {}) {
 
                 element.setAttribute(attr, value);
             });
+
+        /**
+         * 'exclusions' should be an Array of strings --
+         * data-i18n attributes that should be excluded by
+         * the i18n localization system.
+         * Regex strings are allowed e.g., exclusions=["data-i18n-*"]
+         */
+        if (resolvedExclusions.length > 0) {
+            for (const attr of resolvedExclusions) {
+                if (typeof attr !== 'string') {
+                    throw new TypeError(
+                        `createElement: Invalid entry in options.i18n.exclusions. ` +
+                        `Expected array of strings. ` +
+                        `Received: ${String(attr)} (type: ${typeof attr})`
+                    );
+                }
+            }
+
+            // Serialize the validated array into a JSON string
+            const serializedExclude = JSON.stringify(resolvedExclusions);
+            element.setAttribute(I18N_EXCLUDE_KEY, serializedExclude);
+        }
 
         /**
          * 'substitutions' provides values for {placeholders} used in
