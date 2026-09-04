@@ -1,0 +1,473 @@
+{
+    "name": "batch-examples",
+    "type": "directory",
+    "children": [
+        {
+            "name": "cases",
+            "type": "directory",
+            "children": [
+                {
+                    "name": "accusative-plural.txt",
+                    "type": "file",
+                    "path": "cases/accusative-plural.txt",
+                    "displayName": "Винительный падеж — множественное число"
+                },
+                {
+                    "name": "accusative-singular.txt",
+                    "type": "file",
+                    "path": "cases/accusative-singular.txt",
+                    "displayName": "Винительный падеж — единственное число"
+                },
+                {
+                    "name": "ambiguous-cases.txt",
+                    "type": "file",
+                    "path": "cases/ambiguous-cases.txt",
+                    "displayName": "Формы, совпадающие в разных падежах"
+                },
+                {
+                    "name": "cases-mixed.txt",
+                    "type": "file",
+                    "path": "cases/cases-mixed.txt",
+                    "displayName": "Смешанные падежные формы"
+                },
+                {
+                    "name": "dative-plural.txt",
+                    "type": "file",
+                    "path": "cases/dative-plural.txt",
+                    "displayName": "Дательный падеж — множественное число"
+                },
+                {
+                    "name": "dative-singular.txt",
+                    "type": "file",
+                    "path": "cases/dative-singular.txt",
+                    "displayName": "Дательный падеж — единственное число"
+                },
+                {
+                    "name": "genitive-plural.txt",
+                    "type": "file",
+                    "path": "cases/genitive-plural.txt",
+                    "displayName": "Родительный падеж — множественное число"
+                },
+                {
+                    "name": "genitive-singular.txt",
+                    "type": "file",
+                    "path": "cases/genitive-singular.txt",
+                    "displayName": "Родительный падеж — единственное число"
+                },
+                {
+                    "name": "instrumental-plural.txt",
+                    "type": "file",
+                    "path": "cases/instrumental-plural.txt",
+                    "displayName": "Творительный падеж — множественное число"
+                },
+                {
+                    "name": "instrumental-singular.txt",
+                    "type": "file",
+                    "path": "cases/instrumental-singular.txt",
+                    "displayName": "Творительный падеж — единственное число"
+                },
+                {
+                    "name": "nominative-plural.txt",
+                    "type": "file",
+                    "path": "cases/nominative-plural.txt",
+                    "displayName": "Именительный падеж — множественное число"
+                },
+                {
+                    "name": "nominative-singular.txt",
+                    "type": "file",
+                    "path": "cases/nominative-singular.txt",
+                    "displayName": "Именительный падеж — единственное число"
+                },
+                {
+                    "name": "prepositional-plural.txt",
+                    "type": "file",
+                    "path": "cases/prepositional-plural.txt",
+                    "displayName": "Предложный падеж — множественное число"
+                },
+                {
+                    "name": "prepositional-singular.txt",
+                    "type": "file",
+                    "path": "cases/prepositional-singular.txt",
+                    "displayName": "Предложный падеж — единственное число"
+                }
+            ]
+        },
+        {
+            "name": "dialects",
+            "type": "directory",
+            "children": [
+                {
+                    "name": "belarusian-loans.txt",
+                    "type": "file",
+                    "path": "dialects/belarusian-loans.txt",
+                    "displayName": "Заимствования из белорусского"
+                },
+                {
+                    "name": "colloquial-forms.txt",
+                    "type": "file",
+                    "path": "dialects/colloquial-forms.txt",
+                    "displayName": "Разговорные и просторечные формы"
+                },
+                {
+                    "name": "northern-dialect.txt",
+                    "type": "file",
+                    "path": "dialects/northern-dialect.txt",
+                    "displayName": "Севернорусские диалектные слова"
+                },
+                {
+                    "name": "siberian-dialect.txt",
+                    "type": "file",
+                    "path": "dialects/siberian-dialect.txt",
+                    "displayName": "Сибирские диалектные слова"
+                },
+                {
+                    "name": "southern-dialect.txt",
+                    "type": "file",
+                    "path": "dialects/southern-dialect.txt",
+                    "displayName": "Южнорусские диалектные слова"
+                },
+                {
+                    "name": "ukranian-loans.txt",
+                    "type": "file",
+                    "path": "dialects/ukranian-loans.txt",
+                    "displayName": "Заимствования из украинского"
+                }
+            ]
+        },
+        {
+            "name": "frequency",
+            "type": "directory",
+            "children": [
+                {
+                    "name": "spoken-frequency.txt",
+                    "type": "file",
+                    "path": "frequency/spoken-frequency.txt",
+                    "displayName": "Частотные существительные в разговорной речи"
+                },
+                {
+                    "name": "top-100.txt",
+                    "type": "file",
+                    "path": "frequency/top-100.txt",
+                    "displayName": "100 самых частотных существительных"
+                },
+                {
+                    "name": "top-50.txt",
+                    "type": "file",
+                    "path": "frequency/top-50.txt",
+                    "displayName": "50 самых частотных существительных"
+                }
+            ]
+        },
+        {
+            "name": "grammar",
+            "type": "directory",
+            "children": [
+                {
+                    "name": "1st-declension-masculine.txt",
+                    "type": "file",
+                    "path": "grammar/1st-declension-masculine.txt",
+                    "displayName": "1-е склонение — мужской род"
+                },
+                {
+                    "name": "1st-declension-neuter.txt",
+                    "type": "file",
+                    "path": "grammar/1st-declension-neuter.txt",
+                    "displayName": "1-е склонение — средний род"
+                },
+                {
+                    "name": "2nd-declension.txt",
+                    "type": "file",
+                    "path": "grammar/2nd-declension.txt",
+                    "displayName": "2-е склонение"
+                },
+                {
+                    "name": "3rd-declension.txt",
+                    "type": "file",
+                    "path": "grammar/3rd-declension.txt",
+                    "displayName": "3-е склонение — женский род на -ь"
+                },
+                {
+                    "name": "augmentatives.txt",
+                    "type": "file",
+                    "path": "grammar/augmentatives.txt",
+                    "displayName": "Увеличительные формы"
+                },
+                {
+                    "name": "diminutives.txt",
+                    "type": "file",
+                    "path": "grammar/diminutives.txt",
+                    "displayName": "Уменьшительно-ласкательные формы"
+                },
+                {
+                    "name": "fleeting-vowels.txt",
+                    "type": "file",
+                    "path": "grammar/fleeting-vowels.txt",
+                    "displayName": "Существительные с беглыми гласными"
+                },
+                {
+                    "name": "indeclinable.txt",
+                    "type": "file",
+                    "path": "grammar/indeclinable.txt",
+                    "displayName": "Несклоняемые существительные"
+                },
+                {
+                    "name": "irregular-plurals.txt",
+                    "type": "file",
+                    "path": "grammar/irregular-plurals.txt",
+                    "displayName": "Существительные с нерегулярными формами множественного числа"
+                },
+                {
+                    "name": "mixed-declension.txt",
+                    "type": "file",
+                    "path": "grammar/mixed-declension.txt",
+                    "displayName": "Разносклоняемые существительные"
+                },
+                {
+                    "name": "neuter.txt",
+                    "type": "file",
+                    "path": "grammar/neuter.txt",
+                    "displayName": "Существительные среднего рода"
+                },
+                {
+                    "name": "soft-sign-ending.txt",
+                    "type": "file",
+                    "path": "grammar/soft-sign-ending.txt",
+                    "displayName": "Существительные на -ь"
+                }
+            ]
+        },
+        {
+            "name": "misc",
+            "type": "directory",
+            "children": [
+                {
+                    "name": "names",
+                    "type": "directory",
+                    "children": [
+                        {
+                            "name": "names.txt",
+                            "type": "file",
+                            "path": "misc/names/names.txt",
+                            "displayName": "Имена"
+                        },
+                        {
+                            "name": "patronymics.txt",
+                            "type": "file",
+                            "path": "misc/names/patronymics.txt",
+                            "displayName": "Отчества"
+                        },
+                        {
+                            "name": "surnames-declension.txt",
+                            "type": "file",
+                            "path": "misc/names/surnames-declension.txt",
+                            "displayName": "Фамилии с особенностями склонения"
+                        }
+                    ]
+                },
+                {
+                    "name": "slang-colloquial.txt",
+                    "type": "file",
+                    "path": "misc/slang-colloquial.txt",
+                    "displayName": "Разговорные и сленговые существительные"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "type": "directory",
+            "children": [
+                {
+                    "name": "errors.txt",
+                    "type": "file",
+                    "path": "test/errors.txt",
+                    "displayName": "Файл с намеренными ошибками для тестирования парсера"
+                },
+                {
+                    "name": "multi-root.txt",
+                    "type": "file",
+                    "path": "test/multi-root.txt",
+                    "displayName": "Слова с множественными словарными корнями"
+                },
+                {
+                    "name": "parsing.txt",
+                    "type": "file",
+                    "path": "test/parsing.txt",
+                    "displayName": "Тест парсера — файл с различными вариантами форматирования"
+                },
+                {
+                    "name": "random-mix.txt",
+                    "type": "file",
+                    "path": "test/random-mix.txt",
+                    "displayName": "Разное — смешанный список существительных"
+                },
+                {
+                    "name": "stress-100.txt",
+                    "type": "file",
+                    "path": "test/stress-100.txt",
+                    "displayName": "100 существительных для нагрузочного тестирования"
+                },
+                {
+                    "name": "stress-1000.txt",
+                    "type": "file",
+                    "path": "test/stress-1000.txt",
+                    "displayName": "1000 существительных — большой нагрузочный тест"
+                },
+                {
+                    "name": "stress-500.txt",
+                    "type": "file",
+                    "path": "test/stress-500.txt",
+                    "displayName": "500 существительных — нагрузочный тест"
+                }
+            ]
+        },
+        {
+            "name": "vocabulary",
+            "type": "directory",
+            "children": [
+                {
+                    "name": "abstract-concepts.txt",
+                    "type": "file",
+                    "path": "vocabulary/abstract-concepts.txt",
+                    "displayName": "Абстрактные понятия"
+                },
+                {
+                    "name": "animals.txt",
+                    "type": "file",
+                    "path": "vocabulary/animals.txt",
+                    "displayName": "Животные"
+                },
+                {
+                    "name": "art-culture.txt",
+                    "type": "file",
+                    "path": "vocabulary/art-culture.txt",
+                    "displayName": "Искусство и культура"
+                },
+                {
+                    "name": "body-parts.txt",
+                    "type": "file",
+                    "path": "vocabulary/body-parts.txt",
+                    "displayName": "Части тела"
+                },
+                {
+                    "name": "clothing.txt",
+                    "type": "file",
+                    "path": "vocabulary/clothing.txt",
+                    "displayName": "Одежда"
+                },
+                {
+                    "name": "common-100.txt",
+                    "type": "file",
+                    "path": "vocabulary/common-100.txt",
+                    "displayName": "100 частотных существительных"
+                },
+                {
+                    "name": "emotions.txt",
+                    "type": "file",
+                    "path": "vocabulary/emotions.txt",
+                    "displayName": "Эмоции и чувства"
+                },
+                {
+                    "name": "fishing.txt",
+                    "type": "file",
+                    "path": "vocabulary/fishing.txt"
+                },
+                {
+                    "name": "food.txt",
+                    "type": "file",
+                    "path": "vocabulary/food.txt",
+                    "displayName": "Еда и напитки"
+                },
+                {
+                    "name": "geography-russia.txt",
+                    "type": "file",
+                    "path": "vocabulary/geography-russia.txt",
+                    "displayName": "География России"
+                },
+                {
+                    "name": "geography.txt",
+                    "type": "file",
+                    "path": "vocabulary/geography.txt",
+                    "displayName": "География — общая"
+                },
+                {
+                    "name": "home.txt",
+                    "type": "file",
+                    "path": "vocabulary/home.txt",
+                    "displayName": "Дом и быт"
+                },
+                {
+                    "name": "medicine-health.txt",
+                    "type": "file",
+                    "path": "vocabulary/medicine-health.txt",
+                    "displayName": "Медицина и здоровье"
+                },
+                {
+                    "name": "military.txt",
+                    "type": "file",
+                    "path": "vocabulary/military.txt",
+                    "displayName": "Военное дело"
+                },
+                {
+                    "name": "nature.txt",
+                    "type": "file",
+                    "path": "vocabulary/nature.txt",
+                    "displayName": "Природа"
+                },
+                {
+                    "name": "people.txt",
+                    "type": "file",
+                    "path": "vocabulary/people.txt",
+                    "displayName": "Люди"
+                },
+                {
+                    "name": "professions.txt",
+                    "type": "file",
+                    "path": "vocabulary/professions.txt",
+                    "displayName": "Профессии"
+                },
+                {
+                    "name": "religion.txt",
+                    "type": "file",
+                    "path": "vocabulary/religion.txt",
+                    "displayName": "Религия"
+                },
+                {
+                    "name": "rivers-russia.txt",
+                    "type": "file",
+                    "path": "vocabulary/rivers-russia.txt",
+                    "displayName": "Реки России"
+                },
+                {
+                    "name": "school-education.txt",
+                    "type": "file",
+                    "path": "vocabulary/school-education.txt",
+                    "displayName": "Школа и образование"
+                },
+                {
+                    "name": "sports.txt",
+                    "type": "file",
+                    "path": "vocabulary/sports.txt",
+                    "displayName": "Спорт"
+                },
+                {
+                    "name": "technology.txt",
+                    "type": "file",
+                    "path": "vocabulary/technology.txt",
+                    "displayName": "Технологии"
+                },
+                {
+                    "name": "transport.txt",
+                    "type": "file",
+                    "path": "vocabulary/transport.txt",
+                    "displayName": "Транспорт"
+                },
+                {
+                    "name": "weather-seasons.txt",
+                    "type": "file",
+                    "path": "vocabulary/weather-seasons.txt",
+                    "displayName": "Погода и времена года"
+                }
+            ]
+        }
+    ]
+}
