@@ -226,6 +226,7 @@ For the non-Docker route:
 - [Developer Guide](docs/developer/developer-guide.md) — architecture, request lifecycle, and extension guide.
 - [CLI client README](client/cli/README.md) — CLI client demo usage.
 - [Web client README](client/web-client/README.md) — Web client usage.
+- [Grammar Translations](docs/grammar-translations.md) — Russian and English translations for grammar terms used in the application.
 
 ## License
 
