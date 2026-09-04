@@ -190,30 +190,6 @@ Each word is processed independently. Lookup failures (word not found, strict mo
 
 ## Noun Response Model
 
-### Response Structure
-
-This section provides a brief explanation for the response structure, as it is non-obvious.
-
-The API returns a top-level object with two fields: `word` and `matches`.
-
-`word` is the word as submitted by the client. `matches` is a list of one or more declension tables, each representing a possible dictionary root for that word.
-
-**Why is `matches` a list?**
-
-Most words have exactly one match. However, some Russian words map to multiple distinct roots. For example, `абаки` is both the plural of `абак` and the plural of `абака`. The API cannot determine which root the user intended, so it returns all possible matches.
-
-**Why is `plural` also a list?**
-
-Within each match, `plural` is also a list. This is because some nouns have more than one distinct plural form. For example, `человек` has both `люди` and `человеки`. Each item in the `plural` list represents one set of plural forms.
-
-**Note**: Some of these forms may be archaic, rare, or not commonly used in colloquial Russian. However, they are still represented in the Sshra morphological database, and so the API returns them.
-
-Thus, the `matches` and `plural` lists reflect the reality of the Sshra morphology data: a single word can correspond to multiple dictionary entries, and a single dictionary entry can have multiple plural forms.
-
-**Duplicates that aren't duplicates**
-
-In some cases, multiple matches may appear identical because the database does not store stress marks. For example, `замок` (and its declensions) returns two matches that look the same, but are distinct entries (corresponding to `за́мок` (castle) and `замо́к` (lock)).
-
 ### Response Schema
 
 **Top-level response**
@@ -249,6 +225,71 @@ In some cases, multiple matches may appear identical because the database does n
 | `locative` | местный | — | `мест` |
 | `vocative` | звательный | — | `зват` |
 | `counting` | счётная форма | — | `счет` |
+
+### Example
+
+```json
+{
+  "word": "кролика",
+  "matches": [
+    {
+      "root": "кролик",
+      "invariant": false,
+      "gender": "муж",
+      "animacy": true,
+      "singular": {
+        "nominative": "кролик",
+        "genitive": "кролика",
+        "dative": "кролику",
+        "accusative": "кролика",
+        "instrumental": "кроликом",
+        "prepositional": "кролике"
+      },
+      "plural": [
+        {
+          "nominative": "кролики",
+          "genitive": "кроликов",
+          "dative": "кроликам",
+          "accusative": "кроликов",
+          "instrumental": "кроликами",
+          "prepositional": "кроликах"
+        }
+      ],
+      "additional_forms": {
+        "partitive": null,
+        "locative": null,
+        "vocative": null,
+        "counting": null
+      }
+    }
+  ]
+}
+
+```
+
+### Design Notes
+
+This section provides a brief explanation for the response structure, as it is non-obvious.
+
+The API returns a top-level object with two fields: `word` and `matches`.
+
+`word` is the word as submitted by the client. `matches` is a list of one or more declension tables, each representing a possible dictionary root for that word.
+
+#### Why is `matches` a list?
+
+Most words have exactly one match. However, some Russian words map to multiple distinct roots. For example, `абаки` is both the plural of `абак` and the plural of `абака`. The API cannot determine which root the user intended, so it returns all possible matches.
+
+#### Why is `plural` also a list?
+
+Within each match, `plural` is also a list. This is because some nouns have more than one distinct plural form. For example, `человек` has both `люди` and `человеки`. Each item in the `plural` list represents one set of plural forms.
+
+**Note**: Some of these forms may be archaic, rare, or not commonly used in colloquial Russian. However, they are still represented in the Sshra morphological database, and so the API returns them.
+
+Thus, the `matches` and `plural` lists reflect the reality of the Sshra morphology data: a single word can correspond to multiple dictionary entries, and a single dictionary entry can have multiple plural forms.
+
+#### Duplicates that aren't duplicates
+
+In some cases, multiple matches may appear identical because the database does not store stress marks. For example, `замок` (and its declensions) returns two matches that look the same, but are distinct entries (corresponding to `за́мок` (castle) and `замо́к` (lock)).
 
 ---
 
