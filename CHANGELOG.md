@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-09-03
+
+### Added
+
+- Batch noun lookup endpoint: POST /api/v1/nouns/batch for processing multiple words in one request (0fe9dbd)
+- Web client: full replacement for the demo page, with view registry architecture, state management, i18n support, and responsive UI (a0fb58d)
+- Web client: Curated batch example files (585d2c2)
+- Web client testing infrastructure: dependency-free test harness (376fd45), run-all.js aggregator (1f33d7b), npm test script (dfee82f)
+- CLI client: new built-in themes (277aac7) and random theme option (d0f5a74).
+- Documentation: User-facing README for CLI client README (c7dde20) and Web client (38fbd43)
+- Documentation: New grammar-translations.md with Russian and English translations for grammar terms used in the app and documentation (281e1b4)
+- Documentation: developer docs for web client architecture (1d50c58), state management (8247b64), and word list parser (f25bff8)
+- Documentation: API contract updated for batch endpoint and restructured response model (c1edf22, 32db557, 4217401), and dedicated grammar translation section with grammar terms used in API (eec0f28)
+
+### Changed
+
+- Web client features: view state management (3ad1a44), i18n system with attribute handlers and placeholder substitution (c5b4947, 3126412, f6a4837), automatic localization of dynamically added elements (1fbd14c)
+- CLI client: moved from client/declensions.py to dedicated client/cli/declensions.py (8f38fb1)
+- Docker: web client container replaces demo container (bc8dc54), with multi-arch support for arm64 and amd64 (376b628, 71fd413)
+- Documentation: restructured docs/ directory by topic (750de06)
+- Documentation: README updated to replace demo page with web client and add new doc links (fb35d59, 35a3fb2, db048f7)
+
+### Removed
+
+- Demo container: replaced by web client container (bc8dc54)
+- client/demo/ directory: replaced by web-client/ (ec8eb07)
+
+### Fixed
+
+- Numerous web client fixes: i18n error displays, state management error handling, view error fallbacks, and test harness improvements
+
 ## [2.0.0] - 2026-26-8
 
 ### Added
