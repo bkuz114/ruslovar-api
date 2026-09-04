@@ -49,6 +49,24 @@ export const I18N_TEMPLATE_CLOSE_DELIM = "}";
  */
 
 /*
+ * Attr used to exclude an HTML element from i18n localization.
+ * The value is a serialized list of i18n attributes subject to
+ * exclusion, with regex allowed.
+ *
+ * This can be useful if an element should normally be localized
+ * against a specific key, but will temporarily have text that
+ * should not be localized (e.g. server data).
+ *
+ * Example:
+ *   <div data-i18n="name" data-i18n-placeholder="placeholder"
+ *   	data-i18n-exclude='["data-i18n-.*"]'></div>
+ *
+ *   applyLanguage will localize with data-i18n, but will exclude
+ *   localization effects of data-i18n-placeholder
+ */
+export const I18N_EXCLUDE_KEY = "data-i18n-exclude";
+
+/*
  * Attr used to provide values for {placeholders} in localized strings.
  *
  * The value is a JSON object. Each key is an i18n attribute name
@@ -668,6 +686,95 @@ export function resolveElementI18nValue(element, i18n_attr, lang) {
 }
 
 /**
+ * Checks if a string matches a pattern.
+ *
+ * Pattern is treated as a regular expression. Plain strings will
+ * match exactly, but can also include regex syntax (e.g. "data-i18n.*").
+ *
+ * @param {string} str - The string to test against the pattern.
+ * @param {string} pattern - Regex pattern.
+ * @returns {boolean} True if the string matches the pattern.
+ */
+function matchesPattern(str, pattern) {
+    try {
+        const regex = new RegExp(pattern);
+        return regex.test(str);
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            console.error(
+                `i18n.matchesPattern: Invalid regex pattern. ` +
+                `Received: ${JSON.stringify(pattern)}`
+            );
+        } else {
+            console.error(
+                `i18n.matchesPattern: Unexpected error. ` +
+                `Received: ${error}`
+            );
+        }
+        return false;
+    }
+}
+
+/**
+ * Extracts and validates the i18n exclusion attribute from an element.
+ *
+ * The attribute, if present, should contain a JSON-serialized array of
+ * strings representing the attribute names that should be excluded from
+ * i18n processing. For example: '["title", "placeholder"]'
+ *
+ * @param {HTMLElement} element - The DOM element to check for exclusion
+ *     attributes.
+ * @returns {string[]} An array of attribute names to exclude. Empty array
+ *     if the attribute is not present or invalid.
+ */
+function getExcludedAttributes(element) {
+    // Validate the element argument
+    if (!(element instanceof HTMLElement)) {
+        console.error(
+            `i18n.getExcludedAttributes: Invalid element argument. ` +
+            `Expected HTMLElement, received type "${typeof element}":`,
+            element
+        );
+        return [];
+    }
+
+    // Check if element has exclusion criteria
+    const excludedAttributesRaw = element.getAttribute(I18N_EXCLUDE_KEY);
+
+    // No exclusion attribute? Return empty array.
+    if (!excludedAttributesRaw) {
+        return [];
+    }
+
+    // Deserialize the JSON string into a JavaScript value
+    let excludedAttributes;
+    try {
+        excludedAttributes = JSON.parse(excludedAttributesRaw);
+    } catch (error) {
+        console.error(
+            `i18n.getExcludedAttributes: Failed to parse attribute ` +
+            `"${I18N_EXCLUDE_KEY}" on element. Expected JSON array of ` +
+            `strings. Received type "${typeof excludedAttributesRaw}":`,
+            JSON.stringify(excludedAttributesRaw)
+        );
+        return [];
+    }
+
+    // Validate the deserialized value is an array of strings
+    if (!Array.isArray(excludedAttributes) || !excludedAttributes.every((item) => typeof item === 'string')) {
+        console.error(
+            `i18n.getExcludedAttributes: Invalid value for attribute ` +
+            `"${I18N_EXCLUDE_KEY}" on element. Expected JSON array of ` +
+            `strings. Received type "${typeof excludedAttributes}":`,
+            JSON.stringify(excludedAttributes)
+        );
+        return [];
+    }
+
+    return excludedAttributes;
+}
+
+/**
  * Collect all elements matching the given CSS selector, among
  * a root and its descendants.
  *
@@ -759,6 +866,9 @@ export function applyLanguageToElement(element, lang) {
         return;
     }
 
+    // check if element has exclusion criteria
+    const excludedAttributes = getExcludedAttributes(element);
+
     /**
      * Loop through each of the supported
      * data-i18n attributes. If this element
@@ -769,6 +879,12 @@ export function applyLanguageToElement(element, lang) {
      */
     for (const [attribute, handler] of Object.entries(I18N_ATTRIBUTE_HANDLERS)) {
         if (!element.hasAttribute(attribute)) continue;
+
+        // if attribute excluded, skip
+        const isExcluded = excludedAttributes.some(
+            (pattern) => matchesPattern(attribute, pattern)
+        );
+        if (isExcluded) continue;
 
         const value = resolveElementI18nValue(element, attribute, lang);
         if (value !== undefined) {
