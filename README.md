@@ -11,7 +11,7 @@ The API queries a local MySQL database containing Russian noun morphology data a
 - Strict mode for requiring dictionary form.
 - Interactive Swagger UI documentation at `/docs`.
 - Fully offline-capable: no CDN dependency for Swagger UI.
-- Bilingual browser demo (Russian / English) for testing the API.
+- Bilingual Web Client (Russian / English) for testing the API.
 - CLI client for quick lookups from the terminal.
 
 ## Quickstart (Docker)
@@ -37,7 +37,7 @@ The project is fully containerized, with all needed images on Dockerhub. Both AR
 	docker compose up -d
 	```
 
-3. Open `http://127.0.0.1:8000/docs` (Swagger UI) and `http://127.0.0.1:8080` (demo page) in your browser and make sure they work.
+3. Open `http://127.0.0.1:8000/docs` (Swagger UI) and `http://127.0.0.1:8080` (Web Client) in your browser and make sure they work.
 
 	Alternatively, run a test curl command:
 
@@ -154,18 +154,60 @@ Example:
 python client/cli/declensions.py --word кролик --table --color always
 ```
 
-## Demo Page
+## Web Client
 
-A browser-based demo page is included in `client/demo/`. It provides a simple form for entering a noun and displays the declension table.
+A browser-based web client is included in `client/web-client/`. It provides views for querying Russian nouns.
 
-The demo page is included in the Docker setup, running in its own nginx container on port `8080`. After running `docker compose up`, you can view it at `http://127.0.0.1:8080`.
+### Single Noun Lookup
+
+- Select **Single Word** from the view dropdown.
+- Enter a Russian noun in the input field (e.g., `кролик`).
+- Optionally enable strict mode to require dictionary form.
+- Press Enter or click the submit button.
+- View the declension table.
+
+### Batch Noun Lookup
+
+- Select **Batch Lookup** from the view dropdown.
+- Upload a plain text file containing one word per line.
+- Optionally use `#` headings to organize words into categories.
+- Optionally include YAML frontmatter for file metadata (e.g., `title`).
+- Click the submit button to send the batch request.
+- Results are grouped by category and displayed in collapsible sections.
+
+Example batch file:
+
+```
+---
+Title: Рыбалка
+---
+
+# Рыбы
+щука
+окунь
+судак
+сом
+
+# Снаряжение
+удочка
+спиннинг
+катушка
+```
+
+Ready-made batch files are available in `client/web-client/batch-examples/`, organized by case, dialect, frequency, grammar, vocabulary, and other categories.
+
+The web client supports both Russian and English UI. Toggle the language using the buttons in the top right corner. Your preference is saved in browser local storage.
+
+### Running the web client
+
+The web client is included in the Docker setup, running in its own nginx container on port `8080`. After running `docker compose up`, you can view it at `http://127.0.0.1:8080`.
 
 For the non-Docker route:
 
-1. Start a **separate** web server for the demo page:
+1. Start a **separate** web server for the Web Client:
 
 	```bash
-	cd client/demo
+	cd client/web-client
 	python -m http.server 8080
 	```
 
@@ -173,7 +215,7 @@ For the non-Docker route:
 
 2. Open `http://127.0.0.1:8080` in your browser.
 
-(see [Demo README](client/demo/README.md) for further info.)
+(see [Web Client README](client/web-client/README.md) for further info.)
 
 ## Documentation
 
@@ -183,7 +225,7 @@ For the non-Docker route:
 - [API Contract](docs/api.md) — endpoint and response documentation.
 - [Developer Guide](docs/developer-guide.md) — architecture, request lifecycle, and extension guide.
 - [CLI client README](client/cli/README.md) — CLI client demo usage.
-- [Demo README](client/demo/README.md) — browser demo usage.
+- [Web client README](client/web-client/README.md) — Web client usage.
 
 ## License
 
