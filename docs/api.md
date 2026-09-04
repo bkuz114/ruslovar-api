@@ -148,6 +148,101 @@ In some cases, multiple matches may appear identical because the database does n
 | `vocative` | звательный | — | `зват` |
 | `counting` | счётная форма | — | `счет` |
 
+### `POST /nouns/batch`
+
+Returns declension tables for multiple Russian nouns in a single request.
+
+Each word is processed independently. Lookup failures (word not found, strict mode violations) are returned as per-item errors with HTTP 200. Non-200 responses occur only for system errors (malformed request, database unreachable).
+
+#### Request body
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `words` | list of strings | Yes | The Russian nouns to look up (Cyrillic, UTF-8). Must contain at least one word. |
+| `strict` | boolean | No | If `true`, each word must be in dictionary form. Defaults to `false`. |
+
+```json
+{
+  "words": ["кролик", "человек", "кофе"],
+  "strict": false
+}
+```
+
+#### Response
+
+**Status:** `200 OK`
+
+```json
+{
+  "results": [
+    {
+      "word": "кролик",
+      "status": "success",
+      "result": {
+        "word": "кролик",
+        "matches": [
+          {
+            "root": "кролик",
+            "invariant": false,
+            "gender": "муж",
+            "animacy": true,
+            "singular": {
+              "nominative": "кролик",
+              "genitive": "кролика",
+              "dative": "кролику",
+              "accusative": "кролика",
+              "instrumental": "кроликом",
+              "prepositional": "кролике"
+            },
+            "plural": [
+              {
+                "nominative": "кролики",
+                "genitive": "кроликов",
+                "dative": "кроликам",
+                "accusative": "кроликов",
+                "instrumental": "кроликами",
+                "prepositional": "кроликах"
+              }
+            ],
+            "additional_forms": {
+              "partitive": null,
+              "locative": null,
+              "vocative": null,
+              "counting": null
+            }
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "word": "несуществующееслово",
+      "status": "error",
+      "result": null,
+      "error": "Word 'несуществующееслово' not found in dictionary"
+    }
+  ]
+}
+```
+
+#### Response fields
+
+**Top-level response**
+
+| Field | Type | Description |
+|---|---|---|
+| `results` | list | One result per input word, in the same order as the request. |
+
+**Result item (`NounBatchItem`)**
+
+| Field | Type | Description |
+|---|---|---|
+| `word` | string | The word as submitted in the request. |
+| `status` | string | Either `"success"` or `"error"`. |
+| `result` | object \| null | The full `NounLookupResponse` for this word. Present when `status` is `"success"`, `null` otherwise. |
+| `error` | string \| null | A description of the lookup failure. Present when `status` is `"error"`, `null` otherwise. |
+```
+
 ---
 
 ## Error responses
@@ -511,6 +606,107 @@ curl "http://localhost:8000/api/v1/nouns/люди/declensions"
         "vocative": "человече",
         "counting": null
       }
+    }
+  ]
+}
+```
+
+### Example 8: Batch lookup
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/nouns/batch" \
+  -H "Content-Type: application/json" \
+  -d '{"words": ["кролик", "несуществующееслово", "кофе"], "strict": false}'
+```
+
+```json
+{
+  "results": [
+    {
+      "word": "кролик",
+      "status": "success",
+      "result": {
+        "word": "кролик",
+        "matches": [
+          {
+            "root": "кролик",
+            "invariant": false,
+            "gender": "муж",
+            "animacy": true,
+            "singular": {
+              "nominative": "кролик",
+              "genitive": "кролика",
+              "dative": "кролику",
+              "accusative": "кролика",
+              "instrumental": "кроликом",
+              "prepositional": "кролике"
+            },
+            "plural": [
+              {
+                "nominative": "кролики",
+                "genitive": "кроликов",
+                "dative": "кроликам",
+                "accusative": "кроликов",
+                "instrumental": "кроликами",
+                "prepositional": "кроликах"
+              }
+            ],
+            "additional_forms": {
+              "partitive": null,
+              "locative": null,
+              "vocative": null,
+              "counting": null
+            }
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "word": "несуществующееслово",
+      "status": "error",
+      "result": null,
+      "error": "Word 'несуществующееслово' not found in dictionary"
+    },
+    {
+      "word": "кофе",
+      "status": "success",
+      "result": {
+        "word": "кофе",
+        "matches": [
+          {
+            "root": "кофе",
+            "invariant": true,
+            "gender": "муж",
+            "animacy": false,
+            "singular": {
+              "nominative": "кофе",
+              "genitive": "кофе",
+              "dative": "кофе",
+              "accusative": "кофе",
+              "instrumental": "кофе",
+              "prepositional": "кофе"
+            },
+            "plural": [
+              {
+                "nominative": "кофе",
+                "genitive": "кофе",
+                "dative": "кофе",
+                "accusative": "кофе",
+                "instrumental": "кофе",
+                "prepositional": "кофе"
+              }
+            ],
+            "additional_forms": {
+              "partitive": null,
+              "locative": null,
+              "vocative": null,
+              "counting": null
+            }
+          }
+        ]
+      },
+      "error": null
     }
   ]
 }
