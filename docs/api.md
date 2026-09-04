@@ -88,65 +88,9 @@ Returns the full declension table for a Russian noun.
 }
 ```
 
-#### Response Structure
+#### Response fields
 
-This section provides a brief explanation for the response structure, as it is non-obvious.
-
-The API returns a top-level object with two fields: `word` and `matches`.
-
-`word` is the word as submitted by the client. `matches` is a list of one or more declension tables, each representing a possible dictionary root for that word.
-
-**Why is `matches` a list?**
-
-Most words have exactly one match. However, some Russian words map to multiple distinct roots. For example, `абаки` is both the plural of `абак` and the plural of `абака`. The API cannot determine which root the user intended, so it returns all possible matches.
-
-**Why is `plural` also a list?**
-
-Within each match, `plural` is also a list. This is because some nouns have more than one distinct plural form. For example, `человек` has both `люди` and `человеки`. Each item in the `plural` list represents one set of plural forms.
-
-**Note**: Some of these forms may be archaic, rare, or not commonly used in colloquial Russian. However, they are still represented in the Sshra morphological database, and so the API returns them. 
-
-Thus, the `matches` and `plural` lists reflect the reality of the Sshra morphology data: a single word can correspond to multiple dictionary entries, and a single dictionary entry can have multiple plural forms.
-
-**Duplicates that aren't duplicates**
-
-In some cases, multiple matches may appear identical because the database does not store stress marks. For example, `замок` (and its declensions) returns two matches that look the same, but are distinct entries (corresponding to `за́мок` (castle) and `замо́к` (lock)).
-
-#### Response Schema
-
-**Top-level response**
-
-| Field | Type | Description |
-|---|---|---|
-| `word` | string | The word as submitted by the client. |
-| `matches` | list | One or more declension tables, one per possible dictionary root. |
-
-**Match object (`NounDeclensions`)**
-
-| Field | Type | Description |
-|---|---|---|
-| `root` | string | The dictionary form (lemma). |
-| `invariant` | boolean | `true` for invariant nouns (e.g., кофе, радио), `false` otherwise. |
-| `gender` | string \| null | Grammatical gender. One of: `муж`, `жен`, `ср`, `общ`. `null` if unknown. |
-| `animacy` | boolean \| null | `true` = animate, `false` = inanimate, `null` = unknown. |
-| `singular` | object | Singular declensions, keyed by English case name. Empty object if the noun has no singular forms. |
-| `plural` | list | List of plural paradigms. Each item is an object keyed by English case name. Empty list if the noun has no plural forms. |
-| `additional_forms` | object | Rare or archaic case forms. Always present. |
-
-#### Case name mapping
-
-| English key | Russian full name | Russian abbreviation | `wcase` value in DB |
-|---|---|---|---|
-| `nominative` | именительный | И | `им` |
-| `genitive` | родительный | Р | `род` |
-| `dative` | дательный | Д | `дат` |
-| `accusative` | винительный | В | `вин` |
-| `instrumental` | творительный | Т | `тв` |
-| `prepositional` | предложный | П | `пр` |
-| `partitive` | разделительный | — | `парт` |
-| `locative` | местный | — | `мест` |
-| `vocative` | звательный | — | `зват` |
-| `counting` | счётная форма | — | `счет` |
+See [Noun response model](#noun-response-model) for the full response schema and field descriptions.
 
 ### `POST /nouns/batch`
 
@@ -227,21 +171,84 @@ Each word is processed independently. Lookup failures (word not found, strict mo
 
 #### Response fields
 
+**top-level response**
+
+| field | type | description |
+|---|---|---|
+| `result` | object \| null | The full [Noun response model](#noun-response-model) response for this word. Present when `status` is `"success"`, `null` otherwise. |
+
+**result item (`nounbatchitem`)**
+
+| field | type | description |
+|---|---|---|
+| `word` | string | the word as submitted in the request. |
+| `status` | string | either `"success"` or `"error"`. |
+| `result` | object \| null | the full `nounlookupresponse` for this word. present when `status` is `"success"`, `null` otherwise. |
+| `error` | string \| null | a description of the lookup failure. present when `status` is `"error"`, `null` otherwise. |
+
+---
+
+## Noun Response Model
+
+### Response Structure
+
+This section provides a brief explanation for the response structure, as it is non-obvious.
+
+The API returns a top-level object with two fields: `word` and `matches`.
+
+`word` is the word as submitted by the client. `matches` is a list of one or more declension tables, each representing a possible dictionary root for that word.
+
+**Why is `matches` a list?**
+
+Most words have exactly one match. However, some Russian words map to multiple distinct roots. For example, `абаки` is both the plural of `абак` and the plural of `абака`. The API cannot determine which root the user intended, so it returns all possible matches.
+
+**Why is `plural` also a list?**
+
+Within each match, `plural` is also a list. This is because some nouns have more than one distinct plural form. For example, `человек` has both `люди` and `человеки`. Each item in the `plural` list represents one set of plural forms.
+
+**Note**: Some of these forms may be archaic, rare, or not commonly used in colloquial Russian. However, they are still represented in the Sshra morphological database, and so the API returns them.
+
+Thus, the `matches` and `plural` lists reflect the reality of the Sshra morphology data: a single word can correspond to multiple dictionary entries, and a single dictionary entry can have multiple plural forms.
+
+**Duplicates that aren't duplicates**
+
+In some cases, multiple matches may appear identical because the database does not store stress marks. For example, `замок` (and its declensions) returns two matches that look the same, but are distinct entries (corresponding to `за́мок` (castle) and `замо́к` (lock)).
+
+### Response Schema
+
 **Top-level response**
 
 | Field | Type | Description |
 |---|---|---|
-| `results` | list | One result per input word, in the same order as the request. |
+| `word` | string | The word as submitted by the client. |
+| `matches` | list | One or more declension tables, one per possible dictionary root. |
 
-**Result item (`NounBatchItem`)**
+**Match object (`NounDeclensions`)**
 
 | Field | Type | Description |
 |---|---|---|
-| `word` | string | The word as submitted in the request. |
-| `status` | string | Either `"success"` or `"error"`. |
-| `result` | object \| null | The full `NounLookupResponse` for this word. Present when `status` is `"success"`, `null` otherwise. |
-| `error` | string \| null | A description of the lookup failure. Present when `status` is `"error"`, `null` otherwise. |
-```
+| `root` | string | The dictionary form (lemma). |
+| `invariant` | boolean | `true` for invariant nouns (e.g., кофе, радио), `false` otherwise. |
+| `gender` | string \| null | Grammatical gender. One of: `муж`, `жен`, `ср`, `общ`. `null` if unknown. |
+| `animacy` | boolean \| null | `true` = animate, `false` = inanimate, `null` = unknown. |
+| `singular` | object | Singular declensions, keyed by English case name. Empty object if the noun has no singular forms. |
+| `plural` | list | List of plural paradigms. Each item is an object keyed by English case name. Empty list if the noun has no plural forms. |
+| `additional_forms` | object | Rare or archaic case forms. Always present. |
+
+### Case name mapping
+
+| English key | Russian full name | Russian abbreviation | `wcase` value in DB |
+|---|---|---|---|
+| `nominative` | именительный | И | `им` |
+| `genitive` | родительный | Р | `род` |
+| `dative` | дательный | Д | `дат` |
+| `accusative` | винительный | В | `вин` |
+| `instrumental` | творительный | Т | `тв` |
+| `prepositional` | предложный | П | `пр` |
+| `partitive` | разделительный | — | `парт` |
+| `locative` | местный | — | `мест` |
+| `vocative` | звательный | — | `зват` |
+| `counting` | счётная форма | — | `счет` |
 
 ---
 
