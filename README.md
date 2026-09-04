@@ -182,6 +182,7 @@ For the non-Docker route:
 - [Database Schema](docs/database.md) — structure of the underlying data.
 - [API Contract](docs/api.md) — endpoint and response documentation.
 - [Developer Guide](docs/developer-guide.md) — architecture, request lifecycle, and extension guide.
+- [CLI client README](client/cli/README.md) — CLI client demo usage.
 - [Demo README](client/demo/README.md) — browser demo usage.
 
 ## License
