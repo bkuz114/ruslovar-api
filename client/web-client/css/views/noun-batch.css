@@ -41,6 +41,40 @@
 }
 
 /* --------------------------------------------------------------------------
+   Demo file selector browser button/display
+   -------------------------------------------------------------------------- */
+
+.example-file-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.example-file-button {
+    padding: var(--space-xs) var(--space-md);
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+    border: var(--border-width) solid var(--color-primary);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    font-family: var(--font-family);
+}
+
+.example-file-button:hover {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.example-file-indicator {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
    File summary
    -------------------------------------------------------------------------- */
 

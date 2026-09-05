@@ -74,6 +74,9 @@ import {
     WordListDocument,
 } from '../core/parsers/wordlist-parser.js';
 import {
+    createFileBrowserModal,
+} from '../core/dom/components/file-browser-modal.js';
+import {
     createMatchesContainer,
     createSubmitControls,
 } from '../core/dom/renderers.js';
@@ -131,9 +134,11 @@ const VIEW_STRINGS = {
         file_format_hint: 'Одно слово в строке. Категории начинаются с #.',
         results_placeholder: 'Загрузите файл и нажмите кнопку.',
         file_summary: 'Загружено категорий: {categories}, слов: {words}.',
+        load_example: 'Загрузить пример файла',
         uncategorized: 'Без категории',
         error_no_file: 'Файл не выбран.',
         error_empty_file: 'Файл не содержит слов.',
+        error_example_load: 'Не удалось загрузить пример файла.',
     },
     en: {
         view_label: 'Batch Lookup',
@@ -141,9 +146,11 @@ const VIEW_STRINGS = {
         file_format_hint: 'One word per line. Categories start with #.',
         results_placeholder: 'Load a file and click the button.',
         file_summary: 'Loaded categories: {categories}, words: {words}.',
+        load_example: 'Load example file',
         uncategorized: 'Uncategorized',
         error_no_file: 'No file selected.',
         error_empty_file: 'File contains no words.',
+        error_example_load: 'Could not load example file.',
     },
 };
 
@@ -294,12 +301,86 @@ registerView({
 });
 
 /**
+ * Extract the filename from a file path.
+ *
+ * The path may use forward slashes or backslashes. The filename is
+ * the segment after the last slash. If no slash is present, the path
+ * itself is returned.
+ *
+ * @param {string} path - File path.
+ * @returns {string} Filename without directory components.
+ * @throws {TypeError} If path is not a non-empty string.
+ */
+function getFilenameFromPath(path) {
+    if (typeof path !== 'string' || path.length === 0) {
+        throw new TypeError('getFilenameFromPath: path must be a non-empty string');
+    }
+
+    // Handle both forward slashes and backslashes.
+    const parts = path.split(/[\\/]/);
+    return parts[parts.length - 1];
+}
+
+/**
  * Build the view DOM inside the mount container.
  *
  * @param {HTMLElement} container - The mount container element.
  */
 function buildDom(container) {
     clearElement(container);
+
+    // --- File Browser for example batch files --------------------------
+
+    /**
+     * createFileBrowserModal creates a "virtual file browser"
+     * using a manifest file. Here's how it works.
+     *
+     * Manifest File
+     * --------------
+     * - containers entries for each file you want included
+     *   in the virutal file browser
+     * - each entry has attributes: name, displayName,
+     *   path, and type (directory / file).
+     * - manifestUrl is the path to the manifest file
+     *
+     * Virtual File Browser:
+     * ---------------------
+     * - The file browser modal only simulates browsing based
+     *   on entries in the manifest file.
+     * - Meaning, the paths in the manifest file don't actually
+     *   have to exist on the OS; file browser will simply
+     *   create a browesr around any directory structure specified
+     *   in the manifest file. It has no knowledge of the OS.
+     * - Returns a list of the 'path' attrs for each file the
+     *   user selects in the browser.
+     */
+
+    const browser = createFileBrowserModal({
+        // path to manifest file.
+        manifestUrl: '/batch-examples/manifest.json',
+        // path relative to the web server where .path entries
+        // in the manifest file start. File browser will prepend
+        // this to the strings it returns (it returns a list
+        // of strings: the .path attrs for files the user selects
+        // in the virtual browser.) That way, can directly use the
+        // paths it returns in the fetch command to read the files
+        baseUrl: '/batch-examples',
+        onConfirm: async (paths) => {
+            if (paths.length === 0) return;
+            const path = paths[0]; // single-select for now
+            // Get filename from path, to display to user.
+            const fileName = getFilenameFromPath(path);
+            indicator.textContent = fileName;
+            try {
+                const response = await fetch(path);
+                const content = await response.text();
+                handleFileContent(content);
+            } catch (error) {
+                console.error('Failed to load example file:', error);
+                showError('error_example_load');
+            }
+        },
+    });
 
     // --- Batch controls ------------------------------------------------
     const controls = createElement('section', {
@@ -338,10 +419,33 @@ function buildDom(container) {
         },
     });
 
+    // batch example file browser
+    const exampleButton = createElement('button', {
+        class: 'example-file-button',
+        i18n: {
+            'data-i18n': 'load_example'
+        },
+        attrs: {
+            type: 'button'
+        },
+    });
+    exampleButton.addEventListener('click', () => browser.open());
+
+    const indicator = createElement('span', {
+        class: 'example-file-indicator',
+    });
+
+    const exampleGroup = createElement('div', {
+        class: 'example-file-group',
+    });
+    exampleGroup.appendChild(exampleButton);
+    exampleGroup.appendChild(indicator);
+
     fileGroup.appendChild(fileLabel);
     fileGroup.appendChild(fileInput);
     fileGroup.appendChild(formatHint);
     controls.appendChild(fileGroup);
+    controls.appendChild(exampleGroup);
 
     // Submit controls (submit button + strict checkbox)
     const submitControls = createSubmitControls({
