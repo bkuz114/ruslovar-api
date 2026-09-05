@@ -998,7 +998,7 @@ function createWordDetails(wordObj, item, openIds) {
     if (success) {
         details.appendChild(
             createMatchesContainer(item.result, {
-                layout: 'stacked'
+                layout: 'tabs'
             })
         );
     } else if (error) {
