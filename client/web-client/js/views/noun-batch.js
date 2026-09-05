@@ -622,7 +622,7 @@ function restoreFromState(state) {
  * Displays frontmatter metadata (if present) above the results, then
  * renders each category as a collapsible section. Words within each
  * category are matched to their API result and displayed inside a
- * collapsible <details> panel.
+ * collapsible panel.
  *
  * @param {Array<{name: string, words: string[]}>} categories - Flat list
  *     of parsed categories. Each category has a name and a words array.
@@ -733,7 +733,7 @@ function createMetadataDisplay(metadata) {
  * Append word detail panels to a container.
  *
  * For each word in the category, looks up its API result and creates a
- * collapsible <details> panel. The panels are appended directly to the
+ * collapsible panel. The panels are appended directly to the
  * provided container, which may be a category section or the results
  * area itself (for categories without a visible heading).
  *
@@ -769,8 +769,8 @@ function appendWordDetails(container, category, resultMap, openIds) {
         // get the actual word from it
         const word = wordObj.word;
         const item = resultMap.get(word);
-        const details = createWordPanel(wordObj, item, openIds);
-        container.appendChild(details);
+        const wordPanel = createWordPanel(wordObj, item, openIds);
+        container.appendChild(wordPanel);
     });
 }
 
