@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Collapsible Panel Component Styles
+   ==========================================================================
+   A reusable collapsible panel with CSS-driven expand/collapse animation.
+   Uses design tokens from :root for theming.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Default styling for the panel (user can override by passing their own list
+   of classes to classList.root)
+   -------------------------------------------------------------------------- */
+.collapsible-panel-default {
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--border-radius);
+    background: var(--color-surface);
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Trigger (the clickable header)
+   -------------------------------------------------------------------------- */
+.collapsible-panel__trigger {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-md);
+    background: var(--color-surface);
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    text-align: left;
+}
+
+.collapsible-panel__trigger:hover {
+    background: var(--color-metadata-bg);
+}
+
+.collapsible-panel__trigger:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+}
+
+/* --------------------------------------------------------------------------
+   Twistie (expand/collapse indicator)
+   Controlled entirely by CSS — rotates when panel is open.
+
+   Note: .collapsible-panel class added to all collapsibile panels,
+   regardless of user overrides to classList, so always present.
+   However, user can override the twistie class by passing their
+   own list of classes to classList.twistie
+   -------------------------------------------------------------------------- */
+.collapsible-panel__twistie {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    transition: transform 0.2s ease;
+    transform-origin: center;
+}
+
+.collapsible-panel__twistie::before {
+    content: '▶';
+    font-size: 0.65rem;
+    display: block;
+    line-height: 1rem;
+    color: var(--color-text-muted);
+}
+
+/* When panel is open, rotate twistie to point down */
+.collapsible-panel.is-open .collapsible-panel__twistie {
+    transform: rotate(90deg);
+}
+
+/* --------------------------------------------------------------------------
+   Content region
+   Uses CSS grid trick for smooth height animation:
+   - Closed: grid-template-rows: 0fr → inner content has 0 height
+   - Open: grid-template-rows: 1fr → inner content expands naturally
+
+   .collapsible-panel__content added to every content <div> regardless
+   of user override
+   -------------------------------------------------------------------------- */
+.collapsible-panel__content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.2s ease;
+}
+
+.collapsible-panel__content>* {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.collapsible-panel.is-closed .collapsible-panel__content {
+    grid-template-rows: 0fr;
+}
+
+/* Hide content from screen readers when closed */
+.collapsible-panel__content[hidden] {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Content body default styling in case of no user override.
+   (inner wrapper for padding)
+   - user can override by passing own classes to classList.content
+   -------------------------------------------------------------------------- */
+.collapsible-panel__content_default>* {
+    padding: var(--space-md);
+    color: var(--color-text);
+}
