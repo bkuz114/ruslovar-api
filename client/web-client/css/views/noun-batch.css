@@ -139,13 +139,15 @@
    -------------------------------------------------------------------------- */
 
 .word-details {
+    overflow: hidden;
     background-color: var(--color-surface);
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--border-radius);
     margin-bottom: var(--space-sm);
 }
 
-.word-details summary {
+.word-details-header {
+    width: 100%;
     padding: var(--space-sm) var(--space-md);
     cursor: pointer;
     font-weight: 600;
@@ -153,10 +155,6 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-sm);
-}
-
-.word-details summary:hover {
-    background-color: var(--color-bg);
 }
 
 /* --------------------------------------------------------------------------

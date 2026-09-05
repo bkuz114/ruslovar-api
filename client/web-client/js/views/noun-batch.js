@@ -65,6 +65,9 @@ import {
     loadStylesheet
 } from '../core/dom/dom.js';
 import {
+    createCollapsiblePanel
+} from '../core/dom/components/collapsible-panel.js';
+import {
     createErrorDiv,
 } from '../core/dom/components/errors.js';
 import {
@@ -766,7 +769,7 @@ function appendWordDetails(container, category, resultMap, openIds) {
         // get the actual word from it
         const word = wordObj.word;
         const item = resultMap.get(word);
-        const details = createWordDetails(wordObj, item, openIds);
+        const details = createWordPanel(wordObj, item, openIds);
         container.appendChild(details);
     });
 }
@@ -921,47 +924,104 @@ function createEmptyCategory(category) {
 }
 
 /**
- * Create a collapsible details panel for a single word.
- *
- * The panel is collapsed by default unless its node ID is present in
- * openIds. A toggle listener keeps openNodeIds in sync when the user
- * expands or collapses the panel.
- *
- * @param {Object} wordObj - Word node from the parser. The node
- *     contains the word text under the "word" property.
- * @param {Object|undefined} item - API result item for this word, if any.
- * @param {Set<string>} openIds - Set of node IDs that should be open.
- * @returns {HTMLElement} The word details element.
+ * ==========================================================
+ * Functions for building collapsible panels displaying
+ * results for individual words in the batch request.
+ * ==========================================================
  */
-function createWordDetails(wordObj, item, openIds) {
-    // wordObj is a WordNode created by the parser; get word
-    const word = wordObj.word;
 
-    // Set initial open state before attaching the toggle listener.
-    const startOpen = openIds.has(wordObj.id);
+/**
+ * Build the body content for a word result panel.
+ *
+ * Word result panel is the collapsible UI element displayed in the batch
+ * results for a single requested word. It contains a header (the word
+ * text, match count, and status badge) and a body (either the declension
+ * matches or an error message). The panel allows the user to expand or
+ * collapse the server results for that word.
+ *
+ * The body shows either the match results (when the API returned
+ * success) or an error message (when the request failed or no result
+ * item was found).
+ *
+ * @param {Object|undefined} item - API result item for this word, if any.
+ * @param {boolean} success - Whether the API returned a success status.
+ * @returns {HTMLElement} The panel body element.
+ */
+function createWordPanelBody(item, success) {
+    if (typeof success !== 'boolean') {
+        throw new TypeError('createWordPanelBody: success must be a boolean');
+    }
 
-    const details = createElement('details', {
-        class: 'word-details',
-        props: {
-            open: startOpen,
-        },
+    // item may be undefined if the server did not return a result entry
+    // for this word. The API is expected to return one item per requested
+    // word, but if it does not, treat the missing entry as an error case.
+    if (item !== undefined && item !== null && typeof item !== 'object') {
+        throw new TypeError('createWordPanelBody: item must be an object');
+    }
+
+    // Body of the panel depends on whether the word succeeded.
+
+    // Success case
+    if (success) {
+        return createMatchesContainer(
+            item.result, {
+                layout: 'tabs'
+            });
+    }
+
+    // Error case
+    const errorOptions = {
+        class: 'word-error',
+    };
+    if (item && item.error) {
+        // Server provided a specific error message. Use it directly.
+        // (this will NOT localize with language switch - it's just
+        // what server passed back. However, it's more specific.)
+        errorOptions.text = item.error;
+    } else {
+        // No server error text. Fall back to a localized generic error.
+        errorOptions.i18n = {
+            'data-i18n': 'error_unknown'
+        };
+    }
+    return createElement('div', errorOptions);
+}
+
+/**
+ * Build the header content for a word result panel.
+ * 
+ * Word result panel is the collapsible UI element displayed in the batch
+ * results for a single requested word. It contains a header (the word
+ * text, match count, and status badge) and a body (either the declension
+ * matches or an error message). The panel allows the user to expand or
+ * collapse the server results for that word.
+ *
+ * The header displays the word text, an optional match count (when
+ * the word resolves to multiple dictionary roots), and a status badge
+ * indicating success or error.
+ *
+ * @param {string} word - The word text.
+ * @param {boolean} success - Whether the API returned a success status.
+ * @param {number} matchCount - Number of root matches for the word.
+ * @returns {HTMLElement} The panel header element.
+ */
+function createWordPanelHeader(word, success, matchCount) {
+    if (typeof word !== 'string') {
+        throw new TypeError('createWordPanelHeader: word must be a string');
+    }
+
+    if (typeof success !== 'boolean') {
+        throw new TypeError('createWordPanelHeader: success must be a boolean');
+    }
+
+    if (!Number.isInteger(matchCount) || matchCount < 0) {
+        throw new TypeError('createWordPanelHeader: matchCount must be a non-negative integer');
+    }
+
+    // header: word plus a status badge.
+    const header = createElement('div', {
+        class: 'word-details-header',
     });
-
-    // Attach toggle listener after setting initial open state. The open
-    // property is set above; the listener only fires on user interaction.
-    details.addEventListener('toggle', () => {
-        if (details.open) {
-            openNodeIds.add(wordObj.id);
-        } else {
-            openNodeIds.delete(wordObj.id);
-        }
-    });
-
-    // Summary row: word plus a status badge.
-    const summary = createElement('summary');
-
-    const success = item && item.status === 'success';
-    const error = item && item.status === 'error';
 
     // Group word and optional match count in a single flex item.
     const wordGroup = createElement('span', {
@@ -971,14 +1031,14 @@ function createWordDetails(wordObj, item, openIds) {
 
     // If the word resolves to multiple dictionary roots, show a count
     // so the user knows before expanding the panel.
-    if (success && item.result.matches.length > 1) {
-        const matchCount = createElement('span', {
+    if (matchCount > 1) {
+        const matchCountSpan = createElement('span', {
             class: 'match-count',
-            text: `(${item.result.matches.length})`,
+            text: `(${matchCount})`,
         });
-        wordGroup.appendChild(matchCount);
+        wordGroup.appendChild(matchCountSpan);
     }
-    summary.appendChild(wordGroup);
+    header.appendChild(wordGroup);
 
     // Badge to display success of this sub-request
     const statusKey = success ? 'status_success' : 'status_error';
@@ -991,48 +1051,74 @@ function createWordDetails(wordObj, item, openIds) {
         },
     });
 
-    summary.appendChild(status);
-    details.appendChild(summary);
+    header.appendChild(status);
+    return header;
+}
 
-    // Body of the panel depends on whether the word succeeded.
-    if (success) {
-        details.appendChild(
-            createMatchesContainer(item.result, {
-                layout: 'tabs'
-            })
-        );
-    } else if (error) {
-        // common error div options to send to createElement
-        const errorOptions = {
-            class: 'word-error',
-        };
+/**
+ * Create a collapsible panel for server results for a single word.
+ *
+ * Each panel is the collapsible UI element displayed in the batch
+ * results for a single requested word. It contains a header (the word
+ * text, match count, and status badge) and a body (either the declension
+ * matches or an error message). The panel allows the user to expand or
+ * collapse the server results for that word.
+ *
+ * The panel is collapsed by default unless its node ID is present in
+ * openIds. A toggle listener keeps openNodeIds in sync when the user
+ * expands or collapses the panel.
+ *
+ * @param {Object} wordObj - Word node from the parser. The node
+ *     contains the word text under the "word" property.
+ * @param {Object|undefined} item - API result item for this word, if any.
+ * @param {Set<string>} openIds - Set of node IDs that should be open.
+ * @returns {HTMLElement} The word details element.
+ */
+function createWordPanel(wordObj, item, openIds) {
+    // wordObj is a WordNode created by the parser; get word
+    const word = wordObj.word;
 
-        if (item.error) {
-            // Server provided a specific error message. Use it directly.
-            // (this will NOT localize with language switch - it's just
-            // what server passed back. However, it's more specific.)
-            errorOptions.text = item.error;
+    // get success state from server
+    const wasSuccessful = item && item.status === 'success';
+
+    // count how many root matches were found for the word
+    // (gets special header display if more than 1)
+    const matches = item?.result?.matches;
+    const matchCount = Array.isArray(matches) ? matches.length : 0;
+
+    // Header for the panel
+    const panelHeader = createWordPanelHeader(word, wasSuccessful, matchCount);
+
+    // Body for the panel
+    const panelBody = createWordPanelBody(item, wasSuccessful);
+
+    // Create the collapsible panel
+
+    // Set initial open state from previous state.
+    const startOpen = openIds.has(wordObj.id);
+    const panel = createCollapsiblePanel({
+        header: panelHeader,
+        content: panelBody,
+        startOpen: startOpen,
+        classNames: {
+            'root': ['word-details']
+        },
+        onToggle: (state, event) => handleToggle(state, wordObj, openNodeIds),
+    });
+
+    // when panel is toggled, set gloabl state so it
+    // can be saved on navigation.
+    const handleToggle = (state, wordObj, openNodeIds) => {
+        if (state === 'open') {
+            openNodeIds.add(wordObj.id);
         } else {
-            // No server error text. Fall back to a localized generic error.
-            errorOptions.i18n = {
-                'data-i18n': 'error_unknown'
-            };
+            openNodeIds.delete(wordObj.id);
         }
-        const errorDiv = createElement('div', errorOptions);
-        details.appendChild(errorDiv);
-    } else {
-        // No result item found for this word. This can happen if the
-        // API response is missing an entry for a requested word.
-        const errorDiv = createElement('div', {
-            class: 'word-error',
-            i18n: {
-                "data-i18n": 'error_unknown',
-            },
-        });
-        details.appendChild(errorDiv);
-    }
+    };
 
-    return details;
+    // createCollapsiblePanel returns an object of data
+    // .root is the actual DOM node for the panel
+    return panel.root;
 }
 
 /**
