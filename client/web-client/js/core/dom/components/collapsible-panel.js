@@ -14,7 +14,7 @@
  * This avoids JavaScript-based height measurement while preserving
  * smooth animation. See collapsible-panel.css for details.
  *
- * Structural CSS classes (collapsible-panel, collapsible-panel__content,
+ * Structural CSS classes (collapsible-panel__trigger--behavior, collapsible-panel__content--behavior,
  * etc.) are always applied. The classNames option adds to these, it does
  * not replace them. This ensures core behavior (twistie rotation, collapse
  * animation) works regardless of custom styling.
@@ -250,18 +250,18 @@ function resolveContentNode(input, name) {
  * @param {string} [options.idPrefix='collapsible-panel'] - Prefix for
  *                                                          generated element IDs
  * @param {Object} [options.classNames] - Optional CSS class overrides
- * @param {string[]} [options.classNames.root=['collapsible-panel-default]] -
+ * @param {string[]} [options.classNames.root=['collapsible-panel]] -
  * 										Classes for the root element
- * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger_default]] -
+ * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger]] -
  * 										Classes for the trigger element
- * 										Note: ALL panels get 'collapsible-panel__trigger' class
+ * 										Note: ALL panels get 'collapsible-panel__trigger--behavior' class
  * 										If user supplies overrides, it will get appended.
  * 										It does not provide any styling; it just
  * 										assists in twistie animation.
- * @param {string[]} [options.classNames.content=['collapsible-panel__content_default]]
+ * @param {string[]} [options.classNames.content=['collapsible-panel__content]]
  * 										Classes for the content region
  * 										Note: ALL content regions will have
- * 										'collapsible-panel__content added (if user
+ * 										'collapsible-panel__content--behavior added (if user
  * 										sends overrids, it will get appended to it;
  * 										this class is necessary to handle the
  * 										collapse animatino)
@@ -307,9 +307,9 @@ export function createCollapsiblePanel(options = {}) {
 
     // Resolve CSS classes with defaults and caller overrides
     const classes = {
-        root: classNames.root || ['collapsible-panel-default'],
-        trigger: classNames.trigger || ['collapsible-panel__trigger_default'],
-        content: classNames.content || ['collapsible-panel__content_default'],
+        root: classNames.root || ['collapsible-panel'],
+        trigger: classNames.trigger || ['collapsible-panel__trigger'],
+        content: classNames.content || ['collapsible-panel__content'],
         twistie: classNames.twistie || ['collapsible-panel__twistie'],
     };
 
@@ -326,9 +326,9 @@ export function createCollapsiblePanel(options = {}) {
     const trigger = document.createElement('button');
     trigger.type = 'button';
     let triggerClasses = classes.trigger;
-    // collapsible-panel__trigger class + having aria-expanded true determines twistie
+    // collapsible-panel__trigger--behavior class + having aria-expanded true determines twistie
     // animation behavior so must be present
-    triggerClasses.push('collapsible-panel__trigger');
+    triggerClasses.push('collapsible-panel__trigger--behavior');
     trigger.className = triggerClasses.join(' ');
     trigger.id = triggerId;
     // CSS relies on aria-expanded = true on this element to control twistie behavior
@@ -347,8 +347,8 @@ export function createCollapsiblePanel(options = {}) {
     // trigger for assistive technology.
     const contentRegion = document.createElement('div');
     let contentClasses = classes.content;
-    // collapsible-panel__content class determines collapse behavior so it must be present
-    contentClasses.push('collapsible-panel__content');
+    // collapsible-panel__content--behavior class determines collapse behavior so it must be present
+    contentClasses.push('collapsible-panel__content--behavior');
     contentRegion.className = contentClasses.join(' ');
     contentRegion.id = contentId;
     contentRegion.setAttribute('role', 'region');
