@@ -133,12 +133,26 @@
    Category sections
    -------------------------------------------------------------------------- */
 
-.category-heading {
+/* ===========================
+ * Base styling shared between
+ * empty + non-empty categories
+ * ============================
+ */
+
+.category {
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-md);
+    background: var(--color-surface);
+    border: none;
+    border-bottom: var(--border-width) solid var(--color-border);
+    font-family: var(--font-family);
     font-size: var(--font-size-lg);
     font-weight: 600;
-    border-bottom: var(--border-width) solid var(--color-border);
-    padding-bottom: var(--space-xs);
-    margin-bottom: var(--space-sm);
+    text-align: left;
+}
+
+.category-heading {
     cursor: pointer;
 }
 
@@ -154,18 +168,10 @@
    Empty categories
    -------------------------------------------------------------------------- */
 
-.category-empty {
-    margin-bottom: var(--space-md);
-}
-
 .category-empty-heading {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
+    margin-left: 24px;
     font-style: italic;
     color: var(--color-text-muted);
-    border-bottom: var(--border-width) solid var(--color-border);
-    padding-bottom: var(--space-xs);
-    margin-bottom: var(--space-md);
 }
 
 /* --------------------------------------------------------------------------

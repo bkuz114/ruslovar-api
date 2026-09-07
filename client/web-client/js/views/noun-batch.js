@@ -936,7 +936,7 @@ function createCategorySection(category, resultMap, openIds) {
     });
 
     const summary = createElement('summary', {
-        class: 'category-heading',
+        class: ['category', 'category-heading'],
         text: category.name,
     });
     details.appendChild(summary);
@@ -1015,10 +1015,10 @@ function createEmptyCategory(category) {
     }
 
     const container = createElement('div', {
-        class: 'category-empty',
+        class: ['category', 'category-empty'],
     });
 
-    const heading = createElement('h2', {
+    const heading = createElement('div', {
         class: 'category-empty-heading',
         text: category.name,
     });
