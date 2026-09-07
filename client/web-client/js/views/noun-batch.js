@@ -135,6 +135,7 @@ const VIEW_STRINGS = {
         results_placeholder: 'Загрузите файл и нажмите кнопку.',
         file_summary: 'Загружено категорий: {categories}, слов: {words}.',
         load_example: 'Загрузить пример файла',
+        category_empty: '{name} (пусто)',
         uncategorized: 'Без категории',
         error_no_file: 'Файл не выбран.',
         error_empty_file: 'Файл не содержит слов.',
@@ -147,6 +148,7 @@ const VIEW_STRINGS = {
         results_placeholder: 'Load a file and click the button.',
         file_summary: 'Loaded categories: {categories}, words: {words}.',
         load_example: 'Load example file',
+        category_empty: '{name} (empty)',
         uncategorized: 'Uncategorized',
         error_no_file: 'No file selected.',
         error_empty_file: 'File contains no words.',
@@ -1020,7 +1022,14 @@ function createEmptyCategory(category) {
 
     const heading = createElement('div', {
         class: 'category-empty-heading',
-        text: category.name,
+        i18n: {
+            substitutions: {
+                'data-i18n': {
+                    name: category.name,
+                },
+            },
+            'data-i18n': 'category_empty',
+        },
     });
     container.appendChild(heading);
 
