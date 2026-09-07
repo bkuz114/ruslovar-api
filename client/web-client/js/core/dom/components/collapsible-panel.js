@@ -258,7 +258,7 @@ function resolveContentNode(input, name) {
  * 										assists in twistie animation.
  * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger]] -
  * 										Classes for the trigger element
- * @param {string[]} [options.classNames.content=['collapsible-panel__content-default]]
+ * @param {string[]} [options.classNames.content=['collapsible-panel__content_default]]
  * 										Classes for the content region
  * 										Note: ALL content regions will have
  * 										'collapsible-panel__content added (if user
@@ -309,7 +309,7 @@ export function createCollapsiblePanel(options = {}) {
     const classes = {
         root: classNames.root || ['collapsible-panel-default'],
         trigger: classNames.trigger || ['collapsible-panel__trigger'],
-        content: classNames.content || ['collapsible-panel__content-default'],
+        content: classNames.content || ['collapsible-panel__content_default'],
         twistie: classNames.twistie || ['collapsible-panel__twistie'],
     };
 
