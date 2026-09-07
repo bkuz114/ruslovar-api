@@ -250,7 +250,7 @@ function resolveContentNode(input, name) {
  * @param {string} [options.idPrefix='collapsible-panel'] - Prefix for
  *                                                          generated element IDs
  * @param {Object} [options.classNames] - Optional CSS class overrides
- * @param {string[]} [options.classNames.root=['collapsibile-panel-default]] -
+ * @param {string[]} [options.classNames.root=['collapsible-panel-default]] -
  * 										Classes for the root element
  * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger_default]] -
  * 										Classes for the trigger element
