@@ -34,6 +34,7 @@
  *   const panel = createCollapsiblePanel({
  *       header: 'Panel Title',
  *       content: '<p>Panel body content</p>',
+ *       icon: '»',                                // defaults to '▶'
  *       startOpen: true,
  *       onToggle: (state, event) => console.log('Panel is now ' + state),
  *   });
@@ -71,6 +72,48 @@ import {
 } from './../dom.js';
 
 let panelCounter = 0;
+
+/**
+ * Converts a JavaScript string into a valid CSS string value for use
+ * with CSS custom properties (i.e., CSS variables).
+ *
+ * (CSS custom properties store CSS *values*, not JavaScript strings.
+ * A CSS string value must be wrapped in quotes — otherwise, characters
+ * like "▶" or "→" are parsed as invalid CSS syntax and the entire
+ * declaration is discarded by the CSS parser. Within those quotes,
+ * backslashes and single quotes must be escaped so they don't
+ * prematurely terminate or corrupt the string.)
+ *
+ * @param {string} str - The JavaScript string to convert (e.g., "▶", "→")
+ * @returns {string} A CSS string value, including surrounding quotes
+ *                   and necessary escape sequences (e.g., "'▶'", "'\\''")
+ *
+ * @example
+ * // Basic usage
+ * const cssValue = toCssString("▶");
+ * element.style.setProperty('--icon', cssValue);
+ * // Sets: --icon: '▶';
+ *
+ * @example
+ * // Handles quotes and backslashes
+ * toCssString("it's");     // Returns: 'it\'s'
+ * toCssString("a\\b");     // Returns: 'a\\\\b'
+ */
+function toCssString(str) {
+    // Validate input type
+    if (typeof str !== 'string') {
+        throw new TypeError(`toCssString expected a string, received ${typeof str}`);
+    }
+    return "'" + str.replace(/\\/g, '\\\\') // Escape backslashes first
+        .replace(/'/g, "\\'") // Then escape single quotes
+        .replace(/\n/g, '\\A ') // Newline → CSS escape
+        .replace(/\r/g, '\\D ') // Carriage return → CSS escape
+        .replace(/\t/g, '\\9 ') // Tab → CSS escape
+        .replace(/\f/g, '\\C ') // Form feed → CSS escape
+        .replace(/\0/g, '\\0 ') // Null → CSS escape
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g,
+            c => '\\' + c.charCodeAt(0).toString(16) + ' ') + "'";
+}
 
 /**
  * Validates that a value is a plain object (not null, not an array,
@@ -145,6 +188,15 @@ function validateOptions(options) {
         if (typeof options.id !== 'string' || options.id.trim() === '') {
             throw new TypeError(
                 'id must be a non-empty string. Received: ' + typeof options.id
+            );
+        }
+    }
+
+    // Validate icon
+    if (options.icon !== undefined) {
+        if (typeof options.icon !== 'string') {
+            throw new TypeError(
+                'icon must be a string. Received: ' + typeof options.icon
             );
         }
     }
@@ -251,6 +303,8 @@ function resolveContentNode(input, name) {
  *                                        where state is 'open' or 'closed'.
  * @param {string} [options.idPrefix='collapsible-panel'] - Prefix for
  *                                                          generated element IDs
+ * @param {string} [options.icon] - twistie icon. If not supplied, icon is '▶'
+ *                                         (set in collapsible-panel.css, --twistie-icon)
  * @param {Object} [options.classNames] - Optional CSS class overrides
  * @param {string[]} [options.classNames.root=['collapsible-panel]] -
  *                                         Classes for the root element
@@ -297,6 +351,7 @@ export function createCollapsiblePanel(options = {}) {
         onToggle = null,
         id,
         idPrefix = 'collapsible-panel',
+        icon,
         classNames = {},
     } = options;
 
@@ -345,9 +400,12 @@ export function createCollapsiblePanel(options = {}) {
     trigger.setAttribute('aria-expanded', startOpen ? 'true' : 'false');
     trigger.setAttribute('aria-controls', contentId);
 
-    // Twistie icon - purely decorative, controlled by CSS. Hidden from
-    // screen readers since the aria-expanded attribute already conveys
-    // the panel's state.
+    /**
+     * Twistie - purely decorative, controlled by CSS. Hidden from
+     * screen readers since the aria-expanded attribute already conveys
+     * the panel's state.
+     */
+
     const twistie = document.createElement('span');
     let twistieClasses = classes.twistie;
     // collapsible-panel__twistie--behavior drives icon
@@ -355,6 +413,13 @@ export function createCollapsiblePanel(options = {}) {
     twistieClasses.push('collapsible-panel__twistie--behavior');
     twistie.className = twistieClasses.join(' ');
     twistie.setAttribute('aria-hidden', 'true');
+    // the icon itself: derived via CSS variable --twistie-icon
+    // override if user supplied it as a string
+    if (options.icon !== undefined) {
+        const escaped = toCssString(options.icon);
+        twistie.style.setProperty('--twistie-icon', escaped);
+    }
+
     // Content region - the collapsible area. The role="region" and
     // aria-labelledby attributes establish the relationship with the
     // trigger for assistive technology.

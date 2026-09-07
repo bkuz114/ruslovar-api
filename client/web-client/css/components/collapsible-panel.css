@@ -1,3 +1,11 @@
+:root {
+    /*
+     * default twistie icon. user can override with
+     * .icon option to createCollapsiblePanel
+     */
+    --twistie-icon: '▶';
+}
+
 /* ==========================================================================
    Collapsible Panel Component Styles
    ==========================================================================
@@ -70,7 +78,7 @@
       Default styling for <span> twistie is in (color, size)
       User can override via classList.twistie
    - .collapsible-panel__twistie--behavior
-      Controls rotation and icon. Always present; user can not override
+      Controls rotation. Always present; user can not override
    - .collapsible-panel__trigger--behavior
       Defined on parent trigger element.
       Used to determine if panel is open and if to rotate twistie
@@ -93,7 +101,7 @@
 }
 
 .collapsible-panel__twistie--behavior::before {
-    content: '▶';
+    content: var(--twistie-icon);
     display: block;
 }
 
