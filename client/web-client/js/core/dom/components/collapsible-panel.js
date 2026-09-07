@@ -14,7 +14,8 @@
  * This avoids JavaScript-based height measurement while preserving
  * smooth animation. See collapsible-panel.css for details.
  *
- * Structural CSS classes (collapsible-panel__trigger--behavior, collapsible-panel__content--behavior,
+ * Structural CSS classes (collapsible-panel--behavior,
+ * collapsible-panel__trigger--behavior, collapsible-panel__content--behavior,
  * etc.) are always applied. The classNames option adds to these, it does
  * not replace them. This ensures core behavior (twistie rotation, collapse
  * animation) works regardless of custom styling.
@@ -252,6 +253,10 @@ function resolveContentNode(input, name) {
  * @param {Object} [options.classNames] - Optional CSS class overrides
  * @param {string[]} [options.classNames.root=['collapsible-panel]] -
  * 										Classes for the root element
+ * 										Note: ALL panels get 'collapsible-panel--behavior' class
+ * 										If user supplies overrides, it will get appended.
+ * 										It does not provide any styling; it just
+ * 										assists in content display animation.
  * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger]] -
  * 										Classes for the trigger element
  * 										Note: ALL panels get 'collapsible-panel__trigger--behavior' class
@@ -317,7 +322,11 @@ export function createCollapsiblePanel(options = {}) {
 
     // Root container - the outermost element the caller appends to the page
     const root = document.createElement('div');
-    root.className = classes.root.join(' ');
+    let rootClasses = classes.root;
+    // collapsible-panel--behavior class helps determine content animation so must be present
+    // it is behavioral only - no styling changes.
+    rootClasses.push('collapsible-panel--behavior');
+    root.className = rootClasses.join(' ');
     root.classList.add(startOpen ? 'is-open' : 'is-closed');
     root.id = panelId;
 

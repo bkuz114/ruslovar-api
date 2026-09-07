@@ -6,9 +6,16 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Default styling for the panel (user can override by passing their own list
-   of classes to classList.root)
+   Root (the main panel container)
+
+   - .collapsible-panel--behavior is always applied to root container element
+     via collapsible-panel.js, regardless of user-provided class overrides.
+	 It is a behavioral hook: its presence with .is-closed drives content animation.
+
+   - .collapsible-panel is styling only, and user can override by passing
+     their own list of classes to classList.root.
    -------------------------------------------------------------------------- */
+
 .collapsible-panel {
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--border-radius);
@@ -125,7 +132,7 @@
     min-height: 0;
 }
 
-.collapsible-panel.is-closed .collapsible-panel__content--behavior {
+.collapsible-panel--behavior.is-closed .collapsible-panel__content--behavior {
     grid-template-rows: 0fr;
 }
 
