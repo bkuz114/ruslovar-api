@@ -241,8 +241,8 @@ function resolveContentNode(input, name) {
  *
  * @param {Object} options - Component configuration
  * @param {string|Node|Object} options.header - Content for the clickable trigger.
- *										If a string, a <div> will be created.
- *										If Node
+ *                                        If a string, a <div> will be created.
+ *                                        If Node
  * @param {string|Node|Object} options.content - Content for the collapsible region
  * @param {boolean} [options.startOpen=false] - Initial panel state
  * @param {Function} [options.onToggle] - Callback invoked on user-initiated
@@ -252,26 +252,26 @@ function resolveContentNode(input, name) {
  *                                                          generated element IDs
  * @param {Object} [options.classNames] - Optional CSS class overrides
  * @param {string[]} [options.classNames.root=['collapsible-panel]] -
- * 										Classes for the root element
- * 										Note: ALL panels get 'collapsible-panel--behavior' class
- * 										If user supplies overrides, it will get appended.
- * 										It does not provide any styling; it just
- * 										assists in content display animation.
+ *                                         Classes for the root element
+ *                                         Note: ALL panels get 'collapsible-panel--behavior' class
+ *                                         If user supplies overrides, it will get appended.
+ *                                         It does not provide any styling; it just
+ *                                         assists in content display animation.
  * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger]] -
- * 										Classes for the trigger element
- * 										Note: ALL panels get 'collapsible-panel__trigger--behavior' class
- * 										If user supplies overrides, it will get appended.
- * 										It does not provide any styling; it just
- * 										assists in twistie animation.
+ *                                         Classes for the trigger element
+ *                                         Note: ALL panels get 'collapsible-panel__trigger--behavior' class
+ *                                         If user supplies overrides, it will get appended.
+ *                                         It does not provide any styling; it just
+ *                                         assists in twistie animation.
  * @param {string[]} [options.classNames.content=['collapsible-panel__content]]
- * 										Classes for the content region
- * 										Note: ALL content regions will have
- * 										'collapsible-panel__content--behavior added (if user
- * 										sends overrids, it will get appended to it;
- * 										this class is necessary to handle the
- * 										collapse animatino)
+ *                                         Classes for the content region
+ *                                         Note: ALL content regions will have
+ *                                         'collapsible-panel__content--behavior added (if user
+ *                                         sends overrids, it will get appended to it;
+ *                                         this class is necessary to handle the
+ *                                         collapse animatino)
  * @param {string[]} [options.classNames.twistie=['collapsible-panel__twistie']] -
- * 										Classes for the twistie icon
+ *                                         Classes for the twistie icon
  *
  * @returns {Object} The panel component with the following properties:
  *   root    - HTMLElement, the outermost panel element

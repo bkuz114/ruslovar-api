@@ -10,7 +10,7 @@
 
    - .collapsible-panel--behavior is always applied to root container element
      via collapsible-panel.js, regardless of user-provided class overrides.
-	 It is a behavioral hook: its presence with .is-closed drives content animation.
+     It is a behavioral hook: its presence with .is-closed drives content animation.
 
    - .collapsible-panel is styling only, and user can override by passing
      their own list of classes to classList.root.
