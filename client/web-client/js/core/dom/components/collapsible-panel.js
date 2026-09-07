@@ -23,11 +23,10 @@
  *
  * header and content accept either:
  *   - A string: treated as HTML, wrapped in a div
- *   - A DOM node: used as-is
- *   - An object: passed directly to createElement (supports i18n, attrs,
- *     props, class, and all other createElement options)
+ *   - A DOM node: used as-is (build with createElement if i18n or
+ *     custom attributes are needed)
  *
- * Usage (simple):
+ * Usage:
  *
  *   import { createCollapsiblePanel } from './collapsible-panel.js';
  *
@@ -41,35 +40,11 @@
  *
  *   document.body.appendChild(panel.root);
  *
- * Usage (createElement API for header, with custom classes):
- *
- *   const panel = createCollapsiblePanel({
- *       header: {
- *           text: 'Panel Title',
- *           i18n: {
- *               'data-i18n': 'mykey',
- *               exclusions: ['data-i18n-.*'],
- *               forceShared: true
- *           }
- *       },                                  // passed to createElement
- *       content: '<p>Panel body content</p>', // created in-house (wrapped in div)
- *       classNames: {
- *           root: ['panel-styles'],          // added to structural classes
- *           content: ['panel-content', 'mystyles']
- *       },
- *       startOpen: true,
- *       onToggle: (state, event) => console.log('Panel is now ' + state),
- *   });
- *
  *   panel.open();   // silent - does not fire onToggle
  *   panel.close();  // silent - does not fire onToggle
  *   panel.toggle(); // silent - does not fire onToggle
  *   panel.destroy(); // removes event listeners
  */
-
-import {
-    createElement
-} from './../dom.js';
 
 let panelCounter = 0;
 
@@ -240,9 +215,6 @@ function validateOptions(options) {
  *
  *   - Node: returned as-is, no wrapping needed
  *   - string: treated as HTML, wrapped in a div element
- *   - object: passed directly to createElement (caller
- *     responsible for ensuring correct API options for
- *     createElement were provided)
  *
  * Throws a TypeError if the input matches none of the accepted forms.
  * This ensures invalid input is caught immediately rather than silently
@@ -265,11 +237,6 @@ function resolveContentNode(input, name) {
         const container = document.createElement('div');
         container.innerHTML = input;
         return container;
-    }
-
-    // Object input - pass directly to createElement so it can handle i18n
-    if (input !== null && typeof input === 'object' && !Array.isArray(input)) {
-        return createElement('div', input);
     }
 
     // No accepted form matched - fail loudly so the caller knows immediately
