@@ -15,6 +15,7 @@
  * smooth animation. See collapsible-panel.css for details.
  *
  * Structural CSS classes (collapsible-panel--behavior,
+ * collapsible-panel__twistie--behavior,
  * collapsible-panel__trigger--behavior, collapsible-panel__content--behavior,
  * etc.) are always applied. The classNames option adds to these, it does
  * not replace them. This ensures core behavior (twistie rotation, collapse
@@ -348,9 +349,12 @@ export function createCollapsiblePanel(options = {}) {
     // screen readers since the aria-expanded attribute already conveys
     // the panel's state.
     const twistie = document.createElement('span');
-    twistie.className = classes.twistie.join(' ');
+    let twistieClasses = classes.twistie;
+    // collapsible-panel__twistie--behavior drives icon
+    // animation so must be present
+    twistieClasses.push('collapsible-panel__twistie--behavior');
+    twistie.className = twistieClasses.join(' ');
     twistie.setAttribute('aria-hidden', 'true');
-
     // Content region - the collapsible area. The role="region" and
     // aria-labelledby attributes establish the relationship with the
     // trigger for assistive technology.

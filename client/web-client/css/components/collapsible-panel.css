@@ -64,26 +64,37 @@
    Twistie (expand/collapse indicator)
    Controlled entirely by CSS — rotates when panel is open.
 
-   Note: .collapsible-panel class added to all collapsibile panels,
-   regardless of user overrides to classList, so always present.
-   However, user can override the twistie class by passing their
-   own list of classes to classList.twistie
+   Controlled via 3 different classes:
+
+   - .collapsible-panel__twistie
+      Default styling for <span> twistie is in (color, size)
+      User can override via classList.twistie
+   - .collapsible-panel__twistie--behavior
+      Controls rotation and icon. Always present; user can not override
+   - .collapsible-panel__trigger--behavior
+      Defined on parent trigger element.
+      Used to determine if panel is open and if to rotate twistie
+      Always present (Added by JavaScript)
    -------------------------------------------------------------------------- */
+
 .collapsible-panel__twistie {
-    display: inline-block;
-    flex-shrink: 0;
     width: 1rem;
     height: 1rem;
+    font-size: 0.65rem;
+    line-height: 1rem;
+    color: var(--color-text-muted);
+}
+
+.collapsible-panel__twistie--behavior {
+    display: inline-block;
+    flex-shrink: 0;
     transition: transform 0.2s ease;
     transform-origin: center;
 }
 
-.collapsible-panel__twistie::before {
+.collapsible-panel__twistie--behavior::before {
     content: '▶';
-    font-size: 0.65rem;
     display: block;
-    line-height: 1rem;
-    color: var(--color-text-muted);
 }
 
 /*
@@ -108,7 +119,7 @@
  *   regardless of user overrides (it will be appended to any user specified
  *   classes). It is behavioral only, to deal with twistie animation.
  */
-.collapsible-panel__trigger--behavior[aria-expanded="true"]>.collapsible-panel__twistie {
+.collapsible-panel__trigger--behavior[aria-expanded="true"]>.collapsible-panel__twistie--behavior {
     transform: rotate(90deg);
 }
 
