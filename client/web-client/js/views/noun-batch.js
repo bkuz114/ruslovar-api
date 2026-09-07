@@ -204,7 +204,7 @@ let lastResults = null;
 /**
  * Set of node IDs (categories and words) that are currently open.
  *
- * Updated by toggle event listeners on <details> elements. Serialized
+ * Updated by toggle event listeners on collapsible panels. Serialized
  * to an array in getState() and restored from an array on mount.
  *
  * @type {Set<string>}
@@ -777,7 +777,7 @@ function renderBatchResults(categories, metadata, results, openIds) {
             elements.resultsArea.appendChild(createUncategorizedSection(category, resultMap, openIds));
         } else if (category.words.length > 0) {
             // Words within categories: render into collapsible sections with headings
-            elements.resultsArea.appendChild(createCategorySection(category, resultMap, openIds));
+            elements.resultsArea.appendChild(createCategoryPanel(category, resultMap, openIds));
         } else {
             // Categories with no words beneath them
             elements.resultsArea.appendChild(createEmptyCategory(category));
@@ -881,11 +881,54 @@ function appendWordDetails(container, category, resultMap, openIds) {
 }
 
 /**
- * Create a collapsible category section.
+ * Creates the body for a collapsible panel for a container.
  *
- * The category name is rendered as a <summary> element. Words belonging
- * to the category are appended to the body of the <details> element and
- * are hidden until the user expands the section.
+ * For each word in the category, looks up its API result and creates a
+ * collapsible panel for it. The panels are appended to the created div.
+ *
+ * @param {{name: string, words: Array<Object>}} category - Category data.
+ *     The words array contains word node objects from the parser.
+ * @param {Map<string, Object>} resultMap - Map of word to API result item.
+ * @param {Set<string>} openIds - Set of node IDs that should be open.
+ */
+function createCategoryPanelBody(category, resultMap, openIds) {
+
+    if (!category || typeof category !== 'object') {
+        throw new TypeError('createCategoryPanelBody: category must be an object');
+    }
+
+    if (!Array.isArray(category.words)) {
+        throw new TypeError('createCategoryPanelBody: category.words must be an array');
+    }
+
+    if (!(resultMap instanceof Map)) {
+        throw new TypeError('createCategoryPanelBody: resultMap must be a Map');
+    }
+
+    if (!(openIds instanceof Set)) {
+        throw new TypeError('createCategoryPanelBody: openIds must be a Set');
+    }
+
+    const container = createElement('div');
+
+    category.words.forEach((wordObj) => {
+        // wordObj is a WordNode object created by the parser;
+        // get the actual word from it
+        const word = wordObj.word;
+        const item = resultMap.get(word);
+        const wordPanel = createWordPanel(wordObj, item, openIds);
+        container.appendChild(wordPanel);
+    });
+
+    return container;
+}
+
+/**
+ * Create a collapsible panel for a category.
+ *
+ * The category name is rendered in the panels clickable header. Words belonging
+ * to the category are appended to the category content area, each one being
+ * a collapsible panel itself, and are hidden until the user expands the section.
  *
  * Categories are collapsed by default unless their node ID is present
  * in openIds. A toggle listener keeps openNodeIds in sync when the
@@ -894,58 +937,67 @@ function appendWordDetails(container, category, resultMap, openIds) {
  * @param {{name: string, words: string[]}} category - Category data.
  * @param {Map<string, Object>} resultMap - Map of word to API result item.
  * @param {Set<string>} openIds - Set of node IDs that should be open.
- * @returns {HTMLElement} The category section element (a <details> element).
+ * @returns {HTMLElement} The collapsible panel representing the results for
+ *         this category.
  */
-function createCategorySection(category, resultMap, openIds) {
+function createCategoryPanel(category, resultMap, openIds) {
     if (!category || typeof category !== 'object') {
-        throw new TypeError('createCategorySection: category must be an object');
+        throw new TypeError('createCategoryPanel: category must be an object');
     }
 
     if (typeof category.name !== 'string') {
-        throw new TypeError('createCategorySection: category.name must be a string');
+        throw new TypeError('createCategoryPanel: category.name must be a string');
     }
 
     if (!Array.isArray(category.words)) {
-        throw new TypeError('createCategorySection: category.words must be an array');
+        throw new TypeError('createCategoryPanel: category.words must be an array');
     }
 
     if (!(resultMap instanceof Map)) {
-        throw new TypeError('createCategorySection: resultMap must be a Map');
+        throw new TypeError('createCategoryPanel: resultMap must be a Map');
     }
 
     if (!(openIds instanceof Set)) {
-        throw new TypeError('createCategorySection: openIds must be a Set');
+        throw new TypeError('createCategoryPanel: openIds must be a Set');
     }
 
-    // Set initial open state before attaching the toggle listener.
+    // Initial open state based on previous state
     const startOpen = openIds.has(category.id);
 
-    const details = createElement('details', {
-        class: 'category-section',
-        props: {
-            open: startOpen,
-        },
+    // header
+    const panelHeader = createElement('div', {
+        class: 'category-heading',
+        text: category.name,
     });
 
-    // Attach toggle listener after setting initial open state. The open
-    // property is set above; the listener only fires on user interaction.
-    details.addEventListener('toggle', () => {
-        if (details.open) {
+    // Handler for panel open/close: toggle the category id from openNodeIds
+    // (used to save current open/close state of results so it can be
+    // re-rendered if user navigates to another view then returns)
+    const handleToggle = (state) => {
+        if (state === 'open') {
             openNodeIds.add(category.id);
         } else {
             openNodeIds.delete(category.id);
         }
+    };
+
+    // create panel body with subsections for each word
+    const panelBody = createCategoryPanelBody(category, resultMap, openIds);
+
+    // assemble the panel
+    const panel = createCollapsiblePanel({
+        header: panelHeader,
+        content: panelBody,
+        startOpen: startOpen,
+        classNames: {
+            'root': ['category-panel'],
+            'trigger': ['category', 'category-panel__trigger'],
+            'twistie': ['category-panel__twistie'],
+        },
+        onToggle: (state, event) => handleToggle(state, category, openNodeIds),
     });
 
-    const summary = createElement('summary', {
-        class: ['category', 'category-heading'],
-        text: category.name,
-    });
-    details.appendChild(summary);
-
-    appendWordDetails(details, category, resultMap, openIds);
-
-    return details;
+    return panel.root;
 }
 
 /**
@@ -983,11 +1035,10 @@ function createUncategorizedSection(category, resultMap, openIds) {
         throw new TypeError('createUncategorizedSection: openIds must be a Set');
     }
 
-    const container = createElement('div', {
-        class: 'uncategorized-section',
-    });
-    appendWordDetails(container, category, resultMap, openIds);
-    return container;
+    const categoryContent = createCategoryPanelBody(category, resultMap, openIds);
+    // add class to designate
+    categoryContent.classList.add('uncategorized-section');
+    return categoryContent;
 }
 
 /**

@@ -130,7 +130,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Category sections
+   Category Panels
    -------------------------------------------------------------------------- */
 
 /* ===========================
@@ -152,16 +152,47 @@
     text-align: left;
 }
 
-.category-heading {
-    cursor: pointer;
+/* ===============================
+ * specific to non-empty categories
+ * ================================
+ */
+
+/* main wrapper for the panel */
+.category-panel {
+    border: none;
 }
 
-.category-heading:hover {
+/* trigger element wrapping the entire heading */
+.category-panel__trigger {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--color-text);
+}
+
+.category-panel__trigger:hover {
     color: var(--color-primary);
+    background: var(--color-metadata-bg);
+}
+
+.category-panel__trigger:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+}
+
+/* text heading within the trigger element */
+.category-heading {
+    width: 100%;
 }
 
 .category-heading::-webkit-details-marker {
     display: none;
+}
+
+/* span containing arrow icon, make larger for container panels */
+.category-panel__twistie {
+    font-size: 1rem;
+    margin-right: var(--space-xs);
 }
 
 /* --------------------------------------------------------------------------
