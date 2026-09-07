@@ -231,11 +231,11 @@
    -------------------------------------------------------------------------- */
 
 .matches-container {
-    padding: 0 var(--space-md) var(--space-md);
+    padding: var(--space-md);
 }
 
 .match-container {
-    padding: var(--space-md) 0;
+    padding: 0px;
     border-top: var(--border-width) solid var(--color-border);
 }
 
