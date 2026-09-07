@@ -18,8 +18,18 @@
 
 /* --------------------------------------------------------------------------
    Trigger (the clickable header)
+
+   - .collapsible-panel__trigger is always applied to the trigger
+     element, regardless of user-provided class overrides. It is
+     a behavioral hook: its aria-expanded attribute drives the
+     twistie state (see twistie rule below).
+
+   - .collapsible-panel__trigger_default is styling only, and user
+     can override by passing their own list of classes to
+     classList.trigger
    -------------------------------------------------------------------------- */
-.collapsible-panel__trigger {
+
+.collapsible-panel__trigger_default {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
@@ -34,11 +44,11 @@
     text-align: left;
 }
 
-.collapsible-panel__trigger:hover {
+.collapsible-panel__trigger_default:hover {
     background: var(--color-metadata-bg);
 }
 
-.collapsible-panel__trigger:focus-visible {
+.collapsible-panel__trigger_default:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: -2px;
 }
@@ -69,8 +79,29 @@
     color: var(--color-text-muted);
 }
 
-/* When panel is open, rotate twistie to point down */
-.collapsible-panel.is-open .collapsible-panel__twistie {
+/*
+ * When panel is open, rotate twistie to point down
+ * - Determine if a panel is open based on the twistie's direct
+ *   parent (trigger button in the header) having aria-expanded true;
+ * - Do this rather than looking at the actual panel's .is-open state
+ *   (which at first seems like the obvious check) for the following reason:
+ * - if you look for any ancestor panel with is-open, it will break
+ *   the twistie animation if it's part of a nested panel (as a nesting
+ *   panel being open would trigger the rule, making the nested twistie
+ *   rotate, even though they are not the same panel.)
+ * - Currently, the panel <div> is grandfather to the twistie, and so
+ *   could specify to only look at the grandfather <div> with .is-open,
+ *   but I do not want to do this in case the structure changes.
+ * - This rule below also relies on structure (trigger being the
+ *   direct parent), but of the two, this is more reliable, as there's
+ *   less chance of this state changing.
+ *
+ * Note:
+ * - collapsible-panel__trigger always added to trigger element
+ *   regardless of user overrides (it will be appended to any user specified
+ *   classes). It is behavioral only, to deal with twistie animation.
+ */
+.collapsible-panel__trigger[aria-expanded="true"]>.collapsible-panel__twistie {
     transform: rotate(90deg);
 }
 

@@ -252,12 +252,12 @@ function resolveContentNode(input, name) {
  * @param {Object} [options.classNames] - Optional CSS class overrides
  * @param {string[]} [options.classNames.root=['collapsibile-panel-default]] -
  * 										Classes for the root element
- * 										Note: ALL panels get 'collapsible-panel' class
+ * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger_default]] -
+ * 										Classes for the trigger element
+ * 										Note: ALL panels get 'collapsible-panel__trigger' class
  * 										If user supplies overrides, it will get appended.
  * 										It does not provide any styling; it just
  * 										assists in twistie animation.
- * @param {string[]} [options.classNames.trigger=['collapsible-panel__trigger]] -
- * 										Classes for the trigger element
  * @param {string[]} [options.classNames.content=['collapsible-panel__content_default]]
  * 										Classes for the content region
  * 										Note: ALL content regions will have
@@ -308,7 +308,7 @@ export function createCollapsiblePanel(options = {}) {
     // Resolve CSS classes with defaults and caller overrides
     const classes = {
         root: classNames.root || ['collapsible-panel-default'],
-        trigger: classNames.trigger || ['collapsible-panel__trigger'],
+        trigger: classNames.trigger || ['collapsible-panel__trigger_default'],
         content: classNames.content || ['collapsible-panel__content_default'],
         twistie: classNames.twistie || ['collapsible-panel__twistie'],
     };
@@ -317,10 +317,7 @@ export function createCollapsiblePanel(options = {}) {
 
     // Root container - the outermost element the caller appends to the page
     const root = document.createElement('div');
-    let rootClasses = classes.root;
-    // collapsible-panel class determines twistie animation behavior so it must be present
-    rootClasses.push('collapsible-panel');
-    root.className = rootClasses.join(' ');
+    root.className = classes.root.join(' ');
     root.classList.add(startOpen ? 'is-open' : 'is-closed');
     root.id = panelId;
 
@@ -328,8 +325,13 @@ export function createCollapsiblePanel(options = {}) {
     // focus handling, and correct semantic role without extra work
     const trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = classes.trigger.join(' ');;
+    let triggerClasses = classes.trigger;
+    // collapsible-panel__trigger class + having aria-expanded true determines twistie
+    // animation behavior so must be present
+    triggerClasses.push('collapsible-panel__trigger');
+    trigger.className = triggerClasses.join(' ');
     trigger.id = triggerId;
+    // CSS relies on aria-expanded = true on this element to control twistie behavior
     trigger.setAttribute('aria-expanded', startOpen ? 'true' : 'false');
     trigger.setAttribute('aria-controls', contentId);
 
