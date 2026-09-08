@@ -7,6 +7,7 @@
 -- It applies:
 --   1. Indexes for query performance
 --   2. Data fixes for known gaps in the upstream data
+--   3. Adds columns for custom entries (which can be added via manager.py)
 --
 -- Usage:
 --   mysql -u root -p runouns < setup_database.sql
@@ -40,3 +41,12 @@ SET @rebjonok_code = (SELECT code FROM nouns_morf WHERE word = 'ребенок' 
 
 INSERT INTO nouns_morf (IID, word, code, code_parent, plural, gender, wcase, soul)
 VALUES (NULL, 'дети', @new_code, @rebjonok_code, 1, NULL, 'им', 1);
+
+-- --------------------------------------------------------------------------
+-- 3. Add columns for custom entries
+-- --------------------------------------------------------------------------
+
+ALTER TABLE nouns_morf
+ADD COLUMN is_custom TINYINT(1) DEFAULT 0,
+ADD COLUMN created_at TIMESTAMP NULL DEFAULT NULL,
+ADD COLUMN category VARCHAR(50) NULL DEFAULT NULL;
